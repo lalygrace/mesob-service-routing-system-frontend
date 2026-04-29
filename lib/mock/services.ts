@@ -1,12 +1,10 @@
-export type Service = {
-  id: string;
-  title: string;
-  authority: string;
-  locationHint: string;
-  feeHint: string;
-  durationHint: string;
-  requirements: string[];
-};
+import type { Service } from "@/lib/service-navigator/types";
+
+function kw(en: string[]): Service["keywords"] {
+  // For now we reuse English keywords across languages to avoid incorrect translations.
+  // Replace with verified Amharic/Afaan Oromo keywords later.
+  return { am: en, en, om: en };
+}
 
 export const MOCK_SERVICES: Service[] = [
   {
@@ -16,10 +14,38 @@ export const MOCK_SERVICES: Service[] = [
     locationHint: "Floor 1 • Counter A (placeholder)",
     feeHint: "Varies (placeholder)",
     durationHint: "Same day (placeholder)",
+    topicId: "id",
+    keywords: kw(["id", "lost", "replace", "replacement", "missing"]),
     requirements: [
       "Police report (if required)",
       "Passport-size photo",
       "Any supporting identification",
+    ],
+  },
+  {
+    id: "id-damaged",
+    title: "Replace a damaged ID",
+    authority: "Identity Services (placeholder)",
+    locationHint: "Floor 1 • Counter A (placeholder)",
+    feeHint: "Varies (placeholder)",
+    durationHint: "Same day (placeholder)",
+    topicId: "id",
+    keywords: kw(["id", "damaged", "broken", "torn", "replace"]),
+    requirements: ["Damaged ID", "Passport-size photo", "Application form"],
+  },
+  {
+    id: "id-new",
+    title: "Apply for a new ID",
+    authority: "Identity Services (placeholder)",
+    locationHint: "Floor 1 • Counter B (placeholder)",
+    feeHint: "Varies (placeholder)",
+    durationHint: "1–3 days (placeholder)",
+    topicId: "id",
+    keywords: kw(["id", "new", "first time", "apply", "application"]),
+    requirements: [
+      "Passport-size photo",
+      "Proof of residence (if required)",
+      "Application form",
     ],
   },
   {
@@ -29,6 +55,16 @@ export const MOCK_SERVICES: Service[] = [
     locationHint: "Floor 1 • Counter B (placeholder)",
     feeHint: "Varies (placeholder)",
     durationHint: "1–3 days (placeholder)",
+    topicId: "id",
+    keywords: kw([
+      "id",
+      "correction",
+      "correct",
+      "name",
+      "date",
+      "spelling",
+      "wrong",
+    ]),
     requirements: [
       "Current ID",
       "Proof document for correction",
@@ -42,6 +78,15 @@ export const MOCK_SERVICES: Service[] = [
     locationHint: "Floor 2 • Room 12 (placeholder)",
     feeHint: "Varies (placeholder)",
     durationHint: "Several days (placeholder)",
+    topicId: "passport",
+    keywords: kw([
+      "passport",
+      "renew",
+      "renewal",
+      "expired",
+      "expire",
+      "extension",
+    ]),
     requirements: ["Old passport", "Photos", "Payment receipt"],
   },
   {
@@ -51,6 +96,15 @@ export const MOCK_SERVICES: Service[] = [
     locationHint: "Floor 3 • Desk 5 (placeholder)",
     feeHint: "Varies (placeholder)",
     durationHint: "1–2 days (placeholder)",
+    topicId: "business",
+    keywords: kw([
+      "business",
+      "start",
+      "registration",
+      "register",
+      "license",
+      "company",
+    ]),
     requirements: ["Owner ID", "Business name options", "Address proof"],
   },
   {
@@ -60,6 +114,15 @@ export const MOCK_SERVICES: Service[] = [
     locationHint: "Floor 2 • Counter C (placeholder)",
     feeHint: "Varies (placeholder)",
     durationHint: "Varies (placeholder)",
+    topicId: "transport",
+    keywords: kw([
+      "driving",
+      "driver",
+      "license",
+      "licence",
+      "transport",
+      "permit",
+    ]),
     requirements: ["Owner ID", "Medical check (if required)", "Photos"],
   },
   {
@@ -69,6 +132,8 @@ export const MOCK_SERVICES: Service[] = [
     locationHint: "Floor 1 • Room 3 (placeholder)",
     feeHint: "Often free (placeholder)",
     durationHint: "Same day (placeholder)",
+    topicId: "revenue",
+    keywords: kw(["tax", "registration", "revenue", "tin", "vat", "taxpayer"]),
     requirements: ["Owner ID", "Contact phone number", "Address"],
   },
 ];

@@ -23,13 +23,17 @@
 
 ## Checkpoint 2 — Core Flow Screens
 
-- ⏸️ Input screen (text-first, voice UI placeholder)
-- ⏸️ Clarification screen (guided options, no typing required)
-- ⏸️ Suggestions screen (Top 1–3 services)
-- ⏸️ Service details screen (location, fee, time)
-- ⏸️ Requirements checklist (ready/not ready)
-- ⏸️ Summary + confirmation
-- ⏸️ Feedback capture screen
+- ✅ Intake method screen (Speak / Type / Browse)
+- 🟡 Voice screen (recording + live transcript UI)
+- ⏭️ Voice UX (hold-to-speak + clearer mic states)
+- ✅ Typing screen (smart examples / quick fill)
+- ✅ Browse categories screen
+- ✅ Clarification screen (guided options, no typing required)
+- ✅ Suggestions screen (Top 1–3 services)
+- ✅ Service details screen (location, fee, time)
+- ✅ Requirements checklist (ready/not ready)
+- ✅ Summary + confirmation
+- ✅ Feedback capture screen
 
 ## Checkpoint 3 — Quality Bar
 
