@@ -2,18 +2,106 @@ import type { LanguageCode } from "@/lib/service-navigator/types";
 
 export type Strings = {
   appTitle: string;
+  appSubtitle: string;
+  landing: {
+    headline: string;
+    subheadline: string;
+    selectLanguage: string;
+    featureVoice: string;
+    featureVoiceDesc: string;
+    featureGuide: string;
+    featureGuideDesc: string;
+    featureLanguage: string;
+    featureLanguageDesc: string;
+    getStarted: string;
+  };
   steps: {
-    language: { title: string; description: string };
     intake: { title: string; description: string };
     voice: { title: string; description: string };
     problem: { title: string; description: string };
     categories: { title: string; description: string };
     clarify: { title: string; description: string };
-    suggestions: { title: string; description: string };
-    details: { title: string; description: string };
-    requirements: { title: string; description: string };
-    summary: { title: string; description: string };
+    results: { title: string; description: string };
+    detail: { title: string; description: string };
     feedback: { title: string; description: string };
+  };
+  intake: {
+    heading: string;
+    subheading: string;
+    voiceTitle: string;
+    voiceDesc: string;
+    typeTitle: string;
+    typeDesc: string;
+    browseTitle: string;
+    browseDesc: string;
+  };
+  voice: {
+    heading: string;
+    holdToSpeak: string;
+    listening: string;
+    release: string;
+    notSupported: string;
+    notSupportedDesc: string;
+    typeInstead: string;
+    whatWeHeard: string;
+    editHint: string;
+  };
+  problem: {
+    heading: string;
+    placeholder: string;
+    hint: string;
+    examples: string;
+    exampleItems: string[];
+  };
+  categories: {
+    heading: string;
+    subheading: string;
+    items: { label: string; hint: string }[];
+  };
+  clarify: {
+    heading: string;
+    subheading: string;
+    pickOne: string;
+  };
+  results: {
+    heading: string;
+    youSaid: string;
+    noResults: string;
+    noResultsHint: string;
+  };
+  detail: {
+    heading: string;
+    authority: string;
+    location: string;
+    fee: string;
+    processingTime: string;
+    requirements: string;
+    requirementsDesc: string;
+    readiness: string;
+    readyMessage: string;
+    notReadyMessage: string;
+    itemsConfirmed: string;
+  };
+  success: {
+    heading: string;
+    subheading: string;
+    goTo: string;
+    whatToBring: string;
+    giveFeedback: string;
+    startOver: string;
+  };
+  feedbackForm: {
+    heading: string;
+    subheading: string;
+    wasHelpful: string;
+    helpful: string;
+    notHelpful: string;
+    rating: string;
+    comment: string;
+    commentPlaceholder: string;
+    submit: string;
+    thankYou: string;
+    thankYouDesc: string;
   };
   actions: {
     back: string;
@@ -21,77 +109,415 @@ export type Strings = {
     startOver: string;
     select: string;
     selected: string;
-    confirmAndFinish: string;
+    imReady: string;
+    skip: string;
   };
-  labels: {
-    language: string;
+  header: {
+    home: string;
   };
+  noServiceSelected: string;
+  noServiceSelectedDesc: string;
 };
 
+/* ─── English ─── */
 const EN: Strings = {
-  appTitle: "Mesob Service Navigator",
+  appTitle: "Mesob Navigator",
+  appSubtitle: "Government Service Assistant",
+  landing: {
+    headline: "Find the right government service — instantly.",
+    subheadline: "Tell us your problem. We'll guide you to the exact office, floor, and counter at Mesob Center.",
+    selectLanguage: "Choose your language",
+    featureVoice: "Voice Enabled",
+    featureVoiceDesc: "Speak naturally — we understand.",
+    featureGuide: "Step-by-Step Guide",
+    featureGuideDesc: "We walk you through everything.",
+    featureLanguage: "3 Languages",
+    featureLanguageDesc: "Amharic, English, Afaan Oromo.",
+    getStarted: "Get Started",
+  },
   steps: {
-    language: {
-      title: "Welcome",
-      description: "Choose your language to begin.",
-    },
-    intake: {
-      title: "How can we help?",
-      description: "Choose how you want to describe your problem.",
-    },
-    voice: {
-      title: "Speak",
-      description: "Hold to speak. We will show the text.",
-    },
-    problem: {
-      title: "Type",
-      description: "Type a short sentence about your problem.",
-    },
-    categories: {
-      title: "Categories",
-      description: "Browse common service areas.",
-    },
-    clarify: {
-      title: "Clarify",
-      description: "Help us narrow it down.",
-    },
-    suggestions: {
-      title: "Suggestions",
-      description: "Pick the best match.",
-    },
-    details: {
-      title: "Details",
-      description: "See where to go and what to bring.",
-    },
-    requirements: {
-      title: "Checklist",
-      description: "Confirm required documents.",
-    },
-    summary: {
-      title: "Confirm",
-      description: "Review and confirm before proceeding.",
-    },
-    feedback: {
-      title: "Feedback",
-      description: "Help us improve.",
-    },
+    intake: { title: "How can we help?", description: "Choose how to describe your need." },
+    voice: { title: "Speak", description: "Tell us your problem." },
+    problem: { title: "Type", description: "Describe your problem." },
+    categories: { title: "Browse", description: "Pick a service area." },
+    clarify: { title: "Clarify", description: "Help us narrow it down." },
+    results: { title: "Results", description: "Pick the best match." },
+    detail: { title: "Service Details", description: "Review your service info." },
+    feedback: { title: "Feedback", description: "Help us improve." },
+  },
+  intake: {
+    heading: "How can we help you today?",
+    subheading: "Choose the easiest option for you.",
+    voiceTitle: "Speak your problem",
+    voiceDesc: "Tap and speak — the fastest option.",
+    typeTitle: "Type your problem",
+    typeDesc: "Describe it in a short sentence.",
+    browseTitle: "Browse categories",
+    browseDesc: "Choose from common service areas.",
+  },
+  voice: {
+    heading: "Speak your problem",
+    holdToSpeak: "Hold to speak",
+    listening: "Listening…",
+    release: "Release to stop",
+    notSupported: "Voice not supported",
+    notSupportedDesc: "Your browser doesn't support speech recognition.",
+    typeInstead: "Type instead",
+    whatWeHeard: "What we heard",
+    editHint: "You can edit the text before continuing.",
+  },
+  problem: {
+    heading: "Type your problem",
+    placeholder: 'Example: "I lost my ID"',
+    hint: "Keep it short. We'll ask if anything is unclear.",
+    examples: "Quick examples",
+    exampleItems: [
+      "I lost my ID",
+      "My passport expired",
+      "I want to start a business",
+      "I need tax registration",
+    ],
+  },
+  categories: {
+    heading: "Browse categories",
+    subheading: "Pick a category and we'll find the right service.",
+    items: [
+      { label: "ID Services", hint: "ID" },
+      { label: "Passport Services", hint: "Passport" },
+      { label: "Business Services", hint: "Business registration" },
+      { label: "Transport Services", hint: "Driving license" },
+      { label: "Revenue & Tax", hint: "Tax registration" },
+    ],
+  },
+  clarify: {
+    heading: "Let us narrow it down",
+    subheading: "Pick the option closest to your need.",
+    pickOne: "Choose one option",
+  },
+  results: {
+    heading: "Here's what we found",
+    youSaid: "You said",
+    noResults: "No matching services",
+    noResultsHint: "Try describing your problem differently.",
+  },
+  detail: {
+    heading: "Service Information",
+    authority: "Authority",
+    location: "Location",
+    fee: "Fee",
+    processingTime: "Processing Time",
+    requirements: "Required Documents",
+    requirementsDesc: "Check what you already have.",
+    readiness: "Your Readiness",
+    readyMessage: "You're all set! Head to the counter.",
+    notReadyMessage: "Missing items? You can still proceed.",
+    itemsConfirmed: "items confirmed",
+  },
+  success: {
+    heading: "You're ready!",
+    subheading: "Here's where to go next.",
+    goTo: "Go to",
+    whatToBring: "What to bring",
+    giveFeedback: "Give feedback",
+    startOver: "Help someone else",
+  },
+  feedbackForm: {
+    heading: "Quick Feedback",
+    subheading: "Help us serve you better.",
+    wasHelpful: "Was this helpful?",
+    helpful: "Yes, helpful",
+    notHelpful: "Not helpful",
+    rating: "Rate your experience",
+    comment: "Optional comment",
+    commentPlaceholder: "What could be better?",
+    submit: "Submit",
+    thankYou: "Thank you!",
+    thankYouDesc: "Your feedback helps us improve.",
   },
   actions: {
     back: "Back",
     continue: "Continue",
-    startOver: "Start over",
+    startOver: "Start Over",
     select: "Select",
     selected: "Selected",
-    confirmAndFinish: "Confirm & finish",
+    imReady: "I'm Ready",
+    skip: "Skip",
   },
-  labels: {
-    language: "Language",
+  header: {
+    home: "Home",
   },
+  noServiceSelected: "No service selected",
+  noServiceSelectedDesc: "Go back and select a service.",
+};
+
+/* ─── Amharic ─── */
+const AM: Strings = {
+  appTitle: "መሶብ ናቪጌተር",
+  appSubtitle: "የመንግስት አገልግሎት ረዳት",
+  landing: {
+    headline: "ትክክለኛውን የመንግስት አገልግሎት — ወዲያውኑ ያግኙ።",
+    subheadline: "ችግርዎን ይንገሩን። ወደ ትክክለኛው ቢሮ፣ ፎቅ እና ካውንተር እንመራዎታለን።",
+    selectLanguage: "ቋንቋ ይምረጡ",
+    featureVoice: "በድምጽ የሚሰራ",
+    featureVoiceDesc: "በተፈጥሮ ይናገሩ — እንረዳለን።",
+    featureGuide: "ደረጃ-በ-ደረጃ መመሪያ",
+    featureGuideDesc: "ሁሉንም ነገር እንመራዎታለን።",
+    featureLanguage: "3 ቋንቋዎች",
+    featureLanguageDesc: "አማርኛ፣ እንግሊዝኛ፣ አፋን ኦሮሞ።",
+    getStarted: "ጀምር",
+  },
+  steps: {
+    intake: { title: "እንዴት ልንረዳዎ?", description: "ፍላጎትዎን የሚገልጹበትን ይምረጡ።" },
+    voice: { title: "ይናገሩ", description: "ችግርዎን ይንገሩን።" },
+    problem: { title: "ይጻፉ", description: "ችግርዎን ይግለጹ።" },
+    categories: { title: "ያስሱ", description: "የአገልግሎት ዘርፍ ይምረጡ።" },
+    clarify: { title: "ያብራሩ", description: "እንድናጠብዎ ይርዱን።" },
+    results: { title: "ውጤቶች", description: "ምርጥ ተዛማጁን ይምረጡ።" },
+    detail: { title: "የአገልግሎት ዝርዝር", description: "መረጃውን ይገምግሙ።" },
+    feedback: { title: "ግብረመልስ", description: "እንድንሻሻል ይርዱን።" },
+  },
+  intake: {
+    heading: "ዛሬ እንዴት ልንረዳዎ እንችላለን?",
+    subheading: "ለእርስዎ ቀላሉን አማራጭ ይምረጡ።",
+    voiceTitle: "ችግርዎን ይናገሩ",
+    voiceDesc: "ይንኩ እና ይናገሩ — ፈጣን አማራጭ።",
+    typeTitle: "ችግርዎን ይጻፉ",
+    typeDesc: "በአጭር ዓረፍተ ነገር ይግለጹ።",
+    browseTitle: "ምድቦችን ያስሱ",
+    browseDesc: "ከተለመዱ አገልግሎት ዘርፎች ይምረጡ።",
+  },
+  voice: {
+    heading: "ችግርዎን ይናገሩ",
+    holdToSpeak: "ለመናገር ይያዙ",
+    listening: "በማዳመጥ ላይ…",
+    release: "ለማቆም ይልቀቁ",
+    notSupported: "ድምጽ አይደገፍም",
+    notSupportedDesc: "አሳሽዎ የድምጽ ቅጂ አይደግፍም።",
+    typeInstead: "በምትኩ ይጻፉ",
+    whatWeHeard: "የሰማነው",
+    editHint: "ከመቀጠልዎ በፊት ጽሑፉን ማስተካከል ይችላሉ።",
+  },
+  problem: {
+    heading: "ችግርዎን ይጻፉ",
+    placeholder: 'ምሳሌ: "መታወቂያዬ ጠፋ"',
+    hint: "አጭር ያድርጉት። ግልጽ ያልሆነ ነገር ካለ እንጠይቃለን።",
+    examples: "ፈጣን ምሳሌዎች",
+    exampleItems: [
+      "መታወቂያዬ ጠፋ",
+      "ፓስፖርቴ ጊዜው አልፏል",
+      "ንግድ መጀመር እፈልጋለሁ",
+      "የግብር ምዝገባ እፈልጋለሁ",
+    ],
+  },
+  categories: {
+    heading: "ምድቦችን ያስሱ",
+    subheading: "ምድብ ይምረጡ ትክክለኛውን አገልግሎት እናገኛለን።",
+    items: [
+      { label: "የመታወቂያ አገልግሎቶች", hint: "ID" },
+      { label: "የፓስፖርት አገልግሎቶች", hint: "Passport" },
+      { label: "የንግድ አገልግሎቶች", hint: "Business registration" },
+      { label: "የትራንስፖርት አገልግሎቶች", hint: "Driving license" },
+      { label: "ገቢ እና ግብር", hint: "Tax registration" },
+    ],
+  },
+  clarify: {
+    heading: "እንጠብበው",
+    subheading: "ለፍላጎትዎ ቅርብ የሆነውን ይምረጡ።",
+    pickOne: "አንድ አማራጭ ይምረጡ",
+  },
+  results: {
+    heading: "ያገኘነው ይኸው ነው",
+    youSaid: "ያሉት",
+    noResults: "ተዛማጅ አገልግሎቶች አልተገኙም",
+    noResultsHint: "ችግርዎን በሌላ መንገድ ለመግለጽ ይሞክሩ።",
+  },
+  detail: {
+    heading: "የአገልግሎት መረጃ",
+    authority: "ባለስልጣን",
+    location: "አድራሻ",
+    fee: "ክፍያ",
+    processingTime: "የማስኬድ ጊዜ",
+    requirements: "ያስፈልጉ ሰነዶች",
+    requirementsDesc: "ያሉዎትን ያረጋግጡ።",
+    readiness: "ዝግጁነትዎ",
+    readyMessage: "ዝግጁ ነዎት! ወደ ካውንተሩ ይሂዱ።",
+    notReadyMessage: "የጎደሉ ነገሮች? አሁንም መቀጠል ይችላሉ።",
+    itemsConfirmed: "ዕቃዎች ተረጋግጠዋል",
+  },
+  success: {
+    heading: "ዝግጁ ነዎት!",
+    subheading: "ቀጥሎ የሚሄዱበት ይኸው ነው።",
+    goTo: "ይሂዱ ወደ",
+    whatToBring: "ይዘው የሚመጡት",
+    giveFeedback: "ግብረመልስ ይስጡ",
+    startOver: "ሌላ ሰው ይርዱ",
+  },
+  feedbackForm: {
+    heading: "ፈጣን ግብረመልስ",
+    subheading: "የተሻለ ለማገልገል ይርዱን።",
+    wasHelpful: "ረድቶዎታል?",
+    helpful: "አዎ፣ ረድቶኛል",
+    notHelpful: "አልረዳኝም",
+    rating: "ተሞክሮዎን ይደርጉ",
+    comment: "አስተያየት (አማራጭ)",
+    commentPlaceholder: "ምን ሊሻሻል ይችላል?",
+    submit: "ያስገቡ",
+    thankYou: "አመሰግናለሁ!",
+    thankYouDesc: "ግብረመልስዎ እንድንሻሻል ይረዳናል።",
+  },
+  actions: {
+    back: "ተመለስ",
+    continue: "ቀጥል",
+    startOver: "እንደገና ጀምር",
+    select: "ምረጥ",
+    selected: "ተመርጧል",
+    imReady: "ዝግጁ ነኝ",
+    skip: "ዝለል",
+  },
+  header: {
+    home: "መነሻ",
+  },
+  noServiceSelected: "ምንም አገልግሎት አልተመረጠም",
+  noServiceSelectedDesc: "ተመልሰው አገልግሎት ይምረጡ።",
+};
+
+/* ─── Afaan Oromo ─── */
+const OM: Strings = {
+  appTitle: "Mesob Navigator",
+  appSubtitle: "Gargaaraa Tajaajila Mootummaa",
+  landing: {
+    headline: "Tajaajila mootummaa sirrii — dafqaan argadhu.",
+    subheadline: "Rakkoo kee nutti himi. Gara waajjira, darbii fi kaawuntaraa sirrii si qajeelchina.",
+    selectLanguage: "Afaan filadhu",
+    featureVoice: "Sagaleen Hojjeta",
+    featureVoiceDesc: "Akka uumamaatti dubbadhu.",
+    featureGuide: "Qajeelfama Tartiibaan",
+    featureGuideDesc: "Waan hundaa si qajeelchina.",
+    featureLanguage: "Afaan 3",
+    featureLanguageDesc: "Amaariffaa, Ingiliffaa, Afaan Oromoo.",
+    getStarted: "Jalqabi",
+  },
+  steps: {
+    intake: { title: "Akkamiin si gargaaruu?", description: "Akkaataa barbaaddu filadhu." },
+    voice: { title: "Dubbadhu", description: "Rakkoo kee nutti himi." },
+    problem: { title: "Barreessi", description: "Rakkoo kee ibsi." },
+    categories: { title: "Sakatta'i", description: "Gosa tajaajilaa filadhu." },
+    clarify: { title: "Ibsi", description: "Akka dhiphisnuuf nu gargaari." },
+    results: { title: "Bu'aa", description: "Kan irra caalaa walsimatu filadhu." },
+    detail: { title: "Ibsa Tajaajilaa", description: "Odeeffannoo kee ilaali." },
+    feedback: { title: "Yaada", description: "Akka fooyya'inuuf nu gargaari." },
+  },
+  intake: {
+    heading: "Har'a akkamiin si gargaaruu dandeenya?",
+    subheading: "Filannoo siif salphaa ta'e filadhu.",
+    voiceTitle: "Rakkoo kee dubbadhu",
+    voiceDesc: "Tuqi dubbadhu — filannoo dafqa.",
+    typeTitle: "Rakkoo kee barreessi",
+    typeDesc: "Himaamsa gabaabaadhaan ibsi.",
+    browseTitle: "Ramaddii sakatta'i",
+    browseDesc: "Gosa tajaajila beekamoo keessaa filadhu.",
+  },
+  voice: {
+    heading: "Rakkoo kee dubbadhu",
+    holdToSpeak: "Dubbachuuf qabi",
+    listening: "Dhaggeeffachaa…",
+    release: "Dhaabachuuf gadi lakkisi",
+    notSupported: "Sagaleen hin deeggamu",
+    notSupportedDesc: "Browseriin kee beekamtii sagalee hin deeggamu.",
+    typeInstead: "Qooda barreessi",
+    whatWeHeard: "Kan dhageenye",
+    editHint: "Osoo hin itti fufiin barreeffama fooyyessuu dandeessa.",
+  },
+  problem: {
+    heading: "Rakkoo kee barreessi",
+    placeholder: 'Fkn: "Waraqaa eenyummaa koo dhabee"',
+    hint: "Gabaabsi. Yoo hin ifa ta'iin ni gaafanna.",
+    examples: "Fakkeenya dafqa",
+    exampleItems: [
+      "Waraqaa eenyummaa koo dhabee",
+      "Paaspoortiin koo dhumateera",
+      "Daldala jalqabuu barbaada",
+      "Galmee gibiraa barbaada",
+    ],
+  },
+  categories: {
+    heading: "Ramaddii sakatta'i",
+    subheading: "Ramaddii filadhu tajaajila sirrii arganna.",
+    items: [
+      { label: "Tajaajila Eenyummaa", hint: "ID" },
+      { label: "Tajaajila Paaspootii", hint: "Passport" },
+      { label: "Tajaajila Daldalaa", hint: "Business registration" },
+      { label: "Tajaajila Geejjibaa", hint: "Driving license" },
+      { label: "Galii fi Gibiraa", hint: "Tax registration" },
+    ],
+  },
+  clarify: {
+    heading: "Haa dhiphisnu",
+    subheading: "Kan fedhii keetti dhiyaatu filadhu.",
+    pickOne: "Filannoo tokko filadhu",
+  },
+  results: {
+    heading: "Kan arganne kunooti",
+    youSaid: "Kan jette",
+    noResults: "Tajaajilli walsimu hin argamne",
+    noResultsHint: "Rakkoo kee karaa biraatiin ibsuuf yaali.",
+  },
+  detail: {
+    heading: "Odeeffannoo Tajaajilaa",
+    authority: "Abbaa Taayitaa",
+    location: "Bakka",
+    fee: "Kaffaltii",
+    processingTime: "Yeroo Raawwii",
+    requirements: "Sanadoota Barbaachisan",
+    requirementsDesc: "Kan qabdu mirkaneessi.",
+    readiness: "Qophaa'ummaa Kee",
+    readyMessage: "Qophaa'aa dha! Gara kaawuntaraatti deemi.",
+    notReadyMessage: "Waan hafe jiraa? Itti fufuu dandeessa.",
+    itemsConfirmed: "meeshaaleen mirkanaa'an",
+  },
+  success: {
+    heading: "Qophaa'aa dha!",
+    subheading: "Itti aansuun bakka deemtu kunooti.",
+    goTo: "Deemi gara",
+    whatToBring: "Waan fiddu",
+    giveFeedback: "Yaada kenni",
+    startOver: "Nama biraa gargaari",
+  },
+  feedbackForm: {
+    heading: "Yaada Dafqa",
+    subheading: "Fooyya'iinsa keenyaaf nu gargaari.",
+    wasHelpful: "Faayidaa qabaa?",
+    helpful: "Eeyyee, na gargaareera",
+    notHelpful: "Na hin gargaarre",
+    rating: "Muuxannoo kee madaali",
+    comment: "Yaada (dirqama miti)",
+    commentPlaceholder: "Maaltu fooyya'uu danda'a?",
+    submit: "Galchi",
+    thankYou: "Galatoomaa!",
+    thankYouDesc: "Yaadni kee akka fooyya'inuuf nu gargaara.",
+  },
+  actions: {
+    back: "Duuba",
+    continue: "Itti fufi",
+    startOver: "Irra deebi'i",
+    select: "Filadhu",
+    selected: "Filatameera",
+    imReady: "Qophaa'eera",
+    skip: "Darbi",
+  },
+  header: {
+    home: "Mana",
+  },
+  noServiceSelected: "Tajaajilli hin filatamne",
+  noServiceSelectedDesc: "Duuba deebi'ii tajaajila filadhu.",
+};
+
+const STRINGS_MAP: Record<LanguageCode, Strings> = {
+  en: EN,
+  am: AM,
+  om: OM,
 };
 
 export function getStrings(language: LanguageCode): Strings {
-  // We keep UI copy in English for now to avoid incorrect translations.
-  // Add real translations once provided/verified.
-  void language;
-  return EN;
+  return STRINGS_MAP[language] ?? EN;
 }

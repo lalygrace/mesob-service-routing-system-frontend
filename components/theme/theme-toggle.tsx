@@ -1,51 +1,39 @@
 "use client";
 
 import * as React from "react";
-
+import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type Theme = "light" | "dark";
-
-const STORAGE_KEY = "mesob-theme";
-
-function applyTheme(theme: Theme) {
-  if (typeof document === "undefined") return;
-  document.documentElement.classList.toggle("dark", theme === "dark");
-}
-
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (stored === "light" || stored === "dark") return stored;
-
-  return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches
-    ? "dark"
-    : "light";
-}
-
 export function ThemeToggle() {
-  const [theme, setTheme] = React.useState<Theme>(() => getInitialTheme());
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
 
-  React.useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+  React.useEffect(() => setMounted(true), []);
 
-  const nextTheme: Theme = theme === "dark" ? "light" : "dark";
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" aria-label="Toggle theme">
+        <span className="h-4 w-4" />
+      </Button>
+    );
+  }
+
+  const isDark = resolvedTheme === "dark";
 
   return (
     <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      className="h-10 px-4"
-      onClick={() => {
-        setTheme(nextTheme);
-        window.localStorage.setItem(STORAGE_KEY, nextTheme);
-      }}
-      aria-label="Toggle theme"
+      variant="ghost"
+      size="icon"
+      className="h-9 w-9 rounded-full transition-colors hover:bg-accent"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
-      {theme === "dark" ? "Dark" : "Light"}
+      {isDark ? (
+        <Sun className="h-4 w-4 transition-transform duration-300" />
+      ) : (
+        <Moon className="h-4 w-4 transition-transform duration-300" />
+      )}
     </Button>
   );
 }
