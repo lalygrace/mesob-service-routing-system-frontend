@@ -253,6 +253,26 @@
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
+  
+  .animate-float-slow {
+    animation: float-slow 8s ease-in-out infinite;
+  }
+  
+  .animate-float-slower {
+    animation: float-slower 10s ease-in-out infinite;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse-slow 4s ease-in-out infinite;
+  }
+  
+  .animate-pulse-slower {
+    animation: pulse-slower 5s ease-in-out infinite;
+  }
+  
+  .animate-pulse-slowest {
+    animation: pulse-slowest 6s ease-in-out infinite;
+  }
 
   .animate-pulse-ring {
     animation: pulse-ring 2s ease-out infinite;
@@ -268,6 +288,10 @@
   
   .animate-scale-in {
     animation: scale-in 0.4s ease-out forwards;
+  }
+  
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
   }
   
   /* Premium shadow utilities */
@@ -292,7 +316,7 @@
 }
 
 /* ──────────────────────────────────────────────────────────
-   Premium Keyframes
+   Spectacular Keyframes
    ────────────────────────────────────────────────────────── */
 @keyframes float {
   0%, 100% { 
@@ -300,6 +324,60 @@
   }
   50% { 
     transform: translateY(-12px) scale(1.02); 
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% { 
+    transform: translateY(0) translateX(0) scale(1); 
+  }
+  33% { 
+    transform: translateY(-20px) translateX(10px) scale(1.05); 
+  }
+  66% { 
+    transform: translateY(-10px) translateX(-10px) scale(0.98); 
+  }
+}
+
+@keyframes float-slower {
+  0%, 100% { 
+    transform: translateY(0) translateX(0) rotate(0deg); 
+  }
+  50% { 
+    transform: translateY(-30px) translateX(15px) rotate(5deg); 
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { 
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pulse-slower {
+  0%, 100% { 
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.5;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes pulse-slowest {
+  0%, 100% { 
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.4;
+    transform: scale(1.1);
   }
 }
 
@@ -342,13 +420,28 @@
   }
 }
 
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.8), 0 0 60px rgba(99, 102, 241, 0.5);
+  }
+}
+
 /* ──────────────────────────────────────────────────────────
    Reduced Motion
    ────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .animate-float,
+  .animate-float-slow,
+  .animate-float-slower,
+  .animate-pulse-slow,
+  .animate-pulse-slower,
+  .animate-pulse-slowest,
   .animate-pulse-ring,
-  .animate-shimmer {
+  .animate-shimmer,
+  .animate-glow-pulse {
     animation: none !important;
   }
 }
