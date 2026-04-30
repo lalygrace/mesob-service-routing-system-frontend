@@ -55,7 +55,7 @@ const slideVariants = {
   exit: (direction: number) => ({ x: direction > 0 ? -80 : 80, opacity: 0 }),
 };
 
-export default function NavigatePage() {
+function NavigateContent() {
   const searchParams = useSearchParams();
   const langParam = searchParams.get("lang") as LanguageCode | null;
 
@@ -325,5 +325,13 @@ export default function NavigatePage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function NavigatePage() {
+  return (
+    <React.Suspense fallback={<div className="flex min-h-dvh items-center justify-center">Loading...</div>}>
+      <NavigateContent />
+    </React.Suspense>
   );
 }
