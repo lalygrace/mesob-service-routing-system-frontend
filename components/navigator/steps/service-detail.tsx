@@ -9,13 +9,13 @@ import type { Strings } from "@/lib/service-navigator/strings";
 
 function InfoCard({ icon: Icon, label, value }: { icon: typeof Building2; label: string; value: string }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        <Icon className="h-4 w-4" />
+    <div className="flex items-start gap-4 rounded-2xl border-2 border-border bg-card p-5 transition-all duration-300 hover:border-primary/30 hover:shadow-md">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <Icon className="h-5 w-5" />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
-        <p className="mt-0.5 text-sm font-semibold text-foreground">{value}</p>
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{label}</p>
+        <p className="mt-1.5 text-base font-bold text-foreground">{value}</p>
       </div>
     </div>
   );
@@ -45,64 +45,68 @@ export function ServiceDetail({
   const isReady = total > 0 && checkedCount === total;
 
   return (
-    <div className="space-y-8">
-      {/* Service title */}
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+    <div className="space-y-10 animate-fade-in-up">
+      {/* Premium Service title */}
+      <div className="text-center space-y-3">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           {service.title}
         </h1>
-        <p className="text-muted-foreground">{service.authority}</p>
+        <p className="text-lg text-muted-foreground font-medium">{service.authority}</p>
       </div>
 
-      {/* Info grid */}
-      <div className="grid gap-3 sm:grid-cols-2">
+      {/* Premium Info grid */}
+      <div className="grid gap-4 sm:grid-cols-2">
         <InfoCard icon={Building2} label={strings.detail.authority} value={service.authority} />
         <InfoCard icon={MapPin} label={strings.detail.location} value={service.locationHint} />
         <InfoCard icon={Coins} label={strings.detail.fee} value={service.feeHint} />
         <InfoCard icon={Clock} label={strings.detail.processingTime} value={service.durationHint} />
       </div>
 
-      {/* Requirements checklist */}
-      <div className="space-y-4">
+      {/* Premium Requirements checklist */}
+      <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-foreground">{strings.detail.requirements}</h2>
-          <span className="text-xs font-medium text-muted-foreground">
+          <h2 className="text-xl font-bold text-foreground">{strings.detail.requirements}</h2>
+          <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full">
             {checkedCount}/{total} {strings.detail.itemsConfirmed}
           </span>
         </div>
 
-        {/* Progress bar */}
-        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+        {/* Premium Progress bar */}
+        <div className="h-3 w-full overflow-hidden rounded-full bg-muted shadow-inner">
           <motion.div
-            className="h-full rounded-full bg-primary"
+            className="h-full rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg"
             initial={{ width: "0%" }}
             animate={{ width: `${total > 0 ? (checkedCount / total) * 100 : 0}%` }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           />
         </div>
 
-        <div className="space-y-2">
-          {service.requirements.map((req) => {
+        <div className="space-y-3">
+          {service.requirements.map((req, idx) => {
             const isChecked = Boolean(checked[req]);
             return (
               <motion.button
                 key={req}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                whileHover={{ scale: 1.01, x: 4 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onCheckedChange({ ...checked, [req]: !isChecked })}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all duration-200",
+                  "flex w-full items-center gap-4 rounded-2xl border-2 p-5 text-left transition-all duration-300 touch-target",
                   isChecked
-                    ? "border-primary/30 bg-primary/5"
-                    : "border-border bg-card hover:border-primary/20",
+                    ? "border-primary/40 bg-primary/8 shadow-md shadow-primary/10"
+                    : "border-border bg-card hover:border-primary/30 hover:shadow-sm",
                 )}
               >
                 {isChecked ? (
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+                  <CheckCircle2 className="h-6 w-6 shrink-0 text-primary" />
                 ) : (
-                  <Circle className="h-5 w-5 shrink-0 text-muted-foreground/40" />
+                  <Circle className="h-6 w-6 shrink-0 text-muted-foreground/30" />
                 )}
                 <span className={cn(
-                  "text-sm transition-colors",
+                  "text-base font-medium transition-colors",
                   isChecked ? "text-foreground" : "text-muted-foreground",
                 )}>
                   {req}
@@ -112,18 +116,22 @@ export function ServiceDetail({
           })}
         </div>
 
-        {/* Readiness message */}
-        <div className={cn(
-          "rounded-xl p-4 text-center text-sm font-medium",
-          isReady
-            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-            : "bg-muted text-muted-foreground",
-        )}>
+        {/* Premium Readiness message */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={cn(
+            "rounded-2xl p-5 text-center text-base font-bold shadow-sm",
+            isReady
+              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-2 border-emerald-500/30"
+              : "bg-muted text-muted-foreground border-2 border-border",
+          )}
+        >
           {isReady ? strings.detail.readyMessage : strings.detail.notReadyMessage}
-        </div>
+        </motion.div>
       </div>
 
-      <Button onClick={onReady} size="lg" className="w-full rounded-xl h-12">
+      <Button onClick={onReady} size="lg" className="w-full rounded-2xl h-14 text-lg font-bold shadow-lg hover:shadow-xl">
         {strings.actions.imReady}
       </Button>
     </div>

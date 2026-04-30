@@ -13,28 +13,30 @@ export function ResultsStep({
   selectedId: string | null; onSelect: (id: string) => void;
 }) {
   return (
-    <div className="space-y-8">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+    <div className="space-y-10 animate-fade-in-up">
+      <div className="text-center space-y-3">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           {strings.results.heading}
         </h1>
       </div>
 
-      {/* User's query */}
-      <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{strings.results.youSaid}</p>
-        <p className="mt-1 text-sm text-foreground">&ldquo;{userText}&rdquo;</p>
+      {/* User's query - Premium design */}
+      <div className="rounded-2xl border-2 border-primary/20 bg-primary/5 px-6 py-4 shadow-sm">
+        <p className="text-xs font-bold text-primary uppercase tracking-widest">{strings.results.youSaid}</p>
+        <p className="mt-2 text-base text-foreground font-medium leading-relaxed">&ldquo;{userText}&rdquo;</p>
       </div>
 
       {candidates.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-8 text-center">
-          <SearchX className="h-12 w-12 text-muted-foreground/50" />
-          <p className="font-semibold text-foreground">{strings.results.noResults}</p>
-          <p className="text-sm text-muted-foreground">{strings.results.noResultsHint}</p>
+        <div className="flex flex-col items-center gap-4 py-12 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/50">
+            <SearchX className="h-10 w-10 text-muted-foreground/50" />
+          </div>
+          <p className="text-lg font-bold text-foreground">{strings.results.noResults}</p>
+          <p className="text-sm text-muted-foreground max-w-md">{strings.results.noResultsHint}</p>
         </div>
       ) : (
         <motion.div
-          className="grid gap-3"
+          className="grid gap-4 max-w-2xl mx-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
@@ -45,33 +47,36 @@ export function ResultsStep({
             return (
               <motion.button
                 key={service.id}
-                initial={{ opacity: 0, y: 12 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08, duration: 0.3 }}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+                transition={{ delay: i * 0.1, duration: 0.4 }}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => onSelect(service.id)}
                 className={cn(
-                  "group flex items-center gap-4 rounded-2xl border-2 bg-card p-5 text-left transition-all duration-200",
+                  "group flex items-center gap-5 rounded-3xl border-2 bg-card p-6 text-left transition-all duration-300 touch-target-lg",
                   isSelected
-                    ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
-                    : "border-border hover:border-primary/30 hover:shadow-md",
+                    ? "border-primary bg-primary/8 shadow-xl shadow-primary/15 scale-[1.02]"
+                    : "border-border hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5",
                 )}
               >
                 <div className={cn(
-                  "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors",
-                  isSelected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary",
+                  "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl transition-all duration-300",
+                  isSelected ? "bg-primary text-primary-foreground shadow-lg scale-110" : "bg-primary/10 text-primary group-hover:scale-105",
                 )}>
-                  <MapPin className="h-5 w-5" />
+                  <MapPin className="h-6 w-6" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-foreground">{service.title}</p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">{service.authority}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{service.locationHint}</p>
+                  <p className="text-lg font-bold text-foreground">{service.title}</p>
+                  <p className="mt-1 text-sm font-medium text-muted-foreground">{service.authority}</p>
+                  <p className="mt-1.5 text-xs text-muted-foreground/80 flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {service.locationHint}
+                  </p>
                 </div>
                 <ArrowRight className={cn(
-                  "h-5 w-5 shrink-0 transition-all",
-                  isSelected ? "text-primary" : "text-muted-foreground/40 group-hover:text-primary",
+                  "h-6 w-6 shrink-0 transition-all duration-300",
+                  isSelected ? "text-primary translate-x-1" : "text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1",
                 )} />
               </motion.button>
             );

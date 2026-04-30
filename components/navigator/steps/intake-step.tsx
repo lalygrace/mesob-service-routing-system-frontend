@@ -41,32 +41,32 @@ export function IntakeStep({
   };
 
   return (
-    <div className="space-y-8">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+    <div className="space-y-10 animate-fade-in-up">
+      <div className="text-center space-y-3">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           {strings.intake.heading}
         </h1>
-        <p className="text-muted-foreground">{strings.intake.subheading}</p>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{strings.intake.subheading}</p>
       </div>
 
-      <motion.div variants={container} initial="hidden" animate="show" className="grid gap-4">
+      <motion.div variants={container} initial="hidden" animate="show" className="grid gap-5 max-w-2xl mx-auto">
         {options.map((opt) => (
           <motion.button
             key={opt.method}
             variants={item}
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.02, y: -2 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onPick(opt.method)}
-            className={`group flex items-center gap-5 rounded-2xl border border-border bg-gradient-to-r ${opt.color} p-5 text-left transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5`}
+            className={`group flex items-center gap-6 rounded-3xl border-2 border-border bg-gradient-to-br ${opt.color} p-6 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10 touch-target-lg`}
           >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-              <opt.icon className="h-6 w-6" />
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110 group-hover:shadow-lg">
+              <opt.icon className="h-7 w-7" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-base font-semibold text-foreground">{titles[opt.method]}</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">{descs[opt.method]}</p>
+              <p className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">{titles[opt.method]}</p>
+              <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{descs[opt.method]}</p>
             </div>
-            <svg className="h-5 w-5 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-1 group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="h-6 w-6 shrink-0 text-muted-foreground/40 transition-all duration-300 group-hover:translate-x-2 group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </motion.button>
