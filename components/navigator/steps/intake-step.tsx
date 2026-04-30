@@ -41,8 +41,8 @@ export function IntakeStep({
   };
 
   return (
-    <div className="space-y-12 animate-fade-in-up">
-      <div className="text-center space-y-4">
+    <div className="space-y-10 animate-fade-in-up">
+      <div className="text-center space-y-3">
         <motion.div
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
@@ -62,27 +62,27 @@ export function IntakeStep({
               }}
               className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 blur-2xl"
             />
-            <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 shadow-2xl">
-              <Sparkles className="h-10 w-10 text-white" strokeWidth={2.5} />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 shadow-2xl">
+              <Sparkles className="h-8 w-8 text-white" strokeWidth={2.5} />
             </div>
           </div>
         </motion.div>
         
-        <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-foreground">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {strings.intake.heading}
         </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed">{strings.intake.subheading}</p>
+        <p className="text-base text-muted-foreground max-w-2xl mx-auto">{strings.intake.subheading}</p>
       </div>
 
-      <motion.div variants={container} initial="hidden" animate="show" className="grid gap-6 max-w-3xl mx-auto">
+      <motion.div variants={container} initial="hidden" animate="show" className="grid gap-4 max-w-3xl mx-auto">
         {options.map((opt, idx) => (
           <motion.button
             key={opt.method}
             variants={item}
-            whileHover={{ scale: 1.02, y: -8 }}
+            whileHover={{ scale: 1.02, y: -4 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onPick(opt.method)}
-            className={`group relative overflow-hidden flex items-center gap-8 rounded-3xl border-2 border-border bg-card p-8 text-left transition-all duration-500 hover:border-primary/40 hover:shadow-2xl ${opt.glow} touch-target-lg`}
+            className={`group relative overflow-hidden flex items-center gap-6 rounded-2xl border-2 border-border bg-card p-6 text-left transition-all duration-500 hover:border-primary/40 hover:shadow-xl ${opt.glow}`}
           >
             {/* Animated gradient background */}
             <div className={`absolute inset-0 bg-gradient-to-br ${opt.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
@@ -105,24 +105,24 @@ export function IntakeStep({
             <motion.div
               whileHover={{ rotate: 360, scale: 1.1 }}
               transition={{ duration: 0.6 }}
-              className={`relative flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${opt.gradient} shadow-2xl ${opt.glow} transition-all duration-500 group-hover:shadow-3xl`}
+              className={`relative flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${opt.gradient} shadow-xl ${opt.glow} transition-all duration-500`}
             >
-              <opt.icon className="h-12 w-12 text-white" strokeWidth={2.5} />
+              <opt.icon className="h-8 w-8 text-white" strokeWidth={2.5} />
             </motion.div>
             
             <div className="relative min-w-0 flex-1">
-              <p className="text-2xl font-black text-foreground group-hover:text-primary transition-colors mb-2">{titles[opt.method]}</p>
-              <p className="text-base text-muted-foreground leading-relaxed font-medium">{descs[opt.method]}</p>
+              <p className="text-lg font-bold text-foreground group-hover:text-primary transition-colors mb-1">{titles[opt.method]}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{descs[opt.method]}</p>
             </div>
             
             <motion.svg
               animate={{ x: [0, 5, 0] }}
               transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              className="h-8 w-8 shrink-0 text-muted-foreground/40 transition-all duration-500 group-hover:text-primary group-hover:scale-125"
+              className="h-6 w-6 shrink-0 text-muted-foreground/40 transition-all duration-500 group-hover:text-primary group-hover:scale-125"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
-              strokeWidth={3}
+              strokeWidth={2.5}
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </motion.svg>

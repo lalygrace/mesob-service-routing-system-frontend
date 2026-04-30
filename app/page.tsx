@@ -112,24 +112,24 @@ export default function LandingPage() {
               }}
               className="absolute -inset-4 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-30 blur-3xl"
             />
-            <h1 className="relative text-5xl font-black leading-[1.1] tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-white sm:text-6xl md:text-7xl lg:text-8xl drop-shadow-2xl">
+            <h1 className="relative text-3xl font-bold leading-tight tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-white sm:text-4xl md:text-5xl drop-shadow-2xl">
               {strings.landing.headline}
             </h1>
           </motion.div>
 
           <motion.p
             variants={item}
-            className="mt-8 max-w-2xl text-xl text-white/80 sm:text-2xl leading-relaxed font-medium"
+            className="mt-6 max-w-2xl text-base text-white/80 sm:text-lg leading-relaxed"
           >
             {strings.landing.subheadline}
           </motion.p>
 
           {/* Stunning language selector with 3D effect */}
-          <motion.div variants={item} className="mt-16 w-full max-w-2xl">
-            <p className="mb-6 text-sm font-bold text-white/70 uppercase tracking-[0.3em] text-center">
+          <motion.div variants={item} className="mt-12 w-full max-w-2xl">
+            <p className="mb-5 text-xs font-semibold text-white/70 uppercase tracking-[0.2em] text-center">
               {strings.landing.selectLanguage}
             </p>
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-3 gap-4">
               {LANGUAGES.map((lang, idx) => {
                 const isSelected = language === lang.code;
                 return (
@@ -141,7 +141,7 @@ export default function LandingPage() {
                     whileHover={{ scale: 1.05, y: -5 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleLanguageSelect(lang.code)}
-                    className={`group relative overflow-hidden rounded-3xl border-2 p-8 transition-all duration-500 ${
+                    className={`group relative overflow-hidden rounded-2xl border-2 p-6 transition-all duration-500 ${
                       isSelected
                         ? "border-white/40 bg-gradient-to-br from-white/20 to-white/5 shadow-2xl shadow-white/20"
                         : "border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10 backdrop-blur-xl"
@@ -151,10 +151,10 @@ export default function LandingPage() {
                     <div className={`absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${isSelected ? 'opacity-50' : ''}`} />
                     
                     <div className="relative z-10">
-                      <span className={`block text-2xl font-black transition-all duration-300 ${isSelected ? "text-white scale-110" : "text-white/90"}`}>
+                      <span className={`block text-lg font-bold transition-all duration-300 ${isSelected ? "text-white scale-110" : "text-white/90"}`}>
                         {lang.native}
                       </span>
-                      <span className={`mt-2 block text-xs font-bold uppercase tracking-wider transition-colors ${isSelected ? "text-white/90" : "text-white/60"}`}>
+                      <span className={`mt-1.5 block text-xs font-medium uppercase tracking-wider transition-colors ${isSelected ? "text-white/90" : "text-white/60"}`}>
                         {lang.label}
                       </span>
                     </div>
@@ -162,7 +162,7 @@ export default function LandingPage() {
                     {isSelected && (
                       <motion.div
                         layoutId="lang-indicator"
-                        className="absolute -bottom-0.5 left-1/2 h-1 w-16 -translate-x-1/2 rounded-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 shadow-lg shadow-blue-500/50"
+                        className="absolute -bottom-0.5 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 shadow-lg shadow-blue-500/50"
                         transition={{ type: "spring", stiffness: 500, damping: 35 }}
                       />
                     )}
@@ -173,14 +173,14 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Spectacular CTA button */}
-          <motion.div variants={item} className="mt-16">
+          <motion.div variants={item} className="mt-12">
             <motion.button
               onClick={handleGetStarted}
               onHoverStart={() => setIsHovering(true)}
               onHoverEnd={() => setIsHovering(false)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="group relative overflow-hidden rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-12 py-6 text-xl font-black text-white shadow-2xl shadow-blue-500/50 transition-all duration-300"
+              className="group relative overflow-hidden rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-8 py-4 text-base font-bold text-white shadow-2xl shadow-blue-500/50 transition-all duration-300"
             >
               {/* Animated shine effect */}
               <motion.div
@@ -208,12 +208,12 @@ export default function LandingPage() {
                 className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 blur-xl"
               />
               
-              <span className="relative z-10 flex items-center gap-3">
+              <span className="relative z-10 flex items-center gap-2">
                 {strings.landing.getStarted}
                 <motion.svg
                   animate={{ x: isHovering ? 5 : 0 }}
                   transition={{ duration: 0.3 }}
-                  className="h-6 w-6"
+                  className="h-5 w-5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -226,7 +226,7 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Stunning feature cards with 3D effect */}
-          <motion.div variants={item} className="mt-24 grid w-full max-w-4xl grid-cols-1 sm:grid-cols-3 gap-8">
+          <motion.div variants={item} className="mt-16 grid w-full max-w-4xl grid-cols-1 sm:grid-cols-3 gap-6">
             {features.map((f, idx) => (
               <motion.div
                 key={f.title}
@@ -234,26 +234,26 @@ export default function LandingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 + idx * 0.15 }}
                 whileHover={{ y: -10, scale: 1.02 }}
-                className="group relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 p-8 backdrop-blur-xl transition-all duration-500 hover:border-white/30 hover:shadow-2xl hover:shadow-white/10"
+                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 p-6 backdrop-blur-xl transition-all duration-500 hover:border-white/30 hover:shadow-2xl hover:shadow-white/10"
               >
                 {/* Animated gradient overlay */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${f.gradient} opacity-0 group-hover:opacity-20 transition-opacity duration-500`} />
                 
-                <div className="relative z-10 flex flex-col items-center gap-4 text-center">
+                <div className="relative z-10 flex flex-col items-center gap-3 text-center">
                   <motion.div
                     whileHover={{ rotate: 360, scale: 1.2 }}
                     transition={{ duration: 0.6 }}
-                    className={`flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br ${f.gradient} shadow-lg`}
+                    className={`flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${f.gradient} shadow-lg`}
                   >
-                    <f.icon className="h-10 w-10 text-white" strokeWidth={2.5} />
+                    <f.icon className="h-7 w-7 text-white" strokeWidth={2.5} />
                   </motion.div>
-                  <h3 className="text-lg font-black text-white">{f.title}</h3>
-                  <p className="text-sm text-white/70 leading-relaxed font-medium">{f.desc}</p>
+                  <h3 className="text-sm font-bold text-white">{f.title}</h3>
+                  <p className="text-xs text-white/70 leading-relaxed">{f.desc}</p>
                 </div>
 
                 {/* Animated border glow */}
-                <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${f.gradient} blur-xl opacity-50`} />
+                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${f.gradient} blur-xl opacity-50`} />
                 </div>
               </motion.div>
             ))}
