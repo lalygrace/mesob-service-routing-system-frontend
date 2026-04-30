@@ -154,11 +154,7 @@ function NavigateContent() {
     }
 
     setCandidates(nextDecision.candidates);
-    if (nextDecision.reason === "high-confidence") {
-      setSelectedServiceId(nextDecision.candidates[0]?.service.id ?? null);
-    } else {
-      setSelectedServiceId(null);
-    }
+    setSelectedServiceId(nextDecision.candidates[0]?.service.id ?? null);
     goTo("results");
   }
 
@@ -202,14 +198,7 @@ function NavigateContent() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <AppHeader
-        language={language}
-        showHome
-        onLanguageChange={(lang) => {
-          setLanguage(lang);
-          resetFlow();
-        }}
-      />
+      <AppHeader language={language} showHome />
 
       <main className="flex flex-1 flex-col">
         {/* Step indicator */}
@@ -229,6 +218,11 @@ function NavigateContent() {
               {step === "intake" && (
                 <IntakeStep
                   strings={strings}
+                  language={language}
+                  onLanguageChange={(lang) => {
+                    setLanguage(lang);
+                    resetFlow();
+                  }}
                   onPick={(method) => {
                     setIntakeMethod(method);
                     setProblemText("");
@@ -308,6 +302,7 @@ function NavigateContent() {
               {step === "results" && (
                 <ResultsStep
                   strings={strings}
+                  services={services}
                   candidates={candidates}
                   userText={problemText}
                   selectedId={selectedServiceId}

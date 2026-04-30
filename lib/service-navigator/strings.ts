@@ -158,8 +158,8 @@ const EN: Strings = {
   },
   steps: {
     intake: {
-      title: "How can we help?",
-      description: "Choose how to describe your need.",
+      title: "Language",
+      description: "Choose your language and input method.",
     },
     voice: { title: "Speak", description: "Tell us your problem." },
     problem: { title: "Type", description: "Describe your problem." },
@@ -238,10 +238,11 @@ const EN: Strings = {
     pickOne: "Choose one option",
   },
   results: {
-    heading: "Here's what we found",
+    heading: "Matched government services",
     youSaid: "You said",
-    noResults: "No matching services",
-    noResultsHint: "Try describing your problem differently.",
+    noResults: "No confident match yet",
+    noResultsHint:
+      "Add a little more detail, or choose a service from the list.",
   },
   detail: {
     heading: "Service Information",
@@ -321,7 +322,7 @@ const AM: Strings = {
     getStarted: "ጀምር",
   },
   steps: {
-    intake: { title: "እንዴት ልንረዳዎ?", description: "ፍላጎትዎን የሚገልጹበትን ይምረጡ።" },
+    intake: { title: "ቋንቋ", description: "ቋንቋዎን እና የመግቢያ መንገድዎን ይምረጡ።" },
     voice: { title: "ይናገሩ", description: "ችግርዎን ይንገሩን።" },
     problem: { title: "ይጻፉ", description: "ችግርዎን ይግለጹ።" },
     categories: { title: "ያስሱ", description: "የአገልግሎት ዘርፍ ይምረጡ።" },
@@ -390,10 +391,10 @@ const AM: Strings = {
     pickOne: "አንድ አማራጭ ይምረጡ",
   },
   results: {
-    heading: "ያገኘነው ይኸው ነው",
+    heading: "ተዛማጅ የመንግስት አገልግሎቶች",
     youSaid: "ያሉት",
-    noResults: "ተዛማጅ አገልግሎቶች አልተገኙም",
-    noResultsHint: "ችግርዎን በሌላ መንገድ ለመግለጽ ይሞክሩ።",
+    noResults: "አስተማማኝ ተዛማጅ አልተገኘም",
+    noResultsHint: "ተጨማሪ ዝርዝር ይጨምሩ ወይም ከዝርዝሩ አገልግሎት ይምረጡ።",
   },
   detail: {
     heading: "የአገልግሎት መረጃ",
@@ -474,8 +475,8 @@ const OM: Strings = {
   },
   steps: {
     intake: {
-      title: "Akkamiin si gargaaruu?",
-      description: "Akkaataa barbaaddu filadhu.",
+      title: "Afaan",
+      description: "Afaan fi karaa galtee filadhu.",
     },
     voice: { title: "Dubbadhu", description: "Rakkoo kee nutti himi." },
     problem: { title: "Barreessi", description: "Rakkoo kee ibsi." },
@@ -557,10 +558,11 @@ const OM: Strings = {
     pickOne: "Filannoo tokko filadhu",
   },
   results: {
-    heading: "Kan arganne kunooti",
+    heading: "Tajaajiloota mootummaa walsiman",
     youSaid: "Kan jette",
-    noResults: "Tajaajilli walsimu hin argamne",
-    noResultsHint: "Rakkoo kee karaa biraatiin ibsuuf yaali.",
+    noResults: "Walsimni amanamaa hin argamne",
+    noResultsHint:
+      "Odeeffannoo dabalataa kenni yookaan tarree irraa tajaajila filadhu.",
   },
   detail: {
     heading: "Odeeffannoo Tajaajilaa",

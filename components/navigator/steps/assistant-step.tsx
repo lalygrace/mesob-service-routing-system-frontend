@@ -33,6 +33,15 @@ export function AssistantStep({
 
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {strings.results.youSaid}
+        </p>
+        <p className="mt-1 text-sm text-foreground">
+          &ldquo;{userText || strings.assistant.emptyInput}&rdquo;
+        </p>
+      </div>
+
       <div className="text-center space-y-2">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted text-foreground">
           {error ? (
@@ -56,15 +65,6 @@ export function AssistantStep({
             : hasClarify
               ? strings.assistant.pickOne
               : strings.assistant.subheading}
-        </p>
-      </div>
-
-      <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {strings.results.youSaid}
-        </p>
-        <p className="mt-1 text-sm text-foreground">
-          &ldquo;{userText || strings.assistant.emptyInput}&rdquo;
         </p>
       </div>
 
