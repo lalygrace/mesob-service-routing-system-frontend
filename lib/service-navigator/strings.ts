@@ -20,9 +20,11 @@ export type Strings = {
     voice: { title: string; description: string };
     problem: { title: string; description: string };
     categories: { title: string; description: string };
+    assistant: { title: string; description: string };
     clarify: { title: string; description: string };
     results: { title: string; description: string };
     detail: { title: string; description: string };
+    review: { title: string; description: string };
     feedback: { title: string; description: string };
   };
   intake: {
@@ -57,6 +59,14 @@ export type Strings = {
     heading: string;
     subheading: string;
     items: { label: string; hint: string }[];
+  };
+  assistant: {
+    heading: string;
+    subheading: string;
+    pickOne: string;
+    emptyInput: string;
+    failedTitle: string;
+    failedDesc: string;
   };
   clarify: {
     heading: string;
@@ -107,6 +117,8 @@ export type Strings = {
     back: string;
     continue: string;
     startOver: string;
+    tryAgain: string;
+    askAgain: string;
     select: string;
     selected: string;
     imReady: string;
@@ -117,6 +129,14 @@ export type Strings = {
   };
   noServiceSelected: string;
   noServiceSelectedDesc: string;
+  review: {
+    heading: string;
+    subheading: string;
+    missingDocsTitle: string;
+    missingDocsDesc: string;
+    readyTitle: string;
+    readyDesc: string;
+  };
 };
 
 /* ─── English ─── */
@@ -125,7 +145,8 @@ const EN: Strings = {
   appSubtitle: "Government Service Assistant",
   landing: {
     headline: "Find the right government service — instantly.",
-    subheadline: "Tell us your problem. We'll guide you to the exact office, floor, and counter at Mesob Center.",
+    subheadline:
+      "Tell us your problem. We'll guide you to the exact office, floor, and counter at Mesob Center.",
     selectLanguage: "Choose your language",
     featureVoice: "Voice Enabled",
     featureVoiceDesc: "Speak naturally — we understand.",
@@ -136,13 +157,27 @@ const EN: Strings = {
     getStarted: "Get Started",
   },
   steps: {
-    intake: { title: "How can we help?", description: "Choose how to describe your need." },
+    intake: {
+      title: "How can we help?",
+      description: "Choose how to describe your need.",
+    },
     voice: { title: "Speak", description: "Tell us your problem." },
     problem: { title: "Type", description: "Describe your problem." },
     categories: { title: "Browse", description: "Pick a service area." },
+    assistant: {
+      title: "Assistant",
+      description: "Answer a quick question if needed.",
+    },
     clarify: { title: "Clarify", description: "Help us narrow it down." },
     results: { title: "Results", description: "Pick the best match." },
-    detail: { title: "Service Details", description: "Review your service info." },
+    detail: {
+      title: "Service Details",
+      description: "Review your service info.",
+    },
+    review: {
+      title: "Review",
+      description: "Confirm documents and leave feedback.",
+    },
     feedback: { title: "Feedback", description: "Help us improve." },
   },
   intake: {
@@ -170,7 +205,7 @@ const EN: Strings = {
     heading: "Type your problem",
     placeholder: 'Example: "I lost my ID"',
     hint: "Keep it short. We'll ask if anything is unclear.",
-    examples: "Quick examples",
+    examples: "Popular services",
     exampleItems: [
       "I lost my ID",
       "My passport expired",
@@ -188,6 +223,14 @@ const EN: Strings = {
       { label: "Transport Services", hint: "Driving license" },
       { label: "Revenue & Tax", hint: "Tax registration" },
     ],
+  },
+  assistant: {
+    heading: "Assistant response",
+    subheading: "If anything is unclear, we'll ask one quick question.",
+    pickOne: "Choose one option",
+    emptyInput: "(no input)",
+    failedTitle: "We couldn't understand that",
+    failedDesc: "Please try again, or switch to typing.",
   },
   clarify: {
     heading: "Let us narrow it down",
@@ -238,6 +281,8 @@ const EN: Strings = {
     back: "Back",
     continue: "Continue",
     startOver: "Start Over",
+    tryAgain: "Try again",
+    askAgain: "Ask again",
     select: "Select",
     selected: "Selected",
     imReady: "I'm Ready",
@@ -248,6 +293,15 @@ const EN: Strings = {
   },
   noServiceSelected: "No service selected",
   noServiceSelectedDesc: "Go back and select a service.",
+  review: {
+    heading: "Review and finish",
+    subheading: "Confirm required documents and leave feedback.",
+    missingDocsTitle: "Missing required documents",
+    missingDocsDesc:
+      "These documents are mandatory. If you're missing them, you may be asked to return later.",
+    readyTitle: "All documents confirmed",
+    readyDesc: "You're ready to go to the office.",
+  },
 };
 
 /* ─── Amharic ─── */
@@ -271,9 +325,11 @@ const AM: Strings = {
     voice: { title: "ይናገሩ", description: "ችግርዎን ይንገሩን።" },
     problem: { title: "ይጻፉ", description: "ችግርዎን ይግለጹ።" },
     categories: { title: "ያስሱ", description: "የአገልግሎት ዘርፍ ይምረጡ።" },
+    assistant: { title: "ረዳት", description: "ካስፈለገ ፈጣን ጥያቄ ይመልሱ።" },
     clarify: { title: "ያብራሩ", description: "እንድናጠብዎ ይርዱን።" },
     results: { title: "ውጤቶች", description: "ምርጥ ተዛማጁን ይምረጡ።" },
     detail: { title: "የአገልግሎት ዝርዝር", description: "መረጃውን ይገምግሙ።" },
+    review: { title: "ማረጋገጫ", description: "ሰነዶችን ያረጋግጡ እና ግብረመልስ ይስጡ።" },
     feedback: { title: "ግብረመልስ", description: "እንድንሻሻል ይርዱን።" },
   },
   intake: {
@@ -301,7 +357,7 @@ const AM: Strings = {
     heading: "ችግርዎን ይጻፉ",
     placeholder: 'ምሳሌ: "መታወቂያዬ ጠፋ"',
     hint: "አጭር ያድርጉት። ግልጽ ያልሆነ ነገር ካለ እንጠይቃለን።",
-    examples: "ፈጣን ምሳሌዎች",
+    examples: "ታዋቂ አገልግሎቶች",
     exampleItems: [
       "መታወቂያዬ ጠፋ",
       "ፓስፖርቴ ጊዜው አልፏል",
@@ -319,6 +375,14 @@ const AM: Strings = {
       { label: "የትራንስፖርት አገልግሎቶች", hint: "Driving license" },
       { label: "ገቢ እና ግብር", hint: "Tax registration" },
     ],
+  },
+  assistant: {
+    heading: "የረዳት መልስ",
+    subheading: "ግልጽ ካልሆነ ነገር ካለ አንድ ፈጣን ጥያቄ እንጠይቃለን።",
+    pickOne: "አንድ አማራጭ ይምረጡ",
+    emptyInput: "(ግብዓት የለም)",
+    failedTitle: "መረዳት አልቻልንም",
+    failedDesc: "እባክዎ እንደገና ይሞክሩ ወይም በመጻፍ ይግቡ።",
   },
   clarify: {
     heading: "እንጠብበው",
@@ -369,6 +433,8 @@ const AM: Strings = {
     back: "ተመለስ",
     continue: "ቀጥል",
     startOver: "እንደገና ጀምር",
+    tryAgain: "እንደገና ይሞክሩ",
+    askAgain: "እንደገና ጠይቅ",
     select: "ምረጥ",
     selected: "ተመርጧል",
     imReady: "ዝግጁ ነኝ",
@@ -379,6 +445,14 @@ const AM: Strings = {
   },
   noServiceSelected: "ምንም አገልግሎት አልተመረጠም",
   noServiceSelectedDesc: "ተመልሰው አገልግሎት ይምረጡ።",
+  review: {
+    heading: "ያረጋግጡ እና ያጠናቅቁ",
+    subheading: "ያስፈልጉ ሰነዶችን ያረጋግጡ እና ግብረመልስ ይስጡ።",
+    missingDocsTitle: "የሚጎዱ አስፈላጊ ሰነዶች",
+    missingDocsDesc: "እነዚህ ሰነዶች አስፈላጊ ናቸው። ካልተዘጋጁ ሊመለሱ ይችላሉ።",
+    readyTitle: "ሰነዶች ሁሉ ተረጋግጠዋል",
+    readyDesc: "ወደ ቢሮው ለመሄድ ዝግጁ ነዎት።",
+  },
 };
 
 /* ─── Afaan Oromo ─── */
@@ -387,7 +461,8 @@ const OM: Strings = {
   appSubtitle: "Gargaaraa Tajaajila Mootummaa",
   landing: {
     headline: "Tajaajila mootummaa sirrii — dafqaan argadhu.",
-    subheadline: "Rakkoo kee nutti himi. Gara waajjira, darbii fi kaawuntaraa sirrii si qajeelchina.",
+    subheadline:
+      "Rakkoo kee nutti himi. Gara waajjira, darbii fi kaawuntaraa sirrii si qajeelchina.",
     selectLanguage: "Afaan filadhu",
     featureVoice: "Sagaleen Hojjeta",
     featureVoiceDesc: "Akka uumamaatti dubbadhu.",
@@ -398,13 +473,30 @@ const OM: Strings = {
     getStarted: "Jalqabi",
   },
   steps: {
-    intake: { title: "Akkamiin si gargaaruu?", description: "Akkaataa barbaaddu filadhu." },
+    intake: {
+      title: "Akkamiin si gargaaruu?",
+      description: "Akkaataa barbaaddu filadhu.",
+    },
     voice: { title: "Dubbadhu", description: "Rakkoo kee nutti himi." },
     problem: { title: "Barreessi", description: "Rakkoo kee ibsi." },
     categories: { title: "Sakatta'i", description: "Gosa tajaajilaa filadhu." },
+    assistant: {
+      title: "Gargaaraa",
+      description: "Yoo barbaachise gaaffii gabaabaa deebisi.",
+    },
     clarify: { title: "Ibsi", description: "Akka dhiphisnuuf nu gargaari." },
-    results: { title: "Bu'aa", description: "Kan irra caalaa walsimatu filadhu." },
-    detail: { title: "Ibsa Tajaajilaa", description: "Odeeffannoo kee ilaali." },
+    results: {
+      title: "Bu'aa",
+      description: "Kan irra caalaa walsimatu filadhu.",
+    },
+    detail: {
+      title: "Ibsa Tajaajilaa",
+      description: "Odeeffannoo kee ilaali.",
+    },
+    review: {
+      title: "Mirkaneessi",
+      description: "Sanadoota mirkaneessi, yaada kenni.",
+    },
     feedback: { title: "Yaada", description: "Akka fooyya'inuuf nu gargaari." },
   },
   intake: {
@@ -432,7 +524,7 @@ const OM: Strings = {
     heading: "Rakkoo kee barreessi",
     placeholder: 'Fkn: "Waraqaa eenyummaa koo dhabee"',
     hint: "Gabaabsi. Yoo hin ifa ta'iin ni gaafanna.",
-    examples: "Fakkeenya dafqa",
+    examples: "Tajaajila beekamoo",
     exampleItems: [
       "Waraqaa eenyummaa koo dhabee",
       "Paaspoortiin koo dhumateera",
@@ -450,6 +542,14 @@ const OM: Strings = {
       { label: "Tajaajila Geejjibaa", hint: "Driving license" },
       { label: "Galii fi Gibiraa", hint: "Tax registration" },
     ],
+  },
+  assistant: {
+    heading: "Deebii gargaaraa",
+    subheading: "Yoo hin ifa ta'iin gaaffii gabaabaa si gaafanna.",
+    pickOne: "Filannoo tokko filadhu",
+    emptyInput: "(galtee hin jiru)",
+    failedTitle: "Hubachuu hin dandeenye",
+    failedDesc: "Mee irra deebi'ii yaali, yookaan barreessuun galchi.",
   },
   clarify: {
     heading: "Haa dhiphisnu",
@@ -500,6 +600,8 @@ const OM: Strings = {
     back: "Duuba",
     continue: "Itti fufi",
     startOver: "Irra deebi'i",
+    tryAgain: "Irra deebi'ii yaali",
+    askAgain: "Irra deebi'ii gaafadhu",
     select: "Filadhu",
     selected: "Filatameera",
     imReady: "Qophaa'eera",
@@ -510,6 +612,15 @@ const OM: Strings = {
   },
   noServiceSelected: "Tajaajilli hin filatamne",
   noServiceSelectedDesc: "Duuba deebi'ii tajaajila filadhu.",
+  review: {
+    heading: "Mirkaneessi fi xumuri",
+    subheading: "Sanadoota barbaachisan mirkaneessi, yaada kenni.",
+    missingDocsTitle: "Sanadoota barbaachisan hafu",
+    missingDocsDesc:
+      "Sanadootni kunneen dirqama. Yoo hin qabne, deebitee dhufuu dandeessa.",
+    readyTitle: "Sanadootni hundi mirkanaa'an",
+    readyDesc: "Gara waajjiraatti deemuu dandeessa.",
+  },
 };
 
 const STRINGS_MAP: Record<LanguageCode, Strings> = {

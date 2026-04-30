@@ -2,26 +2,38 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
 import { AppHeader } from "@/components/layout/app-header";
 import { StepIndicator } from "@/components/layout/step-indicator";
 import { IntakeStep } from "@/components/navigator/steps/intake-step";
 import { VoiceInput } from "@/components/navigator/steps/voice-input";
 import { TextInput } from "@/components/navigator/steps/text-input";
 import { CategoryBrowse } from "@/components/navigator/steps/category-browse";
-import { ClarifyStep } from "@/components/navigator/steps/clarify-step";
+import {
+  AssistantStep,
+  type AssistantError,
+} from "@/components/navigator/steps/assistant-step";
 import { ResultsStep } from "@/components/navigator/steps/results-step";
-import { ServiceDetail } from "@/components/navigator/steps/service-detail";
-import { SuccessView } from "@/components/navigator/steps/success-view";
-import { FeedbackStep } from "@/components/navigator/steps/feedback-step";
+import { ReviewStep } from "@/components/navigator/steps/review-step";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { decide } from "@/lib/service-navigator/engine";
 import { getStrings } from "@/lib/service-navigator/strings";
-import type { Decision, LanguageCode, MatchCandidate, Service } from "@/lib/service-navigator/types";
+import type {
+  Decision,
+  LanguageCode,
+  MatchCandidate,
+  Service,
+} from "@/lib/service-navigator/types";
 import { MOCK_SERVICES } from "@/lib/mock/services";
 
-type StepId = "intake" | "voice" | "problem" | "categories" | "clarify" | "results" | "detail" | "success" | "feedback";
+type StepId =
+  | "intake"
+  | "voice"
+  | "problem"
+  | "categories"
+  | "assistant"
+  | "results"
+  | "review";
 
 function findServiceById(services: Service[], id: string) {
   return services.find((s) => s.id === id) ?? null;
@@ -37,23 +49,14 @@ function candidatesFromServiceIds(services: Service[], ids: string[]) {
   return candidates.slice(0, 3);
 }
 
-const STEP_ORDER: StepId[] = ["intake", "results", "detail", "success", "feedback"];
-
 function getStepDefs(strings: ReturnType<typeof getStrings>) {
   return [
     { id: "intake", label: strings.steps.intake.title },
+    { id: "assistant", label: strings.steps.assistant.title },
     { id: "results", label: strings.steps.results.title },
-    { id: "detail", label: strings.steps.detail.title },
-    { id: "success", label: strings.success.heading },
-    { id: "feedback", label: strings.steps.feedback.title },
+    { id: "review", label: strings.steps.review.title },
   ];
 }
-
-const slideVariants = {
-  enter: (direction: number) => ({ x: direction > 0 ? 80 : -80, opacity: 0 }),
-  center: { x: 0, opacity: 1 },
-  exit: (direction: number) => ({ x: direction > 0 ? -80 : 80, opacity: 0 }),
-};
 
 function NavigateContent() {
   const searchParams = useSearchParams();
@@ -61,16 +64,27 @@ function NavigateContent() {
 
   const services = MOCK_SERVICES;
 
-  const [language, setLanguage] = React.useState<LanguageCode>(langParam ?? "en");
+  const [language, setLanguage] = React.useState<LanguageCode>(
+    langParam ?? "en",
+  );
   const [step, setStep] = React.useState<StepId>("intake");
-  const [direction, setDirection] = React.useState(1);
 
-  const [intakeMethod, setIntakeMethod] = React.useState<"voice" | "type" | "categories" | null>(null);
+  const [intakeMethod, setIntakeMethod] = React.useState<
+    "voice" | "type" | "categories" | null
+  >(null);
   const [problemText, setProblemText] = React.useState("");
   const [decision, setDecision] = React.useState<Decision | null>(null);
+  const [assistantError, setAssistantError] =
+    React.useState<AssistantError | null>(null);
   const [candidates, setCandidates] = React.useState<MatchCandidate[]>([]);
-  const [selectedServiceId, setSelectedServiceId] = React.useState<string | null>(null);
-  const [checkedRequirements, setCheckedRequirements] = React.useState<Record<string, boolean>>({});
+  const [selectedServiceId, setSelectedServiceId] = React.useState<
+    string | null
+  >(null);
+  const [checkedRequirements, setCheckedRequirements] = React.useState<
+    Record<string, boolean>
+  >({});
+  const [rating, setRating] = React.useState(0);
+  const [comment, setComment] = React.useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = React.useState(false);
 
   const strings = getStrings(language);
@@ -81,31 +95,61 @@ function NavigateContent() {
 
   // Compute which "main step" index we're on for the indicator
   const mainStepIndex = React.useMemo(() => {
-    if (step === "intake" || step === "voice" || step === "problem" || step === "categories") return 0;
-    if (step === "clarify" || step === "results") return 1;
-    if (step === "detail") return 2;
-    if (step === "success") return 3;
-    if (step === "feedback") return 4;
+    if (
+      step === "intake" ||
+      step === "voice" ||
+      step === "problem" ||
+      step === "categories"
+    )
+      return 0;
+    if (step === "assistant") return 1;
+    if (step === "results") return 2;
+    if (step === "review") return 3;
     return 0;
   }, [step]);
 
   function goTo(next: StepId) {
-    const currentMainIdx = STEP_ORDER.indexOf(step) >= 0 ? STEP_ORDER.indexOf(step) : mainStepIndex;
-    const nextMainIdx = STEP_ORDER.indexOf(next) >= 0 ? STEP_ORDER.indexOf(next) : mainStepIndex;
-    setDirection(nextMainIdx >= currentMainIdx ? 1 : -1);
     setStep(next);
+  }
+
+  function goToInput() {
+    if (intakeMethod === "voice") goTo("voice");
+    else if (intakeMethod === "categories") goTo("categories");
+    else goTo("problem");
+  }
+
+  function goToReview() {
+    setCheckedRequirements({});
+    setRating(0);
+    setComment("");
+    setFeedbackSubmitted(false);
+    goTo("review");
   }
 
   function submitProblem(text: string) {
     const cleaned = text.trim();
     setProblemText(cleaned);
+    setAssistantError(null);
+
+    if (cleaned.length < 3) {
+      setDecision(null);
+      setCandidates([]);
+      setSelectedServiceId(null);
+      setAssistantError({
+        title: strings.assistant.failedTitle,
+        message: strings.assistant.failedDesc,
+      });
+      goTo("assistant");
+      return;
+    }
+
     const nextDecision = decide({ services, input: cleaned, language });
     setDecision(nextDecision);
 
     if (nextDecision.mode === "clarify") {
       setCandidates([]);
       setSelectedServiceId(null);
-      goTo("clarify");
+      goTo("assistant");
       return;
     }
 
@@ -120,13 +164,15 @@ function NavigateContent() {
 
   function resetFlow() {
     setStep("intake");
-    setDirection(-1);
     setIntakeMethod(null);
     setProblemText("");
     setDecision(null);
+    setAssistantError(null);
     setCandidates([]);
     setSelectedServiceId(null);
     setCheckedRequirements({});
+    setRating(0);
+    setComment("");
     setFeedbackSubmitted(false);
   }
 
@@ -137,25 +183,15 @@ function NavigateContent() {
       case "categories":
         goTo("intake");
         break;
-      case "clarify":
-        if (intakeMethod === "voice") goTo("voice");
-        else if (intakeMethod === "categories") goTo("categories");
-        else goTo("problem");
+      case "assistant":
+        goToInput();
         break;
       case "results":
-        if (decision?.mode === "clarify") goTo("clarify");
-        else if (intakeMethod === "voice") goTo("voice");
-        else if (intakeMethod === "categories") goTo("categories");
-        else goTo("problem");
+        if (decision?.mode === "clarify") goTo("assistant");
+        else goToInput();
         break;
-      case "detail":
+      case "review":
         goTo("results");
-        break;
-      case "success":
-        goTo("detail");
-        break;
-      case "feedback":
-        goTo("success");
         break;
       default:
         break;
@@ -179,131 +215,128 @@ function NavigateContent() {
         {/* Step indicator */}
         <div className="border-b border-border bg-background/80 py-3 px-4">
           <div className="mx-auto max-w-2xl">
-            <StepIndicator steps={getStepDefs(strings)} currentIndex={mainStepIndex} />
+            <StepIndicator
+              steps={getStepDefs(strings)}
+              currentIndex={mainStepIndex}
+            />
           </div>
         </div>
 
         {/* Content area */}
         <div className="flex-1 flex flex-col">
           <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.div
-                key={step}
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="w-full"
-              >
-                {step === "intake" && (
-                  <IntakeStep
-                    strings={strings}
-                    onPick={(method) => {
-                      setIntakeMethod(method);
-                      setProblemText("");
-                      setDecision(null);
-                      setCandidates([]);
-                      setSelectedServiceId(null);
-                      if (method === "voice") goTo("voice");
-                      else if (method === "type") goTo("problem");
-                      else goTo("categories");
-                    }}
-                  />
-                )}
+            <div className="w-full">
+              {step === "intake" && (
+                <IntakeStep
+                  strings={strings}
+                  onPick={(method) => {
+                    setIntakeMethod(method);
+                    setProblemText("");
+                    setDecision(null);
+                    setAssistantError(null);
+                    setCandidates([]);
+                    setSelectedServiceId(null);
+                    if (method === "voice") goTo("voice");
+                    else if (method === "type") goTo("problem");
+                    else goTo("categories");
+                  }}
+                />
+              )}
 
-                {step === "voice" && (
-                  <VoiceInput
-                    language={language}
-                    strings={strings}
-                    value={problemText}
-                    onChange={setProblemText}
-                    onSubmit={() => submitProblem(problemText)}
-                    onSwitchToTyping={() => {
-                      setIntakeMethod("type");
-                      goTo("problem");
-                    }}
-                  />
-                )}
+              {step === "voice" && (
+                <VoiceInput
+                  language={language}
+                  strings={strings}
+                  value={problemText}
+                  onChange={setProblemText}
+                  onSubmit={() => submitProblem(problemText)}
+                  onSwitchToTyping={() => {
+                    setIntakeMethod("type");
+                    goTo("problem");
+                  }}
+                />
+              )}
 
-                {step === "problem" && (
-                  <TextInput
-                    strings={strings}
-                    value={problemText}
-                    onChange={setProblemText}
-                    onSubmit={() => submitProblem(problemText)}
-                  />
-                )}
+              {step === "problem" && (
+                <TextInput
+                  strings={strings}
+                  value={problemText}
+                  onChange={setProblemText}
+                  onSubmit={() => submitProblem(problemText)}
+                />
+              )}
 
-                {step === "categories" && (
-                  <CategoryBrowse
-                    strings={strings}
-                    onPick={(hint) => {
-                      setIntakeMethod("categories");
-                      submitProblem(hint);
-                    }}
-                  />
-                )}
+              {step === "categories" && (
+                <CategoryBrowse
+                  strings={strings}
+                  onPick={(hint) => {
+                    setIntakeMethod("categories");
+                    submitProblem(hint);
+                  }}
+                />
+              )}
 
-                {step === "clarify" && decision && (
-                  <ClarifyStep
-                    strings={strings}
-                    decision={decision}
-                    onPick={(serviceIds) => {
-                      const next = candidatesFromServiceIds(services, serviceIds);
-                      setCandidates(next);
-                      setSelectedServiceId(next[0]?.service.id ?? null);
-                      goTo("results");
-                    }}
-                  />
-                )}
+              {step === "assistant" && (
+                <AssistantStep
+                  strings={strings}
+                  userText={problemText}
+                  decision={decision}
+                  error={assistantError}
+                  onPickClarification={(serviceIds) => {
+                    const next = candidatesFromServiceIds(services, serviceIds);
+                    setCandidates(next);
+                    setSelectedServiceId(next[0]?.service.id ?? null);
+                    goTo("results");
+                  }}
+                  onRetry={() => {
+                    setAssistantError(null);
+                    goToInput();
+                  }}
+                  onStartOver={resetFlow}
+                  onSwitchToTyping={
+                    intakeMethod === "voice"
+                      ? () => {
+                          setAssistantError(null);
+                          setIntakeMethod("type");
+                          goTo("problem");
+                        }
+                      : undefined
+                  }
+                />
+              )}
 
-                {step === "results" && (
-                  <ResultsStep
-                    strings={strings}
-                    candidates={candidates}
-                    userText={problemText}
-                    selectedId={selectedServiceId}
-                    onSelect={(id) => {
-                      setSelectedServiceId(id);
-                      setCheckedRequirements({});
-                      goTo("detail");
-                    }}
-                  />
-                )}
+              {step === "results" && (
+                <ResultsStep
+                  strings={strings}
+                  candidates={candidates}
+                  userText={problemText}
+                  selectedId={selectedServiceId}
+                  onSelect={(id) => {
+                    setSelectedServiceId(id);
+                  }}
+                  onContinue={() => {
+                    if (!selectedServiceId) return;
+                    goToReview();
+                  }}
+                />
+              )}
 
-                {step === "detail" && (
-                  <ServiceDetail
-                    strings={strings}
-                    service={selectedService}
-                    checked={checkedRequirements}
-                    onCheckedChange={setCheckedRequirements}
-                    onReady={() => goTo("success")}
-                  />
-                )}
-
-                {step === "success" && (
-                  <SuccessView
-                    strings={strings}
-                    service={selectedService}
-                    checkedCount={selectedService ? selectedService.requirements.filter((r) => checkedRequirements[r]).length : 0}
-                    totalCount={selectedService?.requirements.length ?? 0}
-                    onFeedback={() => goTo("feedback")}
-                    onStartOver={resetFlow}
-                  />
-                )}
-
-                {step === "feedback" && (
-                  <FeedbackStep
-                    strings={strings}
-                    submitted={feedbackSubmitted}
-                    onSubmit={() => setFeedbackSubmitted(true)}
-                    onStartOver={resetFlow}
-                  />
-                )}
-              </motion.div>
-            </AnimatePresence>
+              {step === "review" && (
+                <ReviewStep
+                  strings={strings}
+                  service={selectedService}
+                  checked={checkedRequirements}
+                  onCheckedChange={setCheckedRequirements}
+                  rating={rating}
+                  onRatingChange={setRating}
+                  comment={comment}
+                  onCommentChange={setComment}
+                  submitted={feedbackSubmitted}
+                  onSubmit={() => setFeedbackSubmitted(true)}
+                  onStartOver={resetFlow}
+                />
+              )}
+            </div>
           </div>
 
           {/* Bottom bar with back button */}
@@ -330,7 +363,13 @@ function NavigateContent() {
 
 export default function NavigatePage() {
   return (
-    <React.Suspense fallback={<div className="flex min-h-dvh items-center justify-center">Loading...</div>}>
+    <React.Suspense
+      fallback={
+        <div className="flex min-h-dvh items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
       <NavigateContent />
     </React.Suspense>
   );

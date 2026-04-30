@@ -25,11 +25,11 @@ export function AppHeader({
   const strings = getStrings(language);
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-border/50">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         {/* Left: Logo & Title */}
-        <Link href="/" className="flex items-center gap-3 min-w-0 group">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-sm transition-transform group-hover:scale-105">
+        <Link href="/" className="flex items-center gap-3 min-w-0">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-sm">
             M
           </div>
           <div className="min-w-0 hidden sm:block">
@@ -65,7 +65,12 @@ export function AppHeader({
           )}
 
           {showHome && (
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              asChild
+            >
               <Link href="/" aria-label={strings.header.home}>
                 <Home className="h-4 w-4" />
               </Link>

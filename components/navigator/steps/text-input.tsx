@@ -1,14 +1,19 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Strings } from "@/lib/service-navigator/strings";
 
 export function TextInput({
-  strings, value, onChange, onSubmit,
+  strings,
+  value,
+  onChange,
+  onSubmit,
 }: {
-  strings: Strings; value: string; onChange: (v: string) => void; onSubmit: () => void;
+  strings: Strings;
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
 }) {
   return (
     <div className="space-y-8">
@@ -31,23 +36,20 @@ export function TextInput({
 
       {/* Quick examples */}
       <div className="space-y-3">
-        <p className="text-sm font-medium text-muted-foreground">{strings.problem.examples}</p>
-        <motion.div
-          className="grid gap-2 sm:grid-cols-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
+        <p className="text-sm font-medium text-muted-foreground">
+          {strings.problem.examples}
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
           {strings.problem.exampleItems.map((example) => (
             <button
               key={example}
               onClick={() => onChange(example)}
-              className="rounded-xl border border-border bg-card px-4 py-3 text-left text-sm text-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:shadow-sm"
+              className="rounded-xl border border-border bg-card px-4 py-3 text-left text-sm text-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               &ldquo;{example}&rdquo;
             </button>
           ))}
-        </motion.div>
+        </div>
       </div>
 
       <Button

@@ -1,45 +1,87 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "framer-motion";
-import { Mic, MicOff } from "lucide-react";
+import { Mic, MicOff, RotateCcw, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { LanguageCode } from "@/lib/service-navigator/types";
 import type { Strings } from "@/lib/service-navigator/strings";
 
 type SpeechRecognitionAlternativeLike = { transcript: string };
-type SpeechRecognitionResultLike = { length: number; [index: number]: SpeechRecognitionAlternativeLike };
-type SpeechRecognitionResultListLike = { length: number; [index: number]: SpeechRecognitionResultLike };
-type SpeechRecognitionEventLike = { resultIndex: number; results: SpeechRecognitionResultListLike };
+type SpeechRecognitionResultLike = {
+  length: number;
+  [index: number]: SpeechRecognitionAlternativeLike;
+};
+type SpeechRecognitionResultListLike = {
+  length: number;
+  [index: number]: SpeechRecognitionResultLike;
+};
+type SpeechRecognitionEventLike = {
+  resultIndex: number;
+  results: SpeechRecognitionResultListLike;
+};
 type SpeechRecognitionLike = {
-  lang: string; interimResults: boolean; continuous: boolean;
-  start: () => void; stop: () => void;
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  start: () => void;
+  stop: () => void;
   onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: (() => void) | null; onend: (() => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
 };
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
 function getSpeechCtor(): SpeechRecognitionConstructor | null {
   if (typeof window === "undefined") return null;
-  const w = window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor; webkitSpeechRecognition?: SpeechRecognitionConstructor };
+  const w = window as unknown as {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  };
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
 function langCode(language: LanguageCode): string {
-  switch (language) { case "am": return "am-ET"; case "om": return "om-ET"; default: return "en-US"; }
+  switch (language) {
+    case "am":
+      return "am-ET";
+    case "om":
+      return "om-ET";
+    default:
+      return "en-US";
+  }
+}
+
+function formatMs(ms: number) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
 export function VoiceInput({
-  language, strings, value, onChange, onSubmit, onSwitchToTyping,
+  language,
+  strings,
+  value,
+  onChange,
+  onSubmit,
+  onSwitchToTyping,
 }: {
-  language: LanguageCode; strings: Strings; value: string;
-  onChange: (v: string) => void; onSubmit: () => void; onSwitchToTyping: () => void;
+  language: LanguageCode;
+  strings: Strings;
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  onSwitchToTyping: () => void;
 }) {
   const ctor = getSpeechCtor();
   const recognitionRef = React.useRef<SpeechRecognitionLike | null>(null);
+  const intervalRef = React.useRef<number | null>(null);
+  const startedAtRef = React.useRef<number | null>(null);
+
   const [listening, setListening] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [elapsedMs, setElapsedMs] = React.useState(0);
   const supported = Boolean(ctor);
 
   React.useEffect(() => {
@@ -56,62 +98,152 @@ export function VoiceInput({
       const next = transcript.trim();
       if (next) onChange(next);
     };
-    recognition.onerror = () => { setError(strings.voice.notSupportedDesc); setListening(false); };
-    recognition.onend = () => { setListening(false); };
+    recognition.onerror = () => {
+      setError(strings.voice.notSupportedDesc);
+      setListening(false);
+      stopTimer();
+    };
+    recognition.onend = () => {
+      setListening(false);
+      stopTimer();
+    };
     recognitionRef.current = recognition;
-    return () => { recognitionRef.current = null; };
+    return () => {
+      recognitionRef.current = null;
+    };
   }, [ctor, language, onChange, strings.voice.notSupportedDesc]);
+
+  React.useEffect(() => {
+    return () => {
+      if (intervalRef.current) window.clearInterval(intervalRef.current);
+    };
+  }, []);
+
+  function stopTimer() {
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }
+
+  function startTimer() {
+    stopTimer();
+    startedAtRef.current = Date.now();
+    setElapsedMs(0);
+    intervalRef.current = window.setInterval(() => {
+      if (!startedAtRef.current) return;
+      setElapsedMs(Date.now() - startedAtRef.current);
+    }, 250);
+  }
 
   function start() {
     setError(null);
-    try { recognitionRef.current?.start(); setListening(true); } catch { /* ignore */ }
+    onChange("");
+    startTimer();
+    try {
+      recognitionRef.current?.start();
+      setListening(true);
+    } catch {
+      /* ignore */
+    }
   }
   function stop() {
-    try { recognitionRef.current?.stop(); } catch { /* ignore */ }
+    try {
+      recognitionRef.current?.stop();
+    } catch {
+      /* ignore */
+    }
+    stopTimer();
+  }
+
+  function askAgain() {
+    stop();
+    setError(null);
+    onChange("");
+    setElapsedMs(0);
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{strings.voice.heading}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          {strings.voice.heading}
+        </h1>
         <p className="text-muted-foreground">{strings.voice.editHint}</p>
       </div>
 
       {!supported ? (
-        <div className="rounded-2xl border border-border bg-card p-6 text-center space-y-3">
+        <div className="rounded-xl border border-border bg-card p-6 text-center space-y-3">
           <MicOff className="mx-auto h-10 w-10 text-muted-foreground" />
-          <p className="font-semibold text-foreground">{strings.voice.notSupported}</p>
-          <p className="text-sm text-muted-foreground">{strings.voice.notSupportedDesc}</p>
-          <Button onClick={onSwitchToTyping} size="lg" className="rounded-xl">{strings.voice.typeInstead}</Button>
+          <p className="font-semibold text-foreground">
+            {strings.voice.notSupported}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {strings.voice.notSupportedDesc}
+          </p>
+          <Button onClick={onSwitchToTyping} size="lg" className="rounded-xl">
+            {strings.voice.typeInstead}
+          </Button>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-6">
-          {/* Mic button with pulse */}
-          <div className="relative">
-            {listening && (
-              <motion.div
-                className="absolute inset-0 rounded-full bg-primary/20"
-                animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0, 0.6] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              />
-            )}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
+        <div className="rounded-xl border border-border bg-card p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-foreground">
+                {listening
+                  ? strings.voice.listening
+                  : strings.voice.holdToSpeak}
+              </p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Timer className="h-4 w-4" />
+                <span>{formatMs(elapsedMs)}</span>
+              </div>
+            </div>
+
+            <button
               onPointerDown={start}
               onPointerUp={stop}
               onPointerCancel={stop}
-              onPointerLeave={() => { if (listening) stop(); }}
-              className={`relative z-10 flex h-24 w-24 items-center justify-center rounded-full transition-all duration-300 ${
-                listening
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-                  : "bg-primary/10 text-primary hover:bg-primary/20"
-              }`}
+              onPointerLeave={() => {
+                if (listening) stop();
+              }}
+              className={
+                "flex h-14 w-14 items-center justify-center rounded-full border border-border bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
+                (listening
+                  ? "bg-primary text-primary-foreground"
+                  : "text-foreground hover:bg-muted")
+              }
+              aria-label={strings.voice.holdToSpeak}
             >
-              <Mic className="h-10 w-10" />
-            </motion.button>
+              <Mic className="h-7 w-7" />
+            </button>
           </div>
-          <p className="text-sm font-medium text-muted-foreground">
-            {listening ? strings.voice.listening : strings.voice.holdToSpeak}
+
+          {/* Simple waveform visualization (no glow/hover scaling) */}
+          <div
+            className="mt-5 flex items-end justify-center gap-1.5"
+            aria-hidden="true"
+          >
+            {Array.from({ length: 14 }).map((_, i) => {
+              const heights = [
+                6, 12, 8, 18, 10, 16, 9, 20, 11, 17, 8, 14, 7, 12,
+              ];
+              const h = heights[i] ?? 10;
+              return (
+                <div
+                  key={i}
+                  className={
+                    "w-1 rounded-full transition-colors " +
+                    (listening ? "bg-primary" : "bg-muted")
+                  }
+                  style={{ height: `${h}px` }}
+                />
+              );
+            })}
+          </div>
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            {strings.voice.editHint}
           </p>
         </div>
       )}
@@ -119,7 +251,9 @@ export function VoiceInput({
       {error && <p className="text-sm text-destructive text-center">{error}</p>}
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">{strings.voice.whatWeHeard}</label>
+        <label className="text-sm font-medium text-foreground">
+          {strings.voice.whatWeHeard}
+        </label>
         <Textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -128,11 +262,27 @@ export function VoiceInput({
         />
       </div>
 
-      <div className="flex gap-3">
-        <Button variant="outline" onClick={onSwitchToTyping} className="flex-1 rounded-xl h-12">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Button
+          variant="outline"
+          onClick={onSwitchToTyping}
+          className="rounded-xl h-12"
+        >
           {strings.voice.typeInstead}
         </Button>
-        <Button onClick={onSubmit} disabled={value.trim().length < 3} className="flex-1 rounded-xl h-12">
+        <Button
+          variant="outline"
+          onClick={askAgain}
+          className="rounded-xl h-12 gap-2"
+        >
+          <RotateCcw className="h-4 w-4" />
+          {strings.actions.askAgain}
+        </Button>
+        <Button
+          onClick={onSubmit}
+          disabled={value.trim().length < 3}
+          className="rounded-xl h-12"
+        >
           {strings.actions.continue}
         </Button>
       </div>
