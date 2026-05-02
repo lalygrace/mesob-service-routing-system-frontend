@@ -2,6 +2,8 @@
 
 import { Keyboard, Mic } from "lucide-react";
 import type { Strings } from "@/lib/service-navigator/strings";
+import { Card, CardContent } from "@/components/ui/card";
+
 type IntakeMethod = "voice" | "type";
 
 const options: { method: IntakeMethod; icon: typeof Mic }[] = [
@@ -26,34 +28,46 @@ export function IntakeStep({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+    <div className="space-y-8">
+      <div className="text-center space-y-3">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           {strings.intake.heading}
         </h1>
-        <p className="text-muted-foreground">{strings.intake.subheading}</p>
+        <p className="text-lg text-muted-foreground">{strings.intake.subheading}</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        {options.map((opt) => (
-          <button
-            key={opt.method}
-            onClick={() => onPick(opt.method)}
-            className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted text-foreground">
-              <opt.icon className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">
-                {titles[opt.method]}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {descs[opt.method]}
-              </p>
-            </div>
-          </button>
-        ))}
+      <div className="mx-auto w-full max-w-4xl">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
+          {options.map((opt) => (
+            <Card
+              key={opt.method}
+              role="button"
+              tabIndex={0}
+              onClick={() => onPick(opt.method)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onPick(opt.method);
+                }
+              }}
+              className="group cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/30"
+            >
+              <CardContent className="flex flex-col items-start gap-4 sm:gap-5 p-6 sm:p-8 text-left">
+                <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
+                  <opt.icon className="h-7 w-7 sm:h-8 sm:w-8" />
+                </div>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                    {titles[opt.method]}
+                  </h3>
+                  <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">
+                    {descs[opt.method]}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
