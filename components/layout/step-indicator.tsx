@@ -28,13 +28,14 @@ export function StepIndicator({
               <div className="relative flex items-center justify-center">
                 <div
                   className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors duration-300",
-                    isCompleted && "bg-primary text-primary-foreground",
+                    "flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold",
+                    isCompleted &&
+                      "border-primary bg-primary text-primary-foreground",
                     isCurrent &&
-                      "bg-primary text-primary-foreground ring-4 ring-primary/20",
+                      "border-primary bg-primary text-primary-foreground",
                     !isCompleted &&
                       !isCurrent &&
-                      "bg-muted text-muted-foreground",
+                      "border-border bg-muted text-muted-foreground",
                   )}
                 >
                   {isCompleted ? (

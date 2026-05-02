@@ -3,11 +3,15 @@
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
+import {
+  FullscreenToggle,
+  useFullscreenStatus,
+} from "@/components/layout/fullscreen-toggle";
 import { StepIndicator } from "@/components/layout/step-indicator";
+import { LanguageStep } from "@/components/navigator/steps/language-step";
 import { IntakeStep } from "@/components/navigator/steps/intake-step";
 import { VoiceInput } from "@/components/navigator/steps/voice-input";
 import { TextInput } from "@/components/navigator/steps/text-input";
-import { CategoryBrowse } from "@/components/navigator/steps/category-browse";
 import {
   AssistantStep,
   type AssistantError,
@@ -27,10 +31,10 @@ import type {
 import { MOCK_SERVICES } from "@/lib/mock/services";
 
 type StepId =
+  | "language"
   | "intake"
   | "voice"
   | "problem"
-  | "categories"
   | "assistant"
   | "results"
   | "review";
@@ -51,10 +55,10 @@ function candidatesFromServiceIds(services: Service[], ids: string[]) {
 
 function getStepDefs(strings: ReturnType<typeof getStrings>) {
   return [
-    { id: "intake", label: strings.steps.intake.title },
-    { id: "assistant", label: strings.steps.assistant.title },
-    { id: "results", label: strings.steps.results.title },
-    { id: "review", label: strings.steps.review.title },
+    { id: "language", label: strings.landing.selectLanguage },
+    { id: "help", label: strings.intake.heading },
+    { id: "requirements", label: strings.detail.requirements },
+    { id: "details", label: strings.detail.heading },
   ];
 }
 
@@ -63,20 +67,22 @@ function NavigateContent() {
   const langParam = searchParams.get("lang") as LanguageCode | null;
 
   const services = MOCK_SERVICES;
+  const initialLanguage: LanguageCode =
+    langParam === "am" || langParam === "om" || langParam === "en"
+      ? langParam
+      : "en";
 
-  const [language, setLanguage] = React.useState<LanguageCode>(
-    langParam ?? "en",
-  );
-  const [step, setStep] = React.useState<StepId>("intake");
+  const [language, setLanguage] = React.useState<LanguageCode>(initialLanguage);
+  const [step, setStep] = React.useState<StepId>("language");
 
   const [intakeMethod, setIntakeMethod] = React.useState<
-    "voice" | "type" | "categories" | null
+    "voice" | "type" | null
   >(null);
   const [problemText, setProblemText] = React.useState("");
   const [decision, setDecision] = React.useState<Decision | null>(null);
   const [assistantError, setAssistantError] =
     React.useState<AssistantError | null>(null);
-  const [candidates, setCandidates] = React.useState<MatchCandidate[]>([]);
+
   const [selectedServiceId, setSelectedServiceId] = React.useState<
     string | null
   >(null);
@@ -84,10 +90,10 @@ function NavigateContent() {
     Record<string, boolean>
   >({});
   const [rating, setRating] = React.useState(0);
-  const [comment, setComment] = React.useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = React.useState(false);
 
   const strings = getStrings(language);
+  const isFullscreen = useFullscreenStatus();
   const selectedService = React.useMemo(() => {
     if (!selectedServiceId) return null;
     return findServiceById(services, selectedServiceId);
@@ -95,13 +101,8 @@ function NavigateContent() {
 
   // Compute which "main step" index we're on for the indicator
   const mainStepIndex = React.useMemo(() => {
-    if (
-      step === "intake" ||
-      step === "voice" ||
-      step === "problem" ||
-      step === "categories"
-    )
-      return 0;
+    if (step === "language") return 0;
+    if (step === "intake" || step === "voice" || step === "problem") return 1;
     if (step === "assistant") return 1;
     if (step === "results") return 2;
     if (step === "review") return 3;
@@ -114,14 +115,11 @@ function NavigateContent() {
 
   function goToInput() {
     if (intakeMethod === "voice") goTo("voice");
-    else if (intakeMethod === "categories") goTo("categories");
     else goTo("problem");
   }
 
   function goToReview() {
-    setCheckedRequirements({});
     setRating(0);
-    setComment("");
     setFeedbackSubmitted(false);
     goTo("review");
   }
@@ -133,7 +131,6 @@ function NavigateContent() {
 
     if (cleaned.length < 3) {
       setDecision(null);
-      setCandidates([]);
       setSelectedServiceId(null);
       setAssistantError({
         title: strings.assistant.failedTitle,
@@ -147,36 +144,35 @@ function NavigateContent() {
     setDecision(nextDecision);
 
     if (nextDecision.mode === "clarify") {
-      setCandidates([]);
       setSelectedServiceId(null);
       goTo("assistant");
       return;
     }
 
-    setCandidates(nextDecision.candidates);
+    setCheckedRequirements({});
     setSelectedServiceId(nextDecision.candidates[0]?.service.id ?? null);
     goTo("results");
   }
 
   function resetFlow() {
-    setStep("intake");
+    setStep("language");
     setIntakeMethod(null);
     setProblemText("");
     setDecision(null);
     setAssistantError(null);
-    setCandidates([]);
     setSelectedServiceId(null);
     setCheckedRequirements({});
     setRating(0);
-    setComment("");
     setFeedbackSubmitted(false);
   }
 
   function handleBack() {
     switch (step) {
+      case "intake":
+        goTo("language");
+        break;
       case "voice":
       case "problem":
-      case "categories":
         goTo("intake");
         break;
       case "assistant":
@@ -194,16 +190,21 @@ function NavigateContent() {
     }
   }
 
-  const showBack = step !== "intake";
+  const showBack = step !== "language";
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <AppHeader language={language} showHome />
+      {!isFullscreen && <AppHeader language={language} showHome />}
+      {isFullscreen && (
+        <div className="fixed right-4 top-4 z-50 rounded-full border border-border bg-background/95">
+          <FullscreenToggle />
+        </div>
+      )}
 
       <main className="flex flex-1 flex-col">
         {/* Step indicator */}
-        <div className="border-b border-border bg-background/80 py-3 px-4">
-          <div className="mx-auto max-w-2xl">
+        <div className="border-b border-border bg-background py-3 px-4">
+          <div className="mx-auto max-w-5xl">
             <StepIndicator
               steps={getStepDefs(strings)}
               currentIndex={mainStepIndex}
@@ -213,26 +214,30 @@ function NavigateContent() {
 
         {/* Content area */}
         <div className="flex-1 flex flex-col">
-          <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
+          <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-5 sm:px-6 sm:py-8">
             <div className="w-full">
+              {step === "language" && (
+                <LanguageStep
+                  strings={strings}
+                  language={language}
+                  onLanguageChange={(nextLanguage) => {
+                    setLanguage(nextLanguage);
+                    goTo("intake");
+                  }}
+                />
+              )}
+
               {step === "intake" && (
                 <IntakeStep
                   strings={strings}
-                  language={language}
-                  onLanguageChange={(lang) => {
-                    setLanguage(lang);
-                    resetFlow();
-                  }}
                   onPick={(method) => {
                     setIntakeMethod(method);
                     setProblemText("");
                     setDecision(null);
                     setAssistantError(null);
-                    setCandidates([]);
                     setSelectedServiceId(null);
                     if (method === "voice") goTo("voice");
-                    else if (method === "type") goTo("problem");
-                    else goTo("categories");
+                    else goTo("problem");
                   }}
                 />
               )}
@@ -257,15 +262,9 @@ function NavigateContent() {
                   value={problemText}
                   onChange={setProblemText}
                   onSubmit={() => submitProblem(problemText)}
-                />
-              )}
-
-              {step === "categories" && (
-                <CategoryBrowse
-                  strings={strings}
-                  onPick={(hint) => {
-                    setIntakeMethod("categories");
-                    submitProblem(hint);
+                  onSwitchToVoice={() => {
+                    setIntakeMethod("voice");
+                    goTo("voice");
                   }}
                 />
               )}
@@ -278,7 +277,7 @@ function NavigateContent() {
                   error={assistantError}
                   onPickClarification={(serviceIds) => {
                     const next = candidatesFromServiceIds(services, serviceIds);
-                    setCandidates(next);
+                    setCheckedRequirements({});
                     setSelectedServiceId(next[0]?.service.id ?? null);
                     goTo("results");
                   }}
@@ -302,17 +301,10 @@ function NavigateContent() {
               {step === "results" && (
                 <ResultsStep
                   strings={strings}
-                  services={services}
-                  candidates={candidates}
-                  userText={problemText}
-                  selectedId={selectedServiceId}
-                  onSelect={(id) => {
-                    setSelectedServiceId(id);
-                  }}
-                  onContinue={() => {
-                    if (!selectedServiceId) return;
-                    goToReview();
-                  }}
+                  service={selectedService}
+                  checked={checkedRequirements}
+                  onCheckedChange={setCheckedRequirements}
+                  onContinue={goToReview}
                 />
               )}
 
@@ -321,11 +313,8 @@ function NavigateContent() {
                   strings={strings}
                   service={selectedService}
                   checked={checkedRequirements}
-                  onCheckedChange={setCheckedRequirements}
                   rating={rating}
                   onRatingChange={setRating}
-                  comment={comment}
-                  onCommentChange={setComment}
                   submitted={feedbackSubmitted}
                   onSubmit={() => setFeedbackSubmitted(true)}
                   onStartOver={resetFlow}
@@ -337,7 +326,7 @@ function NavigateContent() {
           {/* Bottom bar with back button */}
           {showBack && (
             <div className="border-t border-border bg-background/80 px-4 py-3">
-              <div className="mx-auto max-w-2xl">
+              <div className="mx-auto max-w-5xl">
                 <Button
                   variant="ghost"
                   size="sm"

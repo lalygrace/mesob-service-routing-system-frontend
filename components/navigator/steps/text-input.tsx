@@ -9,14 +9,16 @@ export function TextInput({
   value,
   onChange,
   onSubmit,
+  onSwitchToVoice,
 }: {
   strings: Strings;
   value: string;
   onChange: (v: string) => void;
   onSubmit: () => void;
+  onSwitchToVoice: () => void;
 }) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {strings.problem.heading}
@@ -52,14 +54,24 @@ export function TextInput({
         </div>
       </div>
 
-      <Button
-        onClick={onSubmit}
-        disabled={value.trim().length < 3}
-        size="lg"
-        className="w-full rounded-xl h-12"
-      >
-        {strings.actions.continue}
-      </Button>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Button
+          variant="outline"
+          onClick={onSwitchToVoice}
+          size="lg"
+          className="rounded-xl h-12"
+        >
+          {strings.intake.voiceTitle}
+        </Button>
+        <Button
+          onClick={onSubmit}
+          disabled={value.trim().length < 3}
+          size="lg"
+          className="rounded-xl h-12"
+        >
+          {strings.actions.continue}
+        </Button>
+      </div>
     </div>
   );
 }

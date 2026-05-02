@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Home } from "lucide-react";
+import { FullscreenToggle } from "@/components/layout/fullscreen-toggle";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import type { LanguageCode } from "@/lib/service-navigator/types";
@@ -25,7 +26,7 @@ export function AppHeader({
   const strings = getStrings(language);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="sticky top-0 z-50 border-b border-border bg-background">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         {/* Left: Logo & Title */}
         <Link href="/" className="flex items-center gap-3 min-w-0">
@@ -51,9 +52,9 @@ export function AppHeader({
                 <button
                   key={lang}
                   onClick={() => onLanguageChange(lang)}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-full transition-all duration-200 ${
+                  className={`px-2.5 py-1 text-xs font-medium rounded-full ${
                     language === lang
-                      ? "bg-primary text-primary-foreground shadow-sm"
+                      ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                   aria-label={`Switch to ${lang}`}
@@ -63,6 +64,8 @@ export function AppHeader({
               ))}
             </div>
           )}
+
+          <FullscreenToggle />
 
           {showHome && (
             <Button

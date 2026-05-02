@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Mic, MicOff, RotateCcw, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import type { LanguageCode } from "@/lib/service-navigator/types";
 import type { Strings } from "@/lib/service-navigator/strings";
 
@@ -78,6 +77,7 @@ export function VoiceInput({
   const recognitionRef = React.useRef<SpeechRecognitionLike | null>(null);
   const intervalRef = React.useRef<number | null>(null);
   const startedAtRef = React.useRef<number | null>(null);
+  const baseTextRef = React.useRef("");
 
   const [listening, setListening] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -96,7 +96,9 @@ export function VoiceInput({
         transcript += event.results[i]?.[0]?.transcript ?? "";
       }
       const next = transcript.trim();
-      if (next) onChange(next);
+      if (next) {
+        onChange([baseTextRef.current, next].filter(Boolean).join(" "));
+      }
     };
     recognition.onerror = () => {
       setError(strings.voice.notSupportedDesc);
@@ -138,7 +140,7 @@ export function VoiceInput({
 
   function start() {
     setError(null);
-    onChange("");
+    baseTextRef.current = value.trim();
     startTimer();
     try {
       recognitionRef.current?.start();
@@ -219,31 +221,8 @@ export function VoiceInput({
             </button>
           </div>
 
-          {/* Simple waveform visualization (no glow/hover scaling) */}
-          <div
-            className="mt-5 flex items-end justify-center gap-1.5"
-            aria-hidden="true"
-          >
-            {Array.from({ length: 14 }).map((_, i) => {
-              const heights = [
-                6, 12, 8, 18, 10, 16, 9, 20, 11, 17, 8, 14, 7, 12,
-              ];
-              const h = heights[i] ?? 10;
-              return (
-                <div
-                  key={i}
-                  className={
-                    "w-1 rounded-full transition-colors " +
-                    (listening ? "bg-primary" : "bg-muted")
-                  }
-                  style={{ height: `${h}px` }}
-                />
-              );
-            })}
-          </div>
-
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            {strings.voice.editHint}
+            {strings.voice.release}
           </p>
         </div>
       )}
@@ -251,15 +230,21 @@ export function VoiceInput({
       {error && <p className="text-sm text-destructive text-center">{error}</p>}
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">
+        <p className="text-sm font-medium text-foreground">
           {strings.voice.whatWeHeard}
-        </label>
-        <Textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={strings.problem.placeholder}
-          className="min-h-24 rounded-xl resize-none"
-        />
+        </p>
+        <div
+          className="min-h-20 rounded-xl border border-input bg-muted/30 px-3 py-2 text-sm text-foreground"
+          aria-live="polite"
+        >
+          {value ? (
+            value
+          ) : (
+            <span className="text-muted-foreground">
+              {strings.problem.placeholder}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">

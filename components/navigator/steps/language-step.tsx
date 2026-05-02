@@ -17,27 +17,25 @@ export function LanguageStep({
   strings,
   language,
   onLanguageChange,
-  onContinue,
 }: {
   strings: Strings;
   language: LanguageCode;
   onLanguageChange: (lang: LanguageCode) => void;
-  onContinue: () => void;
 }) {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          {strings.language.heading}
+          {strings.landing.selectLanguage}
         </h1>
-        <p className="text-muted-foreground">{strings.language.subheading}</p>
+        <p className="text-muted-foreground">{strings.appSubtitle}</p>
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
         <p className="text-sm font-semibold text-foreground">
-          {strings.language.selectLabel}
+          {strings.landing.selectLanguage}
         </p>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-4 grid gap-3">
           {(["en", "am", "om"] as LanguageCode[]).map((lang) => {
             const label = LANG_LABELS[lang];
             return (
@@ -46,10 +44,10 @@ export function LanguageStep({
                 type="button"
                 variant={language === lang ? "default" : "outline"}
                 onClick={() => onLanguageChange(lang)}
-                className="h-12 rounded-xl px-3"
+                className="h-20 justify-between rounded-2xl px-5 text-left"
               >
-                <span className="font-semibold">{label.primary}</span>
-                <span className="ml-2 text-xs text-muted-foreground">
+                <span className="text-xl font-semibold">{label.primary}</span>
+                <span className="rounded-full border border-border px-3 py-1 text-sm text-muted-foreground">
                   {label.secondary}
                 </span>
               </Button>
@@ -57,10 +55,6 @@ export function LanguageStep({
           })}
         </div>
       </div>
-
-      <Button onClick={onContinue} size="lg" className="w-full rounded-xl h-12">
-        {strings.actions.continue}
-      </Button>
     </div>
   );
 }

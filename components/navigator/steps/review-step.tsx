@@ -1,42 +1,45 @@
 "use client";
 
-import * as React from "react";
 import {
   AlertCircle,
-  AlertTriangle,
   Building2,
   CheckCircle2,
   Clock,
   Coins,
+  FileText,
   MapPin,
+  Navigation,
   Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+
 import type { Service } from "@/lib/service-navigator/types";
 import type { Strings } from "@/lib/service-navigator/strings";
 
-function InfoItem({
+type DetailIcon = typeof Building2;
+
+function DetailTile({
   icon: Icon,
   label,
   value,
 }: {
-  icon: typeof Building2;
+  icon: DetailIcon;
   label: string;
   value: string;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {label}
-        </p>
-        <p className="mt-0.5 text-sm font-semibold text-foreground">{value}</p>
+    <div className="rounded-2xl border border-border bg-background p-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
+        </div>
       </div>
     </div>
   );
@@ -46,11 +49,8 @@ export function ReviewStep({
   strings,
   service,
   checked,
-  onCheckedChange,
   rating,
   onRatingChange,
-  comment,
-  onCommentChange,
   submitted,
   onSubmit,
   onStartOver,
@@ -58,19 +58,16 @@ export function ReviewStep({
   strings: Strings;
   service: Service | null;
   checked: Record<string, boolean>;
-  onCheckedChange: (next: Record<string, boolean>) => void;
   rating: number;
   onRatingChange: (next: number) => void;
-  comment: string;
-  onCommentChange: (next: string) => void;
   submitted: boolean;
   onSubmit: () => void;
   onStartOver: () => void;
 }) {
   if (!service) {
     return (
-      <div className="flex flex-col items-center gap-3 py-12 text-center">
-        <AlertCircle className="h-12 w-12 text-muted-foreground/50" />
+      <div className="flex flex-col items-center gap-3 py-10 text-center">
+        <AlertCircle className="h-10 w-10 text-muted-foreground/60" />
         <p className="font-semibold text-foreground">
           {strings.noServiceSelected}
         </p>
@@ -81,15 +78,14 @@ export function ReviewStep({
     );
   }
 
-  const requirements = service.requirements;
-  const missing = requirements.filter((r) => !checked[r]);
-  const canSubmit = missing.length === 0 && rating === 5;
+  const confirmedDocs = service.requirements.filter((req) => checked[req]);
+  const missingDocs = service.requirements.filter((req) => !checked[req]);
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-6 py-12 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted text-foreground">
-          <CheckCircle2 className="h-10 w-10" />
+      <div className="flex flex-col items-center justify-center space-y-5 py-10 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-foreground">
+          <CheckCircle2 className="h-8 w-8" />
         </div>
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">
@@ -102,178 +98,171 @@ export function ReviewStep({
         <Button
           onClick={onStartOver}
           size="lg"
-          className="rounded-xl h-12 px-8 mt-2"
+          className="rounded-xl h-12 px-8"
         >
-          {strings.actions.startOver}
+          Serve next customer
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          {strings.review.heading}
-        </h1>
-        <p className="text-muted-foreground">{strings.review.subheading}</p>
-      </div>
+    <div className="space-y-5">
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
+          <div className="border-b border-border bg-muted/30 p-5 sm:p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {strings.detail.heading}
+                </p>
+                <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                  {service.title}
+                </h1>
+                <p className="max-w-2xl text-sm text-muted-foreground">
+                  {service.authority}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border bg-background px-5 py-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {strings.success.goTo}
+                </p>
+                <p className="mt-1 text-xl font-bold text-foreground">
+                  {service.locationHint}
+                </p>
+              </div>
+            </div>
+          </div>
 
-      <Card>
-        <CardHeader className="space-y-1 border-b">
-          <CardTitle className="text-lg">{service.title}</CardTitle>
-          <p className="text-sm text-muted-foreground">{service.authority}</p>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <InfoItem
+          <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-4">
+            <DetailTile
               icon={Building2}
               label={strings.detail.authority}
               value={service.authority}
             />
-            <InfoItem
+            <DetailTile
               icon={MapPin}
               label={strings.detail.location}
               value={service.locationHint}
             />
-            <InfoItem
+            <DetailTile
               icon={Coins}
               label={strings.detail.fee}
               value={service.feeHint}
             />
-            <InfoItem
+            <DetailTile
               icon={Clock}
               label={strings.detail.processingTime}
               value={service.durationHint}
             />
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-base font-semibold text-foreground">
-                {strings.detail.requirements}
-              </h2>
-              <span className="text-xs font-medium text-muted-foreground">
-                {requirements.length - missing.length}/{requirements.length}{" "}
-                {strings.detail.itemsConfirmed}
-              </span>
+      <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+        <Card>
+          <CardContent className="space-y-4 p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-foreground">
+                  {strings.detail.requirements}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {confirmedDocs.length}/{service.requirements.length}{" "}
+                  {strings.detail.itemsConfirmed}
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">
-              {requirements.map((req) => (
-                <label
-                  key={req}
-                  className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/40"
-                >
-                  <Checkbox
-                    checked={Boolean(checked[req])}
-                    onCheckedChange={(next) => {
-                      const isChecked = Boolean(next);
-                      onCheckedChange({ ...checked, [req]: isChecked });
-                    }}
-                    aria-label={req}
-                  />
-                  <span className="text-sm text-foreground">{req}</span>
-                </label>
-              ))}
-            </div>
-
-            {missing.length > 0 ? (
-              <div className="rounded-xl border border-border bg-muted/30 p-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 text-muted-foreground" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">
-                      {strings.review.missingDocsTitle}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {strings.review.missingDocsDesc}
-                    </p>
-                    <p className="text-sm text-foreground">
-                      {missing.join(" • ")}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-border bg-muted/30 p-4">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 text-muted-foreground" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">
-                      {strings.review.readyTitle}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {strings.review.readyDesc}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-base font-semibold text-foreground">
-              {strings.feedbackForm.rating}
-            </h2>
-
-            <div className="flex items-center justify-center gap-1">
-              {Array.from({ length: 5 }).map((_, i) => {
-                const starValue = i + 1;
-                const active = starValue <= rating;
+              {service.requirements.map((req) => {
+                const confirmed = Boolean(checked[req]);
                 return (
-                  <Button
-                    key={starValue}
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={() => onRatingChange(starValue)}
-                    aria-label={`${strings.feedbackForm.rating}: ${starValue}`}
+                  <div
+                    key={req}
+                    className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2"
                   >
-                    <Star
+                    <CheckCircle2
                       className={
-                        active ? "text-primary" : "text-muted-foreground"
+                        confirmed
+                          ? "h-4 w-4 text-primary"
+                          : "h-4 w-4 text-muted-foreground"
                       }
-                      fill={active ? "currentColor" : "none"}
                     />
-                  </Button>
+                    <span className="text-sm text-foreground">{req}</span>
+                  </div>
                 );
               })}
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                {strings.feedbackForm.comment}
-              </label>
-              <Textarea
-                value={comment}
-                onChange={(e) => onCommentChange(e.target.value)}
-                placeholder={strings.feedbackForm.commentPlaceholder}
-                className="min-h-24 rounded-xl resize-none"
-              />
+            {missingDocs.length > 0 && (
+              <div className="rounded-xl border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+                {strings.review.missingDocsDesc}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="space-y-5 p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
+                <Navigation className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-foreground">
+                  Thank you for using Mesob Center
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {strings.feedbackForm.subheading}
+                </p>
+              </div>
             </div>
 
-            <Button
-              onClick={onSubmit}
-              disabled={!canSubmit}
-              size="lg"
-              className="w-full rounded-xl h-12"
-            >
-              {strings.feedbackForm.submit}
-            </Button>
+            <div className="space-y-3 text-center">
+              <h3 className="text-sm font-semibold text-foreground">
+                {strings.feedbackForm.rating}
+              </h3>
+              <div className="flex items-center justify-center gap-1">
+                {Array.from({ length: 5 }).map((_, i) => {
+                  const starValue = i + 1;
+                  const active = starValue <= rating;
+                  return (
+                    <Button
+                      key={starValue}
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-12 w-12 rounded-full"
+                      onClick={() => {
+                        onRatingChange(starValue);
+                        onSubmit();
+                      }}
+                      aria-label={`${strings.feedbackForm.rating}: ${starValue}`}
+                    >
+                      <Star
+                        className={
+                          active
+                            ? "h-7 w-7 text-primary"
+                            : "h-7 w-7 text-muted-foreground"
+                        }
+                        fill={active ? "currentColor" : "none"}
+                      />
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
 
-            <Button
-              onClick={onStartOver}
-              variant="outline"
-              size="lg"
-              className="w-full rounded-xl h-12"
-            >
-              {strings.actions.startOver}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            <p className="text-center text-xs text-muted-foreground">
+              Select a star to finish and serve the next customer.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

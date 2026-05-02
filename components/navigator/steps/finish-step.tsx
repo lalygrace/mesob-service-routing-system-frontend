@@ -20,7 +20,7 @@ export function FinishStep({
   onSubmit: () => void;
   onStartOver: () => void;
 }) {
-  const canSubmit = rating === 5;
+  const canSubmit = rating > 0;
 
   if (submitted) {
     return (
@@ -30,10 +30,10 @@ export function FinishStep({
         </div>
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">
-            {strings.finish.thankYouTitle}
+            {strings.feedbackForm.thankYou}
           </h2>
           <p className="mt-2 text-muted-foreground">
-            {strings.finish.thankYouDesc}
+            {strings.feedbackForm.thankYouDesc}
           </p>
         </div>
         <Button
@@ -51,14 +51,16 @@ export function FinishStep({
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          {strings.finish.heading}
+          Thank you for using Mesob Center
         </h1>
-        <p className="text-muted-foreground">{strings.finish.subheading}</p>
+        <p className="text-muted-foreground">
+          {strings.feedbackForm.subheading}
+        </p>
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-5">
         <p className="text-sm font-semibold text-foreground">
-          {strings.finish.ratingPrompt}
+          {strings.feedbackForm.rating}
         </p>
 
         <div className="mt-4 flex items-center justify-center gap-1">
@@ -73,7 +75,7 @@ export function FinishStep({
                 size="icon"
                 className="rounded-full"
                 onClick={() => onRatingChange(starValue)}
-                aria-label={`${strings.finish.ratingPrompt}: ${starValue}`}
+                aria-label={`${strings.feedbackForm.rating}: ${starValue}`}
               >
                 <Star
                   className={active ? "text-primary" : "text-muted-foreground"}
@@ -83,10 +85,6 @@ export function FinishStep({
             );
           })}
         </div>
-
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          {strings.finish.ratingHint}
-        </p>
       </div>
 
       <Button
@@ -95,7 +93,7 @@ export function FinishStep({
         size="lg"
         className="w-full rounded-xl h-12"
       >
-        {strings.finish.submitRating}
+        {strings.feedbackForm.submit}
       </Button>
 
       <Button

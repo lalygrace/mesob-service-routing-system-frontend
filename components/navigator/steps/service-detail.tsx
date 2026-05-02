@@ -1,20 +1,37 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Building2, MapPin, Clock, Coins, CheckCircle2, Circle, AlertCircle } from "lucide-react";
+import {
+  Building2,
+  MapPin,
+  Clock,
+  Coins,
+  CheckCircle2,
+  Circle,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Service } from "@/lib/service-navigator/types";
 import type { Strings } from "@/lib/service-navigator/strings";
 
-function InfoCard({ icon: Icon, label, value }: { icon: typeof Building2; label: string; value: string }) {
+function InfoCard({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Building2;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {label}
+        </p>
         <p className="mt-0.5 text-sm font-semibold text-foreground">{value}</p>
       </div>
     </div>
@@ -22,7 +39,11 @@ function InfoCard({ icon: Icon, label, value }: { icon: typeof Building2; label:
 }
 
 export function ServiceDetail({
-  strings, service, checked, onCheckedChange, onReady,
+  strings,
+  service,
+  checked,
+  onCheckedChange,
+  onReady,
 }: {
   strings: Strings;
   service: Service | null;
@@ -34,8 +55,12 @@ export function ServiceDetail({
     return (
       <div className="flex flex-col items-center gap-3 py-12 text-center">
         <AlertCircle className="h-12 w-12 text-muted-foreground/50" />
-        <p className="font-semibold text-foreground">{strings.noServiceSelected}</p>
-        <p className="text-sm text-muted-foreground">{strings.noServiceSelectedDesc}</p>
+        <p className="font-semibold text-foreground">
+          {strings.noServiceSelected}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {strings.noServiceSelectedDesc}
+        </p>
       </div>
     );
   }
@@ -56,16 +81,34 @@ export function ServiceDetail({
 
       {/* Info grid */}
       <div className="grid gap-3 sm:grid-cols-2">
-        <InfoCard icon={Building2} label={strings.detail.authority} value={service.authority} />
-        <InfoCard icon={MapPin} label={strings.detail.location} value={service.locationHint} />
-        <InfoCard icon={Coins} label={strings.detail.fee} value={service.feeHint} />
-        <InfoCard icon={Clock} label={strings.detail.processingTime} value={service.durationHint} />
+        <InfoCard
+          icon={Building2}
+          label={strings.detail.authority}
+          value={service.authority}
+        />
+        <InfoCard
+          icon={MapPin}
+          label={strings.detail.location}
+          value={service.locationHint}
+        />
+        <InfoCard
+          icon={Coins}
+          label={strings.detail.fee}
+          value={service.feeHint}
+        />
+        <InfoCard
+          icon={Clock}
+          label={strings.detail.processingTime}
+          value={service.durationHint}
+        />
       </div>
 
       {/* Requirements checklist */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-foreground">{strings.detail.requirements}</h2>
+          <h2 className="text-base font-semibold text-foreground">
+            {strings.detail.requirements}
+          </h2>
           <span className="text-xs font-medium text-muted-foreground">
             {checkedCount}/{total} {strings.detail.itemsConfirmed}
           </span>
@@ -73,11 +116,11 @@ export function ServiceDetail({
 
         {/* Progress bar */}
         <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-          <motion.div
+          <div
             className="h-full rounded-full bg-primary"
-            initial={{ width: "0%" }}
-            animate={{ width: `${total > 0 ? (checkedCount / total) * 100 : 0}%` }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            style={{
+              width: `${total > 0 ? (checkedCount / total) * 100 : 0}%`,
+            }}
           />
         </div>
 
@@ -85,12 +128,13 @@ export function ServiceDetail({
           {service.requirements.map((req) => {
             const isChecked = Boolean(checked[req]);
             return (
-              <motion.button
+              <button
                 key={req}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => onCheckedChange({ ...checked, [req]: !isChecked })}
+                onClick={() =>
+                  onCheckedChange({ ...checked, [req]: !isChecked })
+                }
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all duration-200",
+                  "flex w-full items-center gap-3 rounded-xl border p-4 text-left",
                   isChecked
                     ? "border-primary/30 bg-primary/5"
                     : "border-border bg-card hover:border-primary/20",
@@ -101,25 +145,31 @@ export function ServiceDetail({
                 ) : (
                   <Circle className="h-5 w-5 shrink-0 text-muted-foreground/40" />
                 )}
-                <span className={cn(
-                  "text-sm transition-colors",
-                  isChecked ? "text-foreground" : "text-muted-foreground",
-                )}>
+                <span
+                  className={cn(
+                    "text-sm",
+                    isChecked ? "text-foreground" : "text-muted-foreground",
+                  )}
+                >
                   {req}
                 </span>
-              </motion.button>
+              </button>
             );
           })}
         </div>
 
         {/* Readiness message */}
-        <div className={cn(
-          "rounded-xl p-4 text-center text-sm font-medium",
-          isReady
-            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-            : "bg-muted text-muted-foreground",
-        )}>
-          {isReady ? strings.detail.readyMessage : strings.detail.notReadyMessage}
+        <div
+          className={cn(
+            "rounded-xl p-4 text-center text-sm font-medium",
+            isReady
+              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+              : "bg-muted text-muted-foreground",
+          )}
+        >
+          {isReady
+            ? strings.detail.readyMessage
+            : strings.detail.notReadyMessage}
         </div>
       </div>
 
