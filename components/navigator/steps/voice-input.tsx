@@ -168,7 +168,7 @@ export function VoiceInput({
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
           {strings.voice.heading}
         </h1>
         <p className="text-muted-foreground">{strings.voice.editHint}</p>

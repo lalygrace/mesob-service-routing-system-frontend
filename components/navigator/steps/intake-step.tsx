@@ -30,7 +30,7 @@ export function IntakeStep({
   return (
     <div className="space-y-8">
       <div className="text-center space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {strings.intake.heading}
         </h1>
         <p className="text-lg text-muted-foreground">{strings.intake.subheading}</p>
@@ -57,7 +57,7 @@ export function IntakeStep({
                   <opt.icon className="h-7 w-7 sm:h-8 sm:w-8" />
                 </div>
                 <div className="space-y-1.5 sm:space-y-2">
-                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                  <h3 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
                     {titles[opt.method]}
                   </h3>
                   <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">

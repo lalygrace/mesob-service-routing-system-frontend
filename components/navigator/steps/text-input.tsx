@@ -20,7 +20,7 @@ export function TextInput({
   return (
     <div className="space-y-5">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
           {strings.problem.heading}
         </h1>
         <p className="text-muted-foreground">{strings.problem.hint}</p>

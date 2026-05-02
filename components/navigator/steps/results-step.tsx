@@ -51,7 +51,7 @@ export function ResultsStep({
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {strings.detail.requirements}
             </p>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
               {service.title}
             </h1>
             <p className="text-sm text-muted-foreground">

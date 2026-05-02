@@ -52,7 +52,7 @@ export function AssistantStep({
             <Bot className="h-7 w-7" />
           )}
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
           {error
             ? error.title
             : hasClarify

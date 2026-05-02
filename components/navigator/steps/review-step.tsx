@@ -116,7 +116,7 @@ export function ReviewStep({
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {strings.detail.heading}
                 </p>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
                   {service.title}
                 </h1>
                 <p className="max-w-2xl text-sm text-muted-foreground">
