@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Ethiopic } from "next/font/google";
+import { Noto_Sans_Ethiopic } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import "./globals.css";
-
-const inter = Inter({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 const notoEthiopic = Noto_Sans_Ethiopic({
   variable: "--font-ethiopic",
@@ -38,7 +32,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${notoEthiopic.variable} h-full antialiased`}
+      className={`${notoEthiopic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col relative">
         <ThemeProvider>{children}</ThemeProvider>
