@@ -18,17 +18,19 @@ export default function AdminLayout({
 }) {
   return (
     <AuthGuard>
-      <TooltipProvider>
-        <SidebarProvider>
-          <AdminSidebar />
-          <SidebarInset>
-            <AdminHeader />
-            <div className="flex-1 overflow-auto">
-              <div className="p-4 sm:p-6 lg:p-8">{children}</div>
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
-      </TooltipProvider>
+      <div className="font-admin h-full">
+        <TooltipProvider>
+          <SidebarProvider>
+            <AdminSidebar />
+            <SidebarInset>
+              <AdminHeader />
+              <div className="flex-1 overflow-auto">
+                <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+              </div>
+            </SidebarInset>
+          </SidebarProvider>
+        </TooltipProvider>
+      </div>
     </AuthGuard>
   );
 }
