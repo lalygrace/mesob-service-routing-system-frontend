@@ -8,11 +8,7 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      router.push("/admin");
-    } else {
-      router.push("/auth/login");
-    }
+    router.push("/navigate");
   }, [router]);
 
   return (

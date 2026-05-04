@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -113,8 +114,14 @@ export function AdminSidebar() {
     <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader className="p-4">
         <Link href="/admin" className="flex items-center gap-3 min-w-0">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Shield className="h-4 w-4" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden">
+            <Image
+              src="/mesoblogo.png"
+              alt="Mesob Logo"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
           </div>
           <div className="flex flex-col gap-0.5 leading-none min-w-0 group-data-[collapsible=icon]:hidden">
             <span className="text-sm font-semibold truncate">Mesob Admin</span>
