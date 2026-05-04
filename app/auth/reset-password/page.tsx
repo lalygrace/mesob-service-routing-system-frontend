@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Lock, CheckCircle2 } from "lucide-react";
 import { PublicRoute } from "@/components/auth/public-route";
@@ -68,7 +75,7 @@ function ResetPasswordPageContent() {
     try {
       // TODO: Replace with actual API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      
+
       if (token) {
         setSuccess(true);
         setTimeout(() => {
@@ -84,7 +91,7 @@ function ResetPasswordPageContent() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
             <div className="flex justify-center mb-4">
@@ -92,7 +99,9 @@ function ResetPasswordPageContent() {
                 <CheckCircle2 className="w-8 h-8 text-white" />
               </div>
             </div>
-            <CardTitle className="text-2xl text-center">Password Reset Successful</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              Password Reset Successful
+            </CardTitle>
             <CardDescription className="text-center">
               Your password has been successfully reset. Redirecting to login...
             </CardDescription>
@@ -103,7 +112,7 @@ function ResetPasswordPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
@@ -123,7 +132,7 @@ function ResetPasswordPageContent() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            
+
             <div className="space-y-2">
               <Label htmlFor="password">New Password</Label>
               <div className="relative">
@@ -150,7 +159,8 @@ function ResetPasswordPageContent() {
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Must be at least 8 characters with uppercase, lowercase, and numbers
+                Must be at least 8 characters with uppercase, lowercase, and
+                numbers
               </p>
             </div>
 
@@ -205,7 +215,9 @@ function ResetPasswordPageContent() {
 export default function ResetPasswordPage() {
   return (
     <PublicRoute>
-      <ResetPasswordPageContent />
+      <Suspense fallback={null}>
+        <ResetPasswordPageContent />
+      </Suspense>
     </PublicRoute>
   );
 }
