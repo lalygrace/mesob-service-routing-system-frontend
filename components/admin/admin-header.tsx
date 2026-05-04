@@ -20,6 +20,10 @@ const ROUTE_LABELS: Record<string, string> = {
   intents: "Intent Mapping",
   analytics: "Analytics",
   settings: "Settings",
+  users: "Admin Users",
+  sessions: "Sessions",
+  profile: "Profile",
+  "change-password": "Change Password",
 };
 
 export function AdminHeader() {

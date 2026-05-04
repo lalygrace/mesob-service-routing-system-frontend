@@ -12,6 +12,10 @@ import {
   ChevronUp,
   LogOut,
   Shield,
+  Users,
+  Monitor,
+  User,
+  Lock,
 } from "lucide-react";
 
 import {
@@ -71,6 +75,29 @@ const NAV_ITEMS = [
     title: "Settings",
     url: "/admin/settings",
     icon: Settings,
+  },
+];
+
+const ACCOUNT_ITEMS = [
+  {
+    title: "Admin Users",
+    url: "/admin/users",
+    icon: Users,
+  },
+  {
+    title: "Sessions",
+    url: "/admin/sessions",
+    icon: Monitor,
+  },
+  {
+    title: "Profile",
+    url: "/admin/profile",
+    icon: User,
+  },
+  {
+    title: "Change Password",
+    url: "/admin/change-password",
+    icon: Lock,
   },
 ];
 
@@ -134,6 +161,30 @@ export function AdminSidebar() {
         <SidebarSeparator />
 
         <SidebarGroup>
+          <SidebarGroupLabel>Account</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {ACCOUNT_ITEMS.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item)}
+                    tooltip={item.title}
+                  >
+                    <Link href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
           <SidebarGroupLabel>Quick Links</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -184,16 +235,32 @@ export function AdminSidebar() {
                 align="start"
                 sideOffset={4}
               >
-                <DropdownMenuItem className="gap-2">
-                  <Settings className="h-4 w-4" />
-                  Account Settings
+                <DropdownMenuItem asChild className="gap-2">
+                  <Link href="/admin/profile">
+                    <User className="h-4 w-4" />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-2">
+                  <Link href="/admin/change-password">
+                    <Lock className="h-4 w-4" />
+                    Change Password
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-2">
+                  <Link href="/admin/sessions">
+                    <Monitor className="h-4 w-4" />
+                    Sessions
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="gap-2">
                   <ThemeToggle />
                 </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2 text-destructive">
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
+                <DropdownMenuItem asChild className="gap-2 text-destructive">
+                  <Link href="/auth/login">
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
