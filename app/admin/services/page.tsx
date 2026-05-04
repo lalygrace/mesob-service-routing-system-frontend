@@ -38,35 +38,17 @@ import { ServiceForm } from "@/components/admin/service-form";
 import { MOCK_SERVICES } from "@/lib/mock/services";
 import type { Service, ServiceTopicId } from "@/lib/service-navigator/types";
 
-const TOPIC_LABELS: Record<ServiceTopicId, string> = {
-  id: "Identity",
-  passport: "Passport",
-  business: "Business",
-  transport: "Transport",
-  revenue: "Revenue",
-};
-
-const TOPIC_COLORS: Record<ServiceTopicId, string> = {
-  id: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  passport: "bg-violet-500/10 text-violet-600 border-violet-500/20",
-  business: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-  transport: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-  revenue: "bg-rose-500/10 text-rose-600 border-rose-500/20",
-};
-
 export default function ServicesPage() {
   const [services, setServices] = React.useState<Service[]>(MOCK_SERVICES);
   const [search, setSearch] = React.useState("");
-  const [topicFilter, setTopicFilter] = React.useState<string>("all");
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Service | null>(null);
 
   const filtered = services.filter((s) => {
-    const matchesSearch =
+    return (
       s.title.toLowerCase().includes(search.toLowerCase()) ||
-      s.authority.toLowerCase().includes(search.toLowerCase());
-    const matchesTopic = topicFilter === "all" || s.topicId === topicFilter;
-    return matchesSearch && matchesTopic;
+      s.authority.toLowerCase().includes(search.toLowerCase())
+    );
   });
 
   function handleSave(data: Omit<Service, "id">) {
@@ -123,19 +105,6 @@ export default function ServicesPage() {
               <CardDescription>{services.length} total</CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Select value={topicFilter} onValueChange={setTopicFilter}>
-                <SelectTrigger className="w-36">
-                  <SelectValue placeholder="All Topics" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Topics</SelectItem>
-                  {Object.entries(TOPIC_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <div className="relative w-full sm:w-56">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -153,7 +122,6 @@ export default function ServicesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Service</TableHead>
-                <TableHead>Topic</TableHead>
                 <TableHead className="hidden md:table-cell">Authority</TableHead>
                 <TableHead className="hidden lg:table-cell">Location</TableHead>
                 <TableHead className="hidden lg:table-cell text-center">
@@ -182,14 +150,6 @@ export default function ServicesPage() {
                           {svc.feeHint} • {svc.durationHint}
                         </p>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={TOPIC_COLORS[svc.topicId]}
-                      >
-                        {TOPIC_LABELS[svc.topicId]}
-                      </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                       {svc.authority}

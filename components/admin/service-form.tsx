@@ -24,14 +24,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { Service, ServiceTopicId, LanguageCode } from "@/lib/service-navigator/types";
 
-const TOPICS: { value: ServiceTopicId; label: string }[] = [
-  { value: "id", label: "Identity" },
-  { value: "passport", label: "Passport" },
-  { value: "business", label: "Business" },
-  { value: "transport", label: "Transport" },
-  { value: "revenue", label: "Revenue / Tax" },
-];
-
 const AUTHORITIES = [
   { value: "Identity Services (placeholder)", label: "National ID Authority" },
   { value: "Passport Services (placeholder)", label: "Immigration & Passport Services" },
@@ -177,37 +169,20 @@ export function ServiceForm({ open, onOpenChange, service, onSave }: ServiceForm
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Authority</Label>
-                  <Select value={authority} onValueChange={setAuthority}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select authority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {AUTHORITIES.map((a) => (
-                        <SelectItem key={a.value} value={a.value}>
-                          {a.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Topic</Label>
-                  <Select value={topicId} onValueChange={(v) => setTopicId(v as ServiceTopicId)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TOPICS.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label>Authority</Label>
+                <Select value={authority} onValueChange={setAuthority}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select authority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AUTHORITIES.map((a) => (
+                      <SelectItem key={a.value} value={a.value}>
+                        {a.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
