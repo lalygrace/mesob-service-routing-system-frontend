@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Home } from "lucide-react";
+import { FullscreenToggle } from "@/components/layout/fullscreen-toggle";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import type { LanguageCode } from "@/lib/service-navigator/types";
@@ -25,13 +26,15 @@ export function AppHeader({
   const strings = getStrings(language);
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-border/50">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         {/* Left: Logo & Title */}
-        <Link href="/" className="flex items-center gap-3 min-w-0 group">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-sm transition-transform group-hover:scale-105">
-            M
-          </div>
+        <Link href="/" className="flex items-center gap-3 min-w-0">
+          <img
+            src="/mesoblogo.png"
+            alt="Mesob Logo"
+            className="h-10 w-10 shrink-0 object-contain"
+          />
           <div className="min-w-0 hidden sm:block">
             <p className="text-sm font-semibold leading-5 tracking-tight text-foreground truncate">
               {strings.appTitle}
@@ -51,9 +54,9 @@ export function AppHeader({
                 <button
                   key={lang}
                   onClick={() => onLanguageChange(lang)}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-full transition-all duration-200 ${
+                  className={`px-2.5 py-1 text-xs font-medium rounded-full ${
                     language === lang
-                      ? "bg-primary text-primary-foreground shadow-sm"
+                      ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                   aria-label={`Switch to ${lang}`}
@@ -64,8 +67,15 @@ export function AppHeader({
             </div>
           )}
 
+          <FullscreenToggle />
+
           {showHome && (
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              asChild
+            >
               <Link href="/" aria-label={strings.header.home}>
                 <Home className="h-4 w-4" />
               </Link>

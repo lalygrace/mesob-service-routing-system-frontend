@@ -1,26 +1,15 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Mic, Keyboard, LayoutGrid } from "lucide-react";
+import { Keyboard, Mic } from "lucide-react";
 import type { Strings } from "@/lib/service-navigator/strings";
+import { Card, CardContent } from "@/components/ui/card";
 
-type IntakeMethod = "voice" | "type" | "categories";
+type IntakeMethod = "voice" | "type";
 
-const options: { method: IntakeMethod; icon: typeof Mic; color: string }[] = [
-  { method: "voice", icon: Mic, color: "from-blue-500/10 to-indigo-500/10" },
-  { method: "type", icon: Keyboard, color: "from-emerald-500/10 to-teal-500/10" },
-  { method: "categories", icon: LayoutGrid, color: "from-amber-500/10 to-orange-500/10" },
+const options: { method: IntakeMethod; icon: typeof Mic }[] = [
+  { method: "voice", icon: Mic },
+  { method: "type", icon: Keyboard },
 ];
-
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.08 } },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-};
 
 export function IntakeStep({
   strings,
@@ -32,46 +21,54 @@ export function IntakeStep({
   const titles: Record<IntakeMethod, string> = {
     voice: strings.intake.voiceTitle,
     type: strings.intake.typeTitle,
-    categories: strings.intake.browseTitle,
   };
   const descs: Record<IntakeMethod, string> = {
     voice: strings.intake.voiceDesc,
     type: strings.intake.typeDesc,
-    categories: strings.intake.browseDesc,
   };
 
   return (
     <div className="space-y-8">
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-3">
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {strings.intake.heading}
         </h1>
-        <p className="text-muted-foreground">{strings.intake.subheading}</p>
+        <p className="text-lg text-muted-foreground">{strings.intake.subheading}</p>
       </div>
 
-      <motion.div variants={container} initial="hidden" animate="show" className="grid gap-4">
-        {options.map((opt) => (
-          <motion.button
-            key={opt.method}
-            variants={item}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onPick(opt.method)}
-            className={`group flex items-center gap-5 rounded-2xl border border-border bg-gradient-to-r ${opt.color} p-5 text-left transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5`}
-          >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-              <opt.icon className="h-6 w-6" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-base font-semibold text-foreground">{titles[opt.method]}</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">{descs[opt.method]}</p>
-            </div>
-            <svg className="h-5 w-5 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-1 group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </motion.button>
-        ))}
-      </motion.div>
+      <div className="mx-auto w-full max-w-4xl">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
+          {options.map((opt) => (
+            <Card
+              key={opt.method}
+              role="button"
+              tabIndex={0}
+              onClick={() => onPick(opt.method)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onPick(opt.method);
+                }
+              }}
+              className="group cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/30"
+            >
+              <CardContent className="flex flex-col items-start gap-4 sm:gap-5 p-6 sm:p-8 text-left">
+                <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
+                  <opt.icon className="h-7 w-7 sm:h-8 sm:w-8" />
+                </div>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <h3 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+                    {titles[opt.method]}
+                  </h3>
+                  <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">
+                    {descs[opt.method]}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

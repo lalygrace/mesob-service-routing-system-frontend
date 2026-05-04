@@ -1,83 +1,136 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { MapPin, ArrowRight, SearchX } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { MatchCandidate } from "@/lib/service-navigator/types";
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  FileCheck2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { Service } from "@/lib/service-navigator/types";
 import type { Strings } from "@/lib/service-navigator/strings";
 
 export function ResultsStep({
-  strings, candidates, userText, selectedId, onSelect,
+  strings,
+  service,
+  checked,
+  onCheckedChange,
+  onContinue,
 }: {
-  strings: Strings; candidates: MatchCandidate[]; userText: string;
-  selectedId: string | null; onSelect: (id: string) => void;
+  strings: Strings;
+  service: Service | null;
+  checked: Record<string, boolean>;
+  onCheckedChange: (next: Record<string, boolean>) => void;
+  onContinue: () => void;
 }) {
+  if (!service) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-10 text-center">
+        <AlertCircle className="h-10 w-10 text-muted-foreground/60" />
+        <p className="font-semibold text-foreground">
+          {strings.results.noResults}
+        </p>
+        <p className="max-w-md text-sm text-muted-foreground">
+          {strings.results.noResultsHint}
+        </p>
+      </div>
+    );
+  }
+
+  const requirements = service.requirements;
+  const confirmedCount = requirements.filter((req) => checked[req]).length;
+  const missing = requirements.filter((req) => !checked[req]);
+  const isReady = requirements.length > 0 && missing.length === 0;
+
   return (
-    <div className="space-y-8">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          {strings.results.heading}
-        </h1>
-      </div>
-
-      {/* User's query */}
-      <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{strings.results.youSaid}</p>
-        <p className="mt-1 text-sm text-foreground">&ldquo;{userText}&rdquo;</p>
-      </div>
-
-      {candidates.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-8 text-center">
-          <SearchX className="h-12 w-12 text-muted-foreground/50" />
-          <p className="font-semibold text-foreground">{strings.results.noResults}</p>
-          <p className="text-sm text-muted-foreground">{strings.results.noResultsHint}</p>
+    <div className="space-y-5">
+      <div className="rounded-3xl border border-border bg-card p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0 space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {strings.detail.requirements}
+            </p>
+            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+              {service.title}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {strings.detail.requirementsDesc}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border bg-background px-4 py-3 text-center">
+            <p className="text-3xl font-bold text-foreground">
+              {confirmedCount}/{requirements.length}
+            </p>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {strings.detail.itemsConfirmed}
+            </p>
+          </div>
         </div>
-      ) : (
-        <motion.div
-          className="grid gap-3"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          {candidates.map((c, i) => {
-            const service = c.service;
-            const isSelected = selectedId === service.id;
-            return (
-              <motion.button
-                key={service.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08, duration: 0.3 }}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() => onSelect(service.id)}
-                className={cn(
-                  "group flex items-center gap-4 rounded-2xl border-2 bg-card p-5 text-left transition-all duration-200",
-                  isSelected
-                    ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
-                    : "border-border hover:border-primary/30 hover:shadow-md",
-                )}
-              >
-                <div className={cn(
-                  "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors",
-                  isSelected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary",
-                )}>
-                  <MapPin className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-foreground">{service.title}</p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">{service.authority}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{service.locationHint}</p>
-                </div>
-                <ArrowRight className={cn(
-                  "h-5 w-5 shrink-0 transition-all",
-                  isSelected ? "text-primary" : "text-muted-foreground/40 group-hover:text-primary",
-                )} />
-              </motion.button>
-            );
-          })}
-        </motion.div>
-      )}
+      </div>
+
+      <section className="grid gap-3 sm:grid-cols-2">
+        {requirements.map((req) => {
+          const isChecked = Boolean(checked[req]);
+          return (
+            <label
+              key={req}
+              className="flex min-h-16 items-start gap-3 rounded-2xl border border-border bg-card p-4 hover:bg-muted/40"
+            >
+              <Checkbox
+                checked={isChecked}
+                onCheckedChange={(next) => {
+                  onCheckedChange({ ...checked, [req]: Boolean(next) });
+                }}
+                aria-label={req}
+                className="mt-0.5"
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground">{req}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {isChecked
+                    ? strings.actions.selected
+                    : strings.actions.select}
+                </p>
+              </div>
+            </label>
+          );
+        })}
+      </section>
+
+      <div className="rounded-2xl border border-border bg-muted/30 p-4">
+        <div className="flex items-start gap-3">
+          {isReady ? (
+            <CheckCircle2 className="mt-0.5 h-5 w-5 text-muted-foreground" />
+          ) : (
+            <AlertTriangle className="mt-0.5 h-5 w-5 text-muted-foreground" />
+          )}
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">
+              {isReady
+                ? strings.review.readyTitle
+                : strings.review.missingDocsTitle}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {isReady
+                ? strings.review.readyDesc
+                : strings.review.missingDocsDesc}
+            </p>
+            {!isReady && missing.length > 0 && (
+              <p className="text-sm text-foreground">{missing.join(" • ")}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <Button
+        onClick={onContinue}
+        size="lg"
+        className="w-full rounded-xl h-12 gap-2"
+      >
+        <FileCheck2 className="h-4 w-4" />
+        {strings.actions.continue}
+      </Button>
     </div>
   );
 }

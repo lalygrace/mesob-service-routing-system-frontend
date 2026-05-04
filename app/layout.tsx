@@ -20,7 +20,13 @@ export const metadata: Metadata = {
   title: "Mesob Navigator — Government Service Assistant",
   description:
     "AI-powered navigation system for Mesob Center. Find the right government service instantly — by voice, text, or browsing.",
-  keywords: ["Mesob Center", "Ethiopia", "government services", "AI assistant", "service navigation"],
+  keywords: [
+    "Mesob Center",
+    "Ethiopia",
+    "government services",
+    "AI assistant",
+    "service navigation",
+  ],
 };
 
 export default function RootLayout({
@@ -34,7 +40,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${notoEthiopic.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col relative">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
