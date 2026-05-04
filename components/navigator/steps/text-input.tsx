@@ -46,7 +46,7 @@ export function TextInput({
             <button
               key={example}
               onClick={() => onChange(example)}
-              className="rounded-xl border border-border bg-card px-4 py-3 text-left text-sm text-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="rounded-xl border border-white/20 bg-card/40 backdrop-blur-md px-4 py-3 text-left text-sm text-foreground transition-all hover:bg-card/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               &ldquo;{example}&rdquo;
             </button>
@@ -56,7 +56,7 @@ export function TextInput({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Button
-          variant="outline"
+          variant="glass"
           onClick={onSwitchToVoice}
           size="lg"
           className="rounded-xl h-12"
@@ -64,6 +64,7 @@ export function TextInput({
           {strings.intake.voiceTitle}
         </Button>
         <Button
+          variant="glass"
           onClick={onSubmit}
           disabled={value.trim().length < 3}
           size="lg"

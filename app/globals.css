@@ -199,7 +199,7 @@
         font-family: var(--font-heading);
     }
 
-    html::before {
+    body::before {
         content: "";
         position: fixed;
         inset: 0;
@@ -207,11 +207,14 @@
         background-image: url('/mesoblogo.png');
         background-position: center;
         background-repeat: no-repeat;
-        background-size: min(70vw, 70vh);
+        background-size: 90vmin;
+        opacity: 0.15;
+        mix-blend-mode: multiply;
         pointer-events: none;
     }
 
-    .dark html::before {
-        opacity: 0.25;
+    .dark body::before {
+        opacity: 0.1;
+        mix-blend-mode: screen;
     }
 }

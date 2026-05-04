@@ -202,9 +202,9 @@ function NavigateContent() {
       )}
 
       <main className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative z-10">
-        <div className="w-full max-w-5xl h-[85vh] min-h-[600px] max-h-[900px] bg-background/30 dark:bg-background/40 backdrop-blur-3xl border border-white/20 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col">
+        <div className="w-full max-w-5xl h-[85vh] min-h-[600px] max-h-[900px] rounded-3xl overflow-hidden flex flex-col">
           {/* Step indicator */}
-          <div className="border-b border-white/10 dark:border-white/5 bg-background/20 py-4 px-6 shrink-0">
+          <div className="border-b border-white/10 dark:border-white/5 bg-background/20 backdrop-blur-md py-4 px-6 shrink-0">
             <div className="mx-auto max-w-4xl">
               <StepIndicator
                 steps={getStepDefs(strings)}
@@ -326,7 +326,7 @@ function NavigateContent() {
 
             {/* Bottom bar with back button */}
             {showBack && (
-              <div className="border-t border-border/50 bg-background/40 px-6 py-4">
+              <div className="border-t border-white/10 dark:border-white/5 bg-background/40 backdrop-blur-md px-6 py-4">
                 <div className="mx-auto max-w-4xl">
                   <Button
                     variant="ghost"
