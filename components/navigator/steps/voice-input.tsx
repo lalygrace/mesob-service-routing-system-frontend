@@ -241,7 +241,7 @@ export function VoiceInput({
             value
           ) : (
             <span className="text-muted-foreground">
-              {strings.problem.placeholder}
+              {strings.case.placeholder}
             </span>
           )}
         </div>

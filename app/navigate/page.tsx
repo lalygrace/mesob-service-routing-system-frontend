@@ -34,7 +34,7 @@ type StepId =
   | "language"
   | "intake"
   | "voice"
-  | "problem"
+  | "case"
   | "assistant"
   | "results"
   | "review";
@@ -78,7 +78,7 @@ function NavigateContent() {
   const [intakeMethod, setIntakeMethod] = React.useState<
     "voice" | "type" | null
   >(null);
-  const [problemText, setProblemText] = React.useState("");
+  const [caseText, setCaseText] = React.useState("");
   const [decision, setDecision] = React.useState<Decision | null>(null);
   const [assistantError, setAssistantError] =
     React.useState<AssistantError | null>(null);
@@ -102,7 +102,7 @@ function NavigateContent() {
   // Compute which "main step" index we're on for the indicator
   const mainStepIndex = React.useMemo(() => {
     if (step === "language") return 0;
-    if (step === "intake" || step === "voice" || step === "problem") return 1;
+    if (step === "intake" || step === "voice" || step === "case") return 1;
     if (step === "assistant") return 1;
     if (step === "results") return 2;
     if (step === "review") return 3;
@@ -115,7 +115,7 @@ function NavigateContent() {
 
   function goToInput() {
     if (intakeMethod === "voice") goTo("voice");
-    else goTo("problem");
+    else goTo("case");
   }
 
   function goToReview() {
@@ -124,9 +124,9 @@ function NavigateContent() {
     goTo("review");
   }
 
-  function submitProblem(text: string) {
+  async function submitCase(text: string) {
     const cleaned = text.trim();
-    setProblemText(cleaned);
+    setCaseText(cleaned);
     setAssistantError(null);
 
     if (cleaned.length < 3) {
@@ -157,7 +157,7 @@ function NavigateContent() {
   function resetFlow() {
     setStep("language");
     setIntakeMethod(null);
-    setProblemText("");
+    setCaseText("");
     setDecision(null);
     setAssistantError(null);
     setSelectedServiceId(null);
@@ -172,7 +172,7 @@ function NavigateContent() {
         goTo("language");
         break;
       case "voice":
-      case "problem":
+      case "case":
         goTo("intake");
         break;
       case "assistant":
@@ -233,12 +233,12 @@ function NavigateContent() {
                     strings={strings}
                     onPick={(method) => {
                       setIntakeMethod(method);
-                      setProblemText("");
+                      setCaseText("");
                       setDecision(null);
                       setAssistantError(null);
                       setSelectedServiceId(null);
                       if (method === "voice") goTo("voice");
-                      else goTo("problem");
+                      else goTo("case");
                     }}
                   />
                 )}
@@ -247,22 +247,22 @@ function NavigateContent() {
                   <VoiceInput
                     language={language}
                     strings={strings}
-                    value={problemText}
-                    onChange={setProblemText}
-                    onSubmit={() => submitProblem(problemText)}
+                    value={caseText}
+                    onChange={setCaseText}
+                    onSubmit={() => submitCase(caseText)}
                     onSwitchToTyping={() => {
                       setIntakeMethod("type");
-                      goTo("problem");
+                      goTo("case");
                     }}
                   />
                 )}
 
-                {step === "problem" && (
+                {step === "case" && (
                   <TextInput
                     strings={strings}
-                    value={problemText}
-                    onChange={setProblemText}
-                    onSubmit={() => submitProblem(problemText)}
+                    value={caseText}
+                    onChange={setCaseText}
+                    onSubmit={() => submitCase(caseText)}
                     onSwitchToVoice={() => {
                       setIntakeMethod("voice");
                       goTo("voice");
@@ -273,7 +273,7 @@ function NavigateContent() {
                 {step === "assistant" && (
                   <AssistantStep
                     strings={strings}
-                    userText={problemText}
+                    userText={caseText}
                     decision={decision}
                     error={assistantError}
                     onPickClarification={(serviceIds) => {
@@ -292,7 +292,7 @@ function NavigateContent() {
                         ? () => {
                             setAssistantError(null);
                             setIntakeMethod("type");
-                            goTo("problem");
+                            goTo("case");
                           }
                         : undefined
                     }

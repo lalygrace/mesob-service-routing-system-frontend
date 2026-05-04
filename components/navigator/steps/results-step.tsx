@@ -45,7 +45,7 @@ export function ResultsStep({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-3xl border border-border bg-card p-5 sm:p-6">
+      <div className="rounded-3xl border border-white/20 bg-card/40 backdrop-blur-md p-5 sm:p-6 shadow-xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 space-y-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -58,7 +58,7 @@ export function ResultsStep({
               {strings.detail.requirementsDesc}
             </p>
           </div>
-          <div className="rounded-2xl border border-border bg-background px-4 py-3 text-center">
+          <div className="rounded-2xl border border-white/10 bg-background/50 backdrop-blur-sm px-4 py-3 text-center">
             <p className="text-3xl font-bold text-foreground">
               {confirmedCount}/{requirements.length}
             </p>
@@ -75,7 +75,7 @@ export function ResultsStep({
           return (
             <label
               key={req}
-              className="flex min-h-16 items-start gap-3 rounded-2xl border border-border bg-card p-4 hover:bg-muted/40"
+              className="flex min-h-16 items-start gap-3 rounded-2xl border border-white/10 bg-card/40 backdrop-blur-sm p-4 transition-all hover:bg-card/60"
             >
               <Checkbox
                 checked={isChecked}
@@ -98,7 +98,7 @@ export function ResultsStep({
         })}
       </section>
 
-      <div className="rounded-2xl border border-border bg-muted/30 p-4">
+      <div className="rounded-2xl border border-white/10 bg-background/30 backdrop-blur-md p-4">
         <div className="flex items-start gap-3">
           {isReady ? (
             <CheckCircle2 className="mt-0.5 h-5 w-5 text-muted-foreground" />

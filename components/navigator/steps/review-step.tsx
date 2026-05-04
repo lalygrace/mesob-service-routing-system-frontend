@@ -29,7 +29,7 @@ function DetailTile({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-background p-4">
+    <div className="rounded-2xl border border-white/10 bg-background/40 backdrop-blur-md p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
           <Icon className="h-5 w-5" />
@@ -108,9 +108,9 @@ export function ReviewStep({
 
   return (
     <div className="space-y-5">
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden bg-card/40 backdrop-blur-md border-white/20 shadow-xl">
         <CardContent className="p-0">
-          <div className="border-b border-border bg-muted/30 p-5 sm:p-6">
+          <div className="border-b border-white/10 bg-background/20 p-5 sm:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0 space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -123,7 +123,7 @@ export function ReviewStep({
                   {service.authority}
                 </p>
               </div>
-              <div className="rounded-2xl border border-border bg-background px-5 py-4">
+              <div className="rounded-2xl border border-white/10 bg-background/50 backdrop-blur-sm px-5 py-4 shadow-sm">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {strings.success.goTo}
                 </p>
@@ -160,7 +160,7 @@ export function ReviewStep({
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-        <Card>
+        <Card className="bg-card/40 backdrop-blur-md border-white/20 shadow-xl">
           <CardContent className="space-y-4 p-5">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
@@ -183,7 +183,7 @@ export function ReviewStep({
                 return (
                   <div
                     key={req}
-                    className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2"
+                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-background/40 backdrop-blur-sm px-3 py-2"
                   >
                     <CheckCircle2
                       className={
@@ -199,14 +199,14 @@ export function ReviewStep({
             </div>
 
             {missingDocs.length > 0 && (
-              <div className="rounded-xl border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+              <div className="rounded-xl border border-white/10 bg-background/30 backdrop-blur-sm p-3 text-sm text-muted-foreground">
                 {strings.review.missingDocsDesc}
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-card/40 backdrop-blur-md border-white/20 shadow-xl">
           <CardContent className="space-y-5 p-5">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">

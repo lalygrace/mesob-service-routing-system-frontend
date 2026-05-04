@@ -18,7 +18,7 @@ export type Strings = {
   steps: {
     intake: { title: string; description: string };
     voice: { title: string; description: string };
-    problem: { title: string; description: string };
+    case: { title: string; description: string };
     categories: { title: string; description: string };
     assistant: { title: string; description: string };
     clarify: { title: string; description: string };
@@ -48,7 +48,7 @@ export type Strings = {
     whatWeHeard: string;
     editHint: string;
   };
-  problem: {
+  case: {
     heading: string;
     placeholder: string;
     hint: string;
@@ -146,7 +146,7 @@ const EN: Strings = {
   landing: {
     headline: "Find the right government service — instantly.",
     subheadline:
-      "Tell us your problem. We'll guide you to the exact office, floor, and counter at Mesob Center.",
+      "Tell us about your case. We'll guide you to the exact office, floor, and counter at Mesob Center.",
     selectLanguage: "Choose your language",
     featureVoice: "Voice Enabled",
     featureVoiceDesc: "Speak naturally — we understand.",
@@ -161,8 +161,8 @@ const EN: Strings = {
       title: "Language",
       description: "Choose your language and input method.",
     },
-    voice: { title: "Speak", description: "Tell us your problem." },
-    problem: { title: "Type", description: "Describe your problem." },
+    voice: { title: "Speak", description: "Describe your case." },
+    case: { title: "Type", description: "Describe your case." },
     categories: { title: "Browse", description: "Pick a service area." },
     assistant: {
       title: "Assistant",
@@ -183,15 +183,15 @@ const EN: Strings = {
   intake: {
     heading: "How can we help you today?",
     subheading: "Choose the easiest option for you.",
-    voiceTitle: "Speak your problem",
+    voiceTitle: "Speak your case",
     voiceDesc: "Tap and speak — the fastest option.",
-    typeTitle: "Type your problem",
+    typeTitle: "Type your case",
     typeDesc: "Describe it in a short sentence.",
     browseTitle: "Browse categories",
     browseDesc: "Choose from common service areas.",
   },
   voice: {
-    heading: "Speak your problem",
+    heading: "Speak your case",
     holdToSpeak: "Hold to speak",
     listening: "Listening…",
     release: "Release to stop",
@@ -201,8 +201,8 @@ const EN: Strings = {
     whatWeHeard: "What we heard",
     editHint: "You can edit the text before continuing.",
   },
-  problem: {
-    heading: "Type your problem",
+  case: {
+    heading: "Type your case",
     placeholder: 'Example: "I lost my ID"',
     hint: "Keep it short. We'll ask if anything is unclear.",
     examples: "Popular services",
@@ -311,7 +311,7 @@ const AM: Strings = {
   appSubtitle: "የመንግስት አገልግሎት ረዳት",
   landing: {
     headline: "ትክክለኛውን የመንግስት አገልግሎት — ወዲያውኑ ያግኙ።",
-    subheadline: "ችግርዎን ይንገሩን። ወደ ትክክለኛው ቢሮ፣ ፎቅ እና ካውንተር እንመራዎታለን።",
+    subheadline: "ጉዳይዎን ይንገሩን። ወደ ትክክለኛው ቢሮ፣ ፎቅ እና ካውንተር እንመራዎታለን።",
     selectLanguage: "ቋንቋ ይምረጡ",
     featureVoice: "በድምጽ የሚሰራ",
     featureVoiceDesc: "በተፈጥሮ ይናገሩ — እንረዳለን።",
@@ -323,8 +323,8 @@ const AM: Strings = {
   },
   steps: {
     intake: { title: "ቋንቋ", description: "ቋንቋዎን እና የመግቢያ መንገድዎን ይምረጡ።" },
-    voice: { title: "ይናገሩ", description: "ችግርዎን ይንገሩን።" },
-    problem: { title: "ይጻፉ", description: "ችግርዎን ይግለጹ።" },
+    voice: { title: "ይናገሩ", description: "ጉዳይዎን ይንገሩን።" },
+    case: { title: "ይጻፉ", description: "ጉዳይዎን ይግለጹ።" },
     categories: { title: "ያስሱ", description: "የአገልግሎት ዘርፍ ይምረጡ።" },
     assistant: { title: "ረዳት", description: "ካስፈለገ ፈጣን ጥያቄ ይመልሱ።" },
     clarify: { title: "ያብራሩ", description: "እንድናጠብዎ ይርዱን።" },
@@ -336,15 +336,15 @@ const AM: Strings = {
   intake: {
     heading: "ዛሬ እንዴት ልንረዳዎ እንችላለን?",
     subheading: "ለእርስዎ ቀላሉን አማራጭ ይምረጡ።",
-    voiceTitle: "ችግርዎን ይናገሩ",
+    voiceTitle: "ጉዳይዎን ይናገሩ",
     voiceDesc: "ይንኩ እና ይናገሩ — ፈጣን አማራጭ።",
-    typeTitle: "ችግርዎን ይጻፉ",
+    typeTitle: "ጉዳይዎን ይጻፉ",
     typeDesc: "በአጭር ዓረፍተ ነገር ይግለጹ።",
     browseTitle: "ምድቦችን ያስሱ",
     browseDesc: "ከተለመዱ አገልግሎት ዘርፎች ይምረጡ።",
   },
   voice: {
-    heading: "ችግርዎን ይናገሩ",
+    heading: "ጉዳይዎን ይናገሩ",
     holdToSpeak: "ለመናገር ይያዙ",
     listening: "በማዳመጥ ላይ…",
     release: "ለማቆም ይልቀቁ",
@@ -354,8 +354,8 @@ const AM: Strings = {
     whatWeHeard: "የሰማነው",
     editHint: "ከመቀጠልዎ በፊት ጽሑፉን ማስተካከል ይችላሉ።",
   },
-  problem: {
-    heading: "ችግርዎን ይጻፉ",
+  case: {
+    heading: "ጉዳይዎን ይጻፉ",
     placeholder: 'ምሳሌ: "መታወቂያዬ ጠፋ"',
     hint: "አጭር ያድርጉት። ግልጽ ያልሆነ ነገር ካለ እንጠይቃለን።",
     examples: "ታዋቂ አገልግሎቶች",
@@ -463,7 +463,7 @@ const OM: Strings = {
   landing: {
     headline: "Tajaajila mootummaa sirrii — dafqaan argadhu.",
     subheadline:
-      "Rakkoo kee nutti himi. Gara waajjira, darbii fi kaawuntaraa sirrii si qajeelchina.",
+      "Dhimma kee nutti himi. Gara waajjira, darbii fi kaawuntaraa sirrii si qajeelchina.",
     selectLanguage: "Afaan filadhu",
     featureVoice: "Sagaleen Hojjeta",
     featureVoiceDesc: "Akka uumamaatti dubbadhu.",
@@ -478,8 +478,8 @@ const OM: Strings = {
       title: "Afaan",
       description: "Afaan fi karaa galtee filadhu.",
     },
-    voice: { title: "Dubbadhu", description: "Rakkoo kee nutti himi." },
-    problem: { title: "Barreessi", description: "Rakkoo kee ibsi." },
+    voice: { title: "Dubbadhu", description: "Dhimma kee nutti himi." },
+    case: { title: "Barreessi", description: "Dhimma kee ibsi." },
     categories: { title: "Sakatta'i", description: "Gosa tajaajilaa filadhu." },
     assistant: {
       title: "Gargaaraa",
@@ -503,15 +503,15 @@ const OM: Strings = {
   intake: {
     heading: "Har'a akkamiin si gargaaruu dandeenya?",
     subheading: "Filannoo siif salphaa ta'e filadhu.",
-    voiceTitle: "Rakkoo kee dubbadhu",
+    voiceTitle: "Dhimma kee dubbadhu",
     voiceDesc: "Tuqi dubbadhu — filannoo dafqa.",
-    typeTitle: "Rakkoo kee barreessi",
+    typeTitle: "Dhimma kee barreessi",
     typeDesc: "Himaamsa gabaabaadhaan ibsi.",
     browseTitle: "Ramaddii sakatta'i",
     browseDesc: "Gosa tajaajila beekamoo keessaa filadhu.",
   },
   voice: {
-    heading: "Rakkoo kee dubbadhu",
+    heading: "Dhimma kee dubbadhu",
     holdToSpeak: "Dubbachuuf qabi",
     listening: "Dhaggeeffachaa…",
     release: "Dhaabachuuf gadi lakkisi",
@@ -521,8 +521,8 @@ const OM: Strings = {
     whatWeHeard: "Kan dhageenye",
     editHint: "Osoo hin itti fufiin barreeffama fooyyessuu dandeessa.",
   },
-  problem: {
-    heading: "Rakkoo kee barreessi",
+  case: {
+    heading: "Dhimma kee barreessi",
     placeholder: 'Fkn: "Waraqaa eenyummaa koo dhabee"',
     hint: "Gabaabsi. Yoo hin ifa ta'iin ni gaafanna.",
     examples: "Tajaajila beekamoo",

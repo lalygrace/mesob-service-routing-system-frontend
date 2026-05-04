@@ -21,16 +21,16 @@ export function TextInput({
     <div className="space-y-5">
       <div className="text-center space-y-2">
         <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-          {strings.problem.heading}
+          {strings.case.heading}
         </h1>
-        <p className="text-muted-foreground">{strings.problem.hint}</p>
+        <p className="text-muted-foreground">{strings.case.hint}</p>
       </div>
 
       <div className="space-y-2">
         <Textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={strings.problem.placeholder}
+          placeholder={strings.case.placeholder}
           autoFocus
           className="min-h-28 rounded-xl text-base resize-none"
         />
@@ -39,10 +39,10 @@ export function TextInput({
       {/* Quick examples */}
       <div className="space-y-3">
         <p className="text-sm font-medium text-muted-foreground">
-          {strings.problem.examples}
+          {strings.case.examples}
         </p>
         <div className="grid gap-2 sm:grid-cols-2">
-          {strings.problem.exampleItems.map((example) => (
+          {strings.case.exampleItems.map((example) => (
             <button
               key={example}
               onClick={() => onChange(example)}
