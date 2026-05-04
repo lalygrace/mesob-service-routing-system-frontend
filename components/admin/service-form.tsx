@@ -22,14 +22,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import type { Service, ServiceTopicId, LanguageCode } from "@/lib/service-navigator/types";
+import type {
+  Service,
+  ServiceTopicId,
+  LanguageCode,
+} from "@/lib/service-navigator/types";
 
 const AUTHORITIES = [
   { value: "Identity Services (placeholder)", label: "National ID Authority" },
-  { value: "Passport Services (placeholder)", label: "Immigration & Passport Services" },
-  { value: "Business Services (placeholder)", label: "Business Registration & Licensing" },
+  {
+    value: "Passport Services (placeholder)",
+    label: "Immigration & Passport Services",
+  },
+  {
+    value: "Business Services (placeholder)",
+    label: "Business Registration & Licensing",
+  },
   { value: "Transport Services (placeholder)", label: "Transport Authority" },
-  { value: "Revenue Services (placeholder)", label: "Revenue & Customs Authority" },
+  {
+    value: "Revenue Services (placeholder)",
+    label: "Revenue & Customs Authority",
+  },
 ];
 
 type ServiceFormProps = {
@@ -39,7 +52,12 @@ type ServiceFormProps = {
   onSave: (data: Omit<Service, "id">) => void;
 };
 
-export function ServiceForm({ open, onOpenChange, service, onSave }: ServiceFormProps) {
+export function ServiceForm({
+  open,
+  onOpenChange,
+  service,
+  onSave,
+}: ServiceFormProps) {
   const isEdit = !!service;
 
   const [title, setTitle] = React.useState("");
@@ -62,7 +80,9 @@ export function ServiceForm({ open, onOpenChange, service, onSave }: ServiceForm
       setLocationHint(service.locationHint);
       setFeeHint(service.feeHint);
       setDurationHint(service.durationHint);
-      setRequirements(service.requirements.length > 0 ? service.requirements : [""]);
+      setRequirements(
+        service.requirements.length > 0 ? service.requirements : [""],
+      );
       setWorkflowSteps([""]);
       setKeywordsEn(service.keywords.en.join(", "));
       setKeywordsAm(service.keywords.am.join(", "));
@@ -224,7 +244,10 @@ export function ServiceForm({ open, onOpenChange, service, onSave }: ServiceForm
               </p>
               {requirements.map((req, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <Badge variant="outline" className="shrink-0 text-xs font-mono w-6 justify-center">
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 text-xs font-mono w-6 justify-center"
+                  >
                     {i + 1}
                   </Badge>
                   <Input
@@ -264,7 +287,10 @@ export function ServiceForm({ open, onOpenChange, service, onSave }: ServiceForm
               </p>
               {workflowSteps.map((step, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <Badge variant="secondary" className="shrink-0 text-xs font-mono w-6 justify-center">
+                  <Badge
+                    variant="secondary"
+                    className="shrink-0 text-xs font-mono w-6 justify-center"
+                  >
                     {i + 1}
                   </Badge>
                   <Input
@@ -333,10 +359,16 @@ export function ServiceForm({ open, onOpenChange, service, onSave }: ServiceForm
           </Tabs>
 
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit">{isEdit ? "Save Changes" : "Create Service"}</Button>
+            <Button type="submit">
+              {isEdit ? "Save Changes" : "Create Service"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
