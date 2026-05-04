@@ -44,7 +44,7 @@ export function StatCard({
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold tracking-tight">{value}</p>
+            <p className="text-4xl font-digital tracking-wider text-primary">{value}</p>
             {trend !== undefined && (
               <div className={cn("flex items-center gap-1 text-xs", trendColor)}>
                 <TrendIcon className="h-3.5 w-3.5" />
