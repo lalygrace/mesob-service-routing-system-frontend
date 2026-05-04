@@ -165,10 +165,29 @@
     * {
         @apply border-border outline-ring/50;
     }
+
     body {
-        @apply bg-background text-foreground;
+        @apply bg-transparent text-foreground;
     }
+
     html {
-        @apply font-sans;
+        @apply font-sans bg-background;
+    }
+
+    html::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-image: url('/mesoblogo.png');
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: min(70vw, 70vh);
+        opacity: 0.2;
+        pointer-events: none;
+    }
+
+    .dark html::before {
+        opacity: 0.25;
     }
 }

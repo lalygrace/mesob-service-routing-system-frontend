@@ -26,13 +26,15 @@ export function AppHeader({
   const strings = getStrings(language);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         {/* Left: Logo & Title */}
         <Link href="/" className="flex items-center gap-3 min-w-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-sm">
-            M
-          </div>
+          <img
+            src="/mesoblogo.png"
+            alt="Mesob Logo"
+            className="h-10 w-10 shrink-0 object-contain"
+          />
           <div className="min-w-0 hidden sm:block">
             <p className="text-sm font-semibold leading-5 tracking-tight text-foreground truncate">
               {strings.appTitle}

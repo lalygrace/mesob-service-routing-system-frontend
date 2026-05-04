@@ -193,7 +193,7 @@ function NavigateContent() {
   const showBack = step !== "language";
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
+    <div className="flex min-h-dvh flex-col bg-transparent">
       {!isFullscreen && <AppHeader language={language} showHome />}
       {isFullscreen && (
         <div className="fixed right-4 top-4 z-50 rounded-full border border-border bg-background/95">
@@ -203,7 +203,7 @@ function NavigateContent() {
 
       <main className="flex flex-1 flex-col">
         {/* Step indicator */}
-        <div className="border-b border-border bg-background py-3 px-4">
+        <div className="border-b border-border bg-background/50 backdrop-blur-sm py-3 px-4">
           <div className="mx-auto max-w-5xl">
             <StepIndicator
               steps={getStepDefs(strings)}
