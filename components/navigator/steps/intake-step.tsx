@@ -50,7 +50,7 @@ export function IntakeStep({
                   onPick(opt.method);
                 }
               }}
-              className="group cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/30"
+              className="group cursor-pointer transition-all hover:border-primary/50 hover:bg-card/80 shadow-xl"
             >
               <CardContent className="flex flex-col items-start gap-4 sm:gap-5 p-6 sm:p-8 text-left">
                 <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">

@@ -175,7 +175,7 @@ export function VoiceInput({
       </div>
 
       {!supported ? (
-        <div className="rounded-xl border border-border bg-card p-6 text-center space-y-3">
+        <div className="rounded-xl border border-white/20 bg-card/40 backdrop-blur-md p-6 text-center space-y-3 shadow-xl">
           <MicOff className="mx-auto h-10 w-10 text-muted-foreground" />
           <p className="font-semibold text-foreground">
             {strings.voice.notSupported}
@@ -183,12 +183,12 @@ export function VoiceInput({
           <p className="text-sm text-muted-foreground">
             {strings.voice.notSupportedDesc}
           </p>
-          <Button onClick={onSwitchToTyping} size="lg" className="rounded-xl">
+          <Button onClick={onSwitchToTyping} variant="glass" size="lg" className="rounded-xl">
             {strings.voice.typeInstead}
           </Button>
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-xl border border-white/20 bg-card/40 backdrop-blur-md p-5 shadow-xl">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
               <p className="text-sm font-semibold text-foreground">
@@ -210,10 +210,10 @@ export function VoiceInput({
                 if (listening) stop();
               }}
               className={
-                "flex h-14 w-14 items-center justify-center rounded-full border border-border bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
+                "flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-background/50 backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
                 (listening
                   ? "bg-primary text-primary-foreground"
-                  : "text-foreground hover:bg-muted")
+                  : "text-foreground hover:bg-muted/40")
               }
               aria-label={strings.voice.holdToSpeak}
             >
@@ -249,14 +249,14 @@ export function VoiceInput({
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Button
-          variant="outline"
+          variant="glass"
           onClick={onSwitchToTyping}
           className="rounded-xl h-12"
         >
           {strings.voice.typeInstead}
         </Button>
         <Button
-          variant="outline"
+          variant="glass"
           onClick={askAgain}
           className="rounded-xl h-12 gap-2"
         >
@@ -264,6 +264,7 @@ export function VoiceInput({
           {strings.actions.askAgain}
         </Button>
         <Button
+          variant="glass"
           onClick={onSubmit}
           disabled={value.trim().length < 3}
           className="rounded-xl h-12"

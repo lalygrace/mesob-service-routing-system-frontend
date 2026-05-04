@@ -201,144 +201,146 @@ function NavigateContent() {
         </div>
       )}
 
-      <main className="flex flex-1 flex-col">
-        {/* Step indicator */}
-        <div className="border-b border-border bg-background/50 backdrop-blur-sm py-3 px-4">
-          <div className="mx-auto max-w-5xl">
-            <StepIndicator
-              steps={getStepDefs(strings)}
-              currentIndex={mainStepIndex}
-            />
-          </div>
-        </div>
-
-        {/* Content area */}
-        <div className="flex-1 flex flex-col">
-          <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-5 sm:px-6 sm:py-8">
-            <div className="w-full">
-              {step === "language" && (
-                <LanguageStep
-                  strings={strings}
-                  language={language}
-                  onLanguageChange={(nextLanguage) => {
-                    setLanguage(nextLanguage);
-                    goTo("intake");
-                  }}
-                />
-              )}
-
-              {step === "intake" && (
-                <IntakeStep
-                  strings={strings}
-                  onPick={(method) => {
-                    setIntakeMethod(method);
-                    setProblemText("");
-                    setDecision(null);
-                    setAssistantError(null);
-                    setSelectedServiceId(null);
-                    if (method === "voice") goTo("voice");
-                    else goTo("problem");
-                  }}
-                />
-              )}
-
-              {step === "voice" && (
-                <VoiceInput
-                  language={language}
-                  strings={strings}
-                  value={problemText}
-                  onChange={setProblemText}
-                  onSubmit={() => submitProblem(problemText)}
-                  onSwitchToTyping={() => {
-                    setIntakeMethod("type");
-                    goTo("problem");
-                  }}
-                />
-              )}
-
-              {step === "problem" && (
-                <TextInput
-                  strings={strings}
-                  value={problemText}
-                  onChange={setProblemText}
-                  onSubmit={() => submitProblem(problemText)}
-                  onSwitchToVoice={() => {
-                    setIntakeMethod("voice");
-                    goTo("voice");
-                  }}
-                />
-              )}
-
-              {step === "assistant" && (
-                <AssistantStep
-                  strings={strings}
-                  userText={problemText}
-                  decision={decision}
-                  error={assistantError}
-                  onPickClarification={(serviceIds) => {
-                    const next = candidatesFromServiceIds(services, serviceIds);
-                    setCheckedRequirements({});
-                    setSelectedServiceId(next[0]?.service.id ?? null);
-                    goTo("results");
-                  }}
-                  onRetry={() => {
-                    setAssistantError(null);
-                    goToInput();
-                  }}
-                  onStartOver={resetFlow}
-                  onSwitchToTyping={
-                    intakeMethod === "voice"
-                      ? () => {
-                          setAssistantError(null);
-                          setIntakeMethod("type");
-                          goTo("problem");
-                        }
-                      : undefined
-                  }
-                />
-              )}
-
-              {step === "results" && (
-                <ResultsStep
-                  strings={strings}
-                  service={selectedService}
-                  checked={checkedRequirements}
-                  onCheckedChange={setCheckedRequirements}
-                  onContinue={goToReview}
-                />
-              )}
-
-              {step === "review" && (
-                <ReviewStep
-                  strings={strings}
-                  service={selectedService}
-                  checked={checkedRequirements}
-                  rating={rating}
-                  onRatingChange={setRating}
-                  submitted={feedbackSubmitted}
-                  onSubmit={() => setFeedbackSubmitted(true)}
-                  onStartOver={resetFlow}
-                />
-              )}
+      <main className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative z-10">
+        <div className="w-full max-w-5xl h-[85vh] min-h-[600px] max-h-[900px] rounded-3xl overflow-hidden flex flex-col">
+          {/* Step indicator */}
+          <div className="border-b border-white/10 dark:border-white/5 bg-background/20 backdrop-blur-md py-4 px-6 shrink-0">
+            <div className="mx-auto max-w-4xl">
+              <StepIndicator
+                steps={getStepDefs(strings)}
+                currentIndex={mainStepIndex}
+              />
             </div>
           </div>
 
-          {/* Bottom bar with back button */}
-          {showBack && (
-            <div className="border-t border-border bg-background/80 px-4 py-3">
-              <div className="mx-auto max-w-5xl">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleBack}
-                  className="gap-2 text-muted-foreground hover:text-foreground"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  {strings.actions.back}
-                </Button>
+          {/* Content area */}
+          <div className="flex-1 flex flex-col bg-transparent overflow-y-auto">
+            <div className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-8 sm:py-10">
+              <div className="w-full">
+                {step === "language" && (
+                  <LanguageStep
+                    strings={strings}
+                    language={language}
+                    onLanguageChange={(nextLanguage) => {
+                      setLanguage(nextLanguage);
+                      goTo("intake");
+                    }}
+                  />
+                )}
+
+                {step === "intake" && (
+                  <IntakeStep
+                    strings={strings}
+                    onPick={(method) => {
+                      setIntakeMethod(method);
+                      setProblemText("");
+                      setDecision(null);
+                      setAssistantError(null);
+                      setSelectedServiceId(null);
+                      if (method === "voice") goTo("voice");
+                      else goTo("problem");
+                    }}
+                  />
+                )}
+
+                {step === "voice" && (
+                  <VoiceInput
+                    language={language}
+                    strings={strings}
+                    value={problemText}
+                    onChange={setProblemText}
+                    onSubmit={() => submitProblem(problemText)}
+                    onSwitchToTyping={() => {
+                      setIntakeMethod("type");
+                      goTo("problem");
+                    }}
+                  />
+                )}
+
+                {step === "problem" && (
+                  <TextInput
+                    strings={strings}
+                    value={problemText}
+                    onChange={setProblemText}
+                    onSubmit={() => submitProblem(problemText)}
+                    onSwitchToVoice={() => {
+                      setIntakeMethod("voice");
+                      goTo("voice");
+                    }}
+                  />
+                )}
+
+                {step === "assistant" && (
+                  <AssistantStep
+                    strings={strings}
+                    userText={problemText}
+                    decision={decision}
+                    error={assistantError}
+                    onPickClarification={(serviceIds) => {
+                      const next = candidatesFromServiceIds(services, serviceIds);
+                      setCheckedRequirements({});
+                      setSelectedServiceId(next[0]?.service.id ?? null);
+                      goTo("results");
+                    }}
+                    onRetry={() => {
+                      setAssistantError(null);
+                      goToInput();
+                    }}
+                    onStartOver={resetFlow}
+                    onSwitchToTyping={
+                      intakeMethod === "voice"
+                        ? () => {
+                            setAssistantError(null);
+                            setIntakeMethod("type");
+                            goTo("problem");
+                          }
+                        : undefined
+                    }
+                  />
+                )}
+
+                {step === "results" && (
+                  <ResultsStep
+                    strings={strings}
+                    service={selectedService}
+                    checked={checkedRequirements}
+                    onCheckedChange={setCheckedRequirements}
+                    onContinue={goToReview}
+                  />
+                )}
+
+                {step === "review" && (
+                  <ReviewStep
+                    strings={strings}
+                    service={selectedService}
+                    checked={checkedRequirements}
+                    rating={rating}
+                    onRatingChange={setRating}
+                    submitted={feedbackSubmitted}
+                    onSubmit={() => setFeedbackSubmitted(true)}
+                    onStartOver={resetFlow}
+                  />
+                )}
               </div>
             </div>
-          )}
+
+            {/* Bottom bar with back button */}
+            {showBack && (
+              <div className="border-t border-white/10 dark:border-white/5 bg-background/40 backdrop-blur-md px-6 py-4">
+                <div className="mx-auto max-w-4xl">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBack}
+                    className="gap-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    {strings.actions.back}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>

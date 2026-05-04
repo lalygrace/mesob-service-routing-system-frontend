@@ -53,8 +53,8 @@ export function LanguageStep({
                   }
                 }}
                 className={cn(
-                  "group cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/30",
-                  isSelected && "border-primary bg-primary/5 ring-1 ring-primary"
+                  "group cursor-pointer transition-all hover:border-primary/50 hover:bg-card/80 shadow-xl",
+                  isSelected && "border-primary bg-primary/10 ring-1 ring-primary"
                 )}
               >
                 <CardContent className="flex flex-col items-start gap-4 sm:gap-5 p-6 sm:p-8 text-left">

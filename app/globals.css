@@ -1,3 +1,6 @@
+@import url('https://fonts.cdnfonts.com/css/digital-7-mono');
+@import url('https://fonts.googleapis.com/css2?family=Aldrich&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "tailwindcss";
 @import "shadcn/tailwind.css";
 
@@ -11,9 +14,11 @@
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-sans);
+    --font-sans: 'Inter', sans-serif;
     --font-mono: var(--font-geist-mono);
-    --font-heading: var(--font-sans);
+    --font-heading: 'Inter', sans-serif;
+    --font-digital: 'Digital-7 Mono', monospace;
+    --font-admin: 'Aldrich', sans-serif;
 
     /* Sidebar tokens (ShadcnUI) */
     --color-sidebar-ring: var(--sidebar-ring);
@@ -64,7 +69,7 @@
    Light Mode — Azure #1520A6 Brand
    ────────────────────────────────────────────────────────── */
 :root {
-    --background: oklch(0.98 0.004 260);
+    --background: oklch(0.96 0.015 260);
     --foreground: oklch(0.14 0.02 260);
 
     --card: oklch(1 0 0);
@@ -90,6 +95,7 @@
     --border: oklch(0.91 0.01 260);
     --input: oklch(0.91 0.01 260);
     --ring: oklch(0.33 0.22 268);
+    --gold: oklch(0.75 0.15 80);
 
     /* Charts — Azure spectrum */
     --chart-1: oklch(0.33 0.22 268);
@@ -140,6 +146,7 @@
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 12%);
     --ring: oklch(0.58 0.2 268);
+    --gold: oklch(0.65 0.15 80);
 
     /* Charts */
     --chart-1: oklch(0.58 0.2 268);
@@ -172,9 +179,27 @@
 
     html {
         @apply font-sans bg-background;
+        background-image:
+            /* Ambient Azure splashes */
+            radial-gradient(circle at 15% 25%, color-mix(in srgb, var(--primary) 10%, transparent) 0%, transparent 35%),
+            radial-gradient(circle at 85% 75%, color-mix(in srgb, var(--primary) 10%, transparent) 0%, transparent 35%),
+            /* Ambient Gold splashes */
+            radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--gold) 10%, transparent) 0%, transparent 25%),
+            radial-gradient(circle at 20% 80%, color-mix(in srgb, var(--gold) 10%, transparent) 0%, transparent 20%);
+        background-size: 100vw 100vh;
+        background-attachment: fixed;
     }
 
-    html::before {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-heading);
+    }
+
+    body::before {
         content: "";
         position: fixed;
         inset: 0;
@@ -182,12 +207,14 @@
         background-image: url('/mesoblogo.png');
         background-position: center;
         background-repeat: no-repeat;
-        background-size: min(70vw, 70vh);
-        opacity: 0.2;
+        background-size: 90vmin;
+        opacity: 0.15;
+        mix-blend-mode: multiply;
         pointer-events: none;
     }
 
-    .dark html::before {
-        opacity: 0.25;
+    .dark body::before {
+        opacity: 0.1;
+        mix-blend-mode: screen;
     }
 }
