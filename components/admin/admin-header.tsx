@@ -49,10 +49,12 @@ export function AdminHeader() {
                 <BreadcrumbPage className="font-medium">{label}</BreadcrumbPage>
               </BreadcrumbItem>
             ) : (
-              <BreadcrumbItem key={segment}>
-                <BreadcrumbLink href={href}>{label}</BreadcrumbLink>
-                <BreadcrumbSeparator />
-              </BreadcrumbItem>
+              [
+                <BreadcrumbItem key={`item-${segment}-${index}`}>
+                  <BreadcrumbLink href={href}>{label}</BreadcrumbLink>
+                </BreadcrumbItem>,
+                <BreadcrumbSeparator key={`separator-${segment}-${index}`} />,
+              ]
             );
           })}
         </BreadcrumbList>
