@@ -1,47 +1,47 @@
 /**
- * Authentication utilities
- * TODO: Replace with actual authentication implementation
+ * Authentication utilities integrated with backend better-auth
  */
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: "super_admin" | "admin" | "moderator";
+  role: "super_admin" | "admin" | "moderator" | "viewer";
 }
 
-export function isAuthenticated(): boolean {
-  if (typeof window === "undefined") return false;
-  return !!localStorage.getItem("authToken");
-}
+export async function getCurrentUser(): Promise<User | null> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`, {
+      credentials: 'include',
+    });
 
-export function getCurrentUser(): User | null {
-  if (typeof window === "undefined") return null;
-  
-  const email = localStorage.getItem("userEmail");
-  if (!email) return null;
+    if (!response.ok) {
+      return null;
+    }
 
-  // Mock user data
-  return {
-    id: "1",
-    name: "Admin User",
-    email: email,
-    role: "super_admin",
-  };
-}
-
-export function logout() {
-  if (typeof window === "undefined") return;
-  
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("userEmail");
-  window.location.href = "/auth/login";
-}
-
-export function requireAuth() {
-  if (typeof window === "undefined") return;
-  
-  if (!isAuthenticated()) {
-    window.location.href = "/auth/login";
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return null;
   }
+}
+
+export async function logout() {
+  try {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/sign-out`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+  } finally {
+    if (typeof window !== "undefined") {
+      window.location.href = "/auth/login";
+    }
+  }
+}
+
+export async function isAuthenticated(): Promise<boolean> {
+  const user = await getCurrentUser();
+  return user !== null;
 }

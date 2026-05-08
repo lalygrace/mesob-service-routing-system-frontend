@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { PublicRoute } from "@/components/auth/public-route";
+import { toast } from "sonner";
 
 function LoginPageContent() {
   const router = useRouter();
@@ -25,20 +26,28 @@ function LoginPageContent() {
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Mock authentication
-      if (email && password) {
-        // Store auth token (mock)
-        localStorage.setItem("authToken", "mock-token");
-        localStorage.setItem("userEmail", email);
-        router.push("/admin");
-      } else {
-        setError("Please enter both email and password");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/sign-in/email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Invalid credentials. Please try again.");
+        toast.error(data.message || "Login failed");
+        return;
       }
+
+      toast.success("Login successful");
+      router.push("/admin");
     } catch (err) {
-      setError("Invalid credentials. Please try again.");
+      setError("An error occurred. Please try again.");
+      toast.error("An error occurred during login");
     } finally {
       setIsLoading(false);
     }
