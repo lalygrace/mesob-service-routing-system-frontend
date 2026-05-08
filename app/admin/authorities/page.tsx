@@ -28,13 +28,36 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AuthorityForm } from "@/components/admin/authority-form";
-import { MOCK_AUTHORITIES, type Authority } from "@/lib/mock/authorities";
+import { authoritiesApi, ApiError } from "@/lib/api-client";
+import { toast } from "sonner";
+import type { Authority } from "@/lib/mock/authorities";
 
 export default function AuthoritiesPage() {
-  const [authorities, setAuthorities] = React.useState<Authority[]>(MOCK_AUTHORITIES);
+  const [authorities, setAuthorities] = React.useState<Authority[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Authority | null>(null);
+
+  React.useEffect(() => {
+    loadAuthorities();
+  }, []);
+
+  async function loadAuthorities() {
+    try {
+      setLoading(true);
+      const data = await authoritiesApi.list();
+      setAuthorities(data);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to load authorities: ${error.message}`);
+      } else {
+        toast.error("Failed to load authorities");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const filtered = authorities.filter(
     (a) =>
@@ -42,25 +65,39 @@ export default function AuthoritiesPage() {
       a.abbreviation.toLowerCase().includes(search.toLowerCase()),
   );
 
-  function handleSave(data: Omit<Authority, "id" | "createdAt" | "serviceCount">) {
-    if (editing) {
-      setAuthorities((prev) =>
-        prev.map((a) => (a.id === editing.id ? { ...a, ...data } : a)),
-      );
-    } else {
-      const newAuth: Authority = {
-        ...data,
-        id: `auth-${Date.now()}`,
-        serviceCount: 0,
-        createdAt: new Date().toISOString().slice(0, 10),
-      };
-      setAuthorities((prev) => [...prev, newAuth]);
+  async function handleSave(data: Omit<Authority, "id" | "createdAt" | "serviceCount">) {
+    try {
+      if (editing) {
+        await authoritiesApi.update(editing.id, data);
+        toast.success("Authority updated successfully");
+      } else {
+        await authoritiesApi.create(data);
+        toast.success("Authority created successfully");
+      }
+      await loadAuthorities();
+      setEditing(null);
+      setFormOpen(false);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to save authority: ${error.message}`);
+      } else {
+        toast.error("Failed to save authority");
+      }
     }
-    setEditing(null);
   }
 
-  function handleDelete(id: string) {
-    setAuthorities((prev) => prev.filter((a) => a.id !== id));
+  async function handleDelete(id: string) {
+    try {
+      await authoritiesApi.delete(id);
+      toast.success("Authority deleted successfully");
+      await loadAuthorities();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to delete authority: ${error.message}`);
+      } else {
+        toast.error("Failed to delete authority");
+      }
+    }
   }
 
   function openEdit(authority: Authority) {
@@ -121,7 +158,13 @@ export default function AuthoritiesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12">
+                    <div className="text-muted-foreground">Loading...</div>
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">

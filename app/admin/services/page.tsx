@@ -35,14 +35,36 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServiceForm } from "@/components/admin/service-form";
-import { MOCK_SERVICES } from "@/lib/mock/services";
+import { servicesApi, ApiError } from "@/lib/api-client";
+import { toast } from "sonner";
 import type { Service, ServiceTopicId } from "@/lib/service-navigator/types";
 
 export default function ServicesPage() {
-  const [services, setServices] = React.useState<Service[]>(MOCK_SERVICES);
+  const [services, setServices] = React.useState<Service[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Service | null>(null);
+
+  React.useEffect(() => {
+    loadServices();
+  }, []);
+
+  async function loadServices() {
+    try {
+      setLoading(true);
+      const data = await servicesApi.list();
+      setServices(data);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to load services: ${error.message}`);
+      } else {
+        toast.error("Failed to load services");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const filtered = services.filter((s) => {
     return (
@@ -51,23 +73,39 @@ export default function ServicesPage() {
     );
   });
 
-  function handleSave(data: Omit<Service, "id">) {
-    if (editing) {
-      setServices((prev) =>
-        prev.map((s) => (s.id === editing.id ? { ...s, ...data } : s)),
-      );
-    } else {
-      const newService: Service = {
-        ...data,
-        id: `svc-${Date.now()}`,
-      };
-      setServices((prev) => [...prev, newService]);
+  async function handleSave(data: Omit<Service, "id">) {
+    try {
+      if (editing) {
+        await servicesApi.update(editing.id, data);
+        toast.success("Service updated successfully");
+      } else {
+        await servicesApi.create(data);
+        toast.success("Service created successfully");
+      }
+      await loadServices();
+      setEditing(null);
+      setFormOpen(false);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to save service: ${error.message}`);
+      } else {
+        toast.error("Failed to save service");
+      }
     }
-    setEditing(null);
   }
 
-  function handleDelete(id: string) {
-    setServices((prev) => prev.filter((s) => s.id !== id));
+  async function handleDelete(id: string) {
+    try {
+      await servicesApi.delete(id);
+      toast.success("Service deleted successfully");
+      await loadServices();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to delete service: ${error.message}`);
+      } else {
+        toast.error("Failed to delete service");
+      }
+    }
   }
 
   function openEdit(service: Service) {
@@ -131,7 +169,13 @@ export default function ServicesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12">
+                    <div className="text-muted-foreground">Loading...</div>
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">

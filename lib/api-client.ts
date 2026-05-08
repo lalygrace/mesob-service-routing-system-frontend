@@ -102,3 +102,45 @@ export const stepsApi = {
   upsertTranslation: (stepId: string, lang: string, data: any) =>
     api.put<any>(`/api/admin/steps/${stepId}/translations/${lang}`, data),
 };
+
+// Services API
+export const servicesApi = {
+  list: () => api.get<any[]>('/api/admin/services'),
+  get: (id: string) => api.get<any>(`/api/admin/services/${id}`),
+  create: (data: any) => api.post<any>('/api/admin/services', data),
+  update: (id: string, data: any) => api.patch<any>(`/api/admin/services/${id}`, data),
+  delete: (id: string) => api.delete<any>(`/api/admin/services/${id}`),
+  publish: (id: string) => api.post<any>(`/api/admin/services/${id}/publish`),
+  unpublish: (id: string) => api.post<any>(`/api/admin/services/${id}/unpublish`),
+  upsertTranslation: (id: string, lang: string, data: any) =>
+    api.put<any>(`/api/admin/services/${id}/translations/${lang}`, data),
+  listIntentMappings: (serviceId: string, lang?: string) => {
+    const params = lang ? `?lang=${lang}` : '';
+    return api.get<any[]>(`/api/admin/services/${serviceId}/intent-mappings${params}`);
+  },
+};
+
+// Authorities API
+export const authoritiesApi = {
+  list: () => api.get<any[]>('/api/admin/authorities'),
+  get: (id: string) => api.get<any>(`/api/admin/authorities/${id}`),
+  create: (data: any) => api.post<any>('/api/admin/authorities', data),
+  update: (id: string, data: any) => api.patch<any>(`/api/admin/authorities/${id}`, data),
+  delete: (id: string) => api.delete<any>(`/api/admin/authorities/${id}`),
+};
+
+// Intent Mappings API
+export const intentMappingsApi = {
+  list: () => api.get<any[]>('/api/admin/intent-mappings'),
+  listForService: (serviceId: string, lang?: string) => {
+    const params = lang ? `?lang=${lang}` : '';
+    return api.get<any[]>(`/api/admin/services/${serviceId}/intent-mappings${params}`);
+  },
+  createForService: (serviceId: string, data: any) =>
+    api.post<any>(`/api/admin/services/${serviceId}/intent-mappings`, data),
+  create: (data: any) => api.post<any>('/api/admin/intent-mappings', data),
+  update: (mappingId: string, data: any) =>
+    api.patch<any>(`/api/admin/intent-mappings/${mappingId}`, data),
+  delete: (mappingId: string) =>
+    api.delete<any>(`/api/admin/intent-mappings/${mappingId}`),
+};

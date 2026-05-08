@@ -35,11 +35,9 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { IntentForm } from "@/components/admin/intent-form";
-import {
-  MOCK_INTENTS,
-  LANGUAGE_LABELS,
-  type IntentMapping,
-} from "@/lib/mock/intents";
+import { servicesApi, intentMappingsApi, ApiError } from "@/lib/api-client";
+import { toast } from "sonner";
+import { LANGUAGE_LABELS, type IntentMapping } from "@/lib/mock/intents";
 
 const LANG_COLORS: Record<string, string> = {
   en: "bg-blue-500/10 text-blue-600 border-blue-500/20",
@@ -48,11 +46,32 @@ const LANG_COLORS: Record<string, string> = {
 };
 
 export default function IntentsPage() {
-  const [intents, setIntents] = React.useState<IntentMapping[]>(MOCK_INTENTS);
+  const [intents, setIntents] = React.useState<IntentMapping[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [langFilter, setLangFilter] = React.useState<string>("all");
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<IntentMapping | null>(null);
+
+  React.useEffect(() => {
+    loadIntents();
+  }, []);
+
+  async function loadIntents() {
+    try {
+      setLoading(true);
+      const data = await intentMappingsApi.list();
+      setIntents(data);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to load intent mappings: ${error.message}`);
+      } else {
+        toast.error("Failed to load intent mappings");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const filtered = intents.filter((intent) => {
     const matchesSearch =
@@ -64,27 +83,41 @@ export default function IntentsPage() {
     return matchesSearch && matchesLang;
   });
 
-  function handleSave(
+  async function handleSave(
     data: Omit<IntentMapping, "id" | "createdAt" | "usageCount">,
   ) {
-    if (editing) {
-      setIntents((prev) =>
-        prev.map((i) => (i.id === editing.id ? { ...i, ...data } : i)),
-      );
-    } else {
-      const newIntent: IntentMapping = {
-        ...data,
-        id: `int-${Date.now()}`,
-        usageCount: 0,
-        createdAt: new Date().toISOString().slice(0, 10),
-      };
-      setIntents((prev) => [...prev, newIntent]);
+    try {
+      if (editing) {
+        await intentMappingsApi.update(editing.id, data);
+        toast.success("Intent mapping updated successfully");
+      } else {
+        await intentMappingsApi.create(data);
+        toast.success("Intent mapping created successfully");
+      }
+      await loadIntents();
+      setEditing(null);
+      setFormOpen(false);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to save intent mapping: ${error.message}`);
+      } else {
+        toast.error("Failed to save intent mapping");
+      }
     }
-    setEditing(null);
   }
 
-  function handleDelete(id: string) {
-    setIntents((prev) => prev.filter((i) => i.id !== id));
+  async function handleDelete(id: string) {
+    try {
+      await intentMappingsApi.delete(id);
+      toast.success("Intent mapping deleted successfully");
+      await loadIntents();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to delete intent mapping: ${error.message}`);
+      } else {
+        toast.error("Failed to delete intent mapping");
+      }
+    }
   }
 
   function openEdit(intent: IntentMapping) {
@@ -158,7 +191,13 @@ export default function IntentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12">
+                    <div className="text-muted-foreground">Loading...</div>
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
