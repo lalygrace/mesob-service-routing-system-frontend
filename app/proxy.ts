@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+// Backend API URL - typically runs on a different port than frontend
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 // 1. Specify protected and public routes
 const protectedRoutes = ['/admin']
@@ -20,6 +21,7 @@ export default async function proxy(req: NextRequest) {
   const isPublicRoute = publicRoutes.some(route => path.startsWith(route))
 
   console.log(`[Proxy] Path: ${path}, Protected: ${isProtectedRoute}, Public: ${isPublicRoute}`)
+  console.log(`[Proxy] API URL: ${API_URL}`)
 
   // 3. Verify session with backend API and get user data
   let isAuthenticated = false
