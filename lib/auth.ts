@@ -9,9 +9,11 @@ export interface User {
   role: "super_admin" | "admin" | "moderator" | "viewer";
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`, {
+    const response = await fetch(`${API_URL}/api/admin/me`, {
       credentials: 'include',
     });
 
@@ -22,13 +24,14 @@ export async function getCurrentUser(): Promise<User | null> {
     const data = await response.json();
     return data;
   } catch (error) {
+    console.error('Failed to get current user:', error);
     return null;
   }
 }
 
 export async function logout() {
   try {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/sign-out`, {
+    await fetch(`${API_URL}/api/auth/sign-out`, {
       method: 'POST',
       credentials: 'include',
     });

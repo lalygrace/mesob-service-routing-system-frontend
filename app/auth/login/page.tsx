@@ -12,6 +12,8 @@ import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { PublicRoute } from "@/components/auth/public-route";
 import { toast } from "sonner";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
 function LoginPageContent() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -26,7 +28,7 @@ function LoginPageContent() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/sign-in/email`, {
+      const response = await fetch(`${API_URL}/api/auth/sign-in/email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
