@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -66,8 +67,12 @@ export function ServiceForm({
   const [locationHint, setLocationHint] = React.useState("");
   const [feeHint, setFeeHint] = React.useState("");
   const [durationHint, setDurationHint] = React.useState("");
-  const [requirements, setRequirements] = React.useState<string[]>([""]);
-  const [workflowSteps, setWorkflowSteps] = React.useState<string[]>([""]);
+  const [requirements, setRequirements] = React.useState<
+    Array<{ id: string; label: string; type: string; isRequired: boolean; sortOrder: number }>
+  >([{ id: "1", label: "", type: "DOCUMENT", isRequired: true, sortOrder: 0 }]);
+  const [workflowSteps, setWorkflowSteps] = React.useState<
+    Array<{ id: string; title: string; stepNumber: number; isOptional: boolean }>
+  >([{ id: "1", title: "", stepNumber: 1, isOptional: false }]);
   const [keywordsEn, setKeywordsEn] = React.useState("");
   const [keywordsAm, setKeywordsAm] = React.useState("");
   const [keywordsOm, setKeywordsOm] = React.useState("");
@@ -80,10 +85,18 @@ export function ServiceForm({
       setLocationHint(service.locationHint);
       setFeeHint(service.feeHint);
       setDurationHint(service.durationHint);
-      setRequirements(
-        service.requirements.length > 0 ? service.requirements : [""],
-      );
-      setWorkflowSteps([""]);
+      // Convert simple string requirements to structured format
+      const structuredReqs = service.requirements.length > 0
+        ? service.requirements.map((req, i) => ({
+            id: String(i + 1),
+            label: req,
+            type: "DOCUMENT",
+            isRequired: true,
+            sortOrder: i,
+          }))
+        : [{ id: "1", label: "", type: "DOCUMENT", isRequired: true, sortOrder: 0 }];
+      setRequirements(structuredReqs);
+      setWorkflowSteps([{ id: "1", title: "", stepNumber: 1, isOptional: false }]);
       setKeywordsEn(service.keywords.en.join(", "));
       setKeywordsAm(service.keywords.am.join(", "));
       setKeywordsOm(service.keywords.om.join(", "));
@@ -94,8 +107,8 @@ export function ServiceForm({
       setLocationHint("");
       setFeeHint("");
       setDurationHint("");
-      setRequirements([""]);
-      setWorkflowSteps([""]);
+      setRequirements([{ id: "1", label: "", type: "DOCUMENT", isRequired: true, sortOrder: 0 }]);
+      setWorkflowSteps([{ id: "1", title: "", stepNumber: 1, isOptional: false }]);
       setKeywordsEn("");
       setKeywordsAm("");
       setKeywordsOm("");
@@ -103,27 +116,48 @@ export function ServiceForm({
   }, [service, open]);
 
   function addRequirement() {
-    setRequirements((prev) => [...prev, ""]);
+    setRequirements((prev) => [
+      ...prev,
+      {
+        id: String(prev.length + 1),
+        label: "",
+        type: "DOCUMENT",
+        isRequired: true,
+        sortOrder: prev.length,
+      },
+    ]);
   }
 
-  function removeRequirement(index: number) {
-    setRequirements((prev) => prev.filter((_, i) => i !== index));
+  function removeRequirement(id: string) {
+    setRequirements((prev) => prev.filter((r) => r.id !== id));
   }
 
-  function updateRequirement(index: number, value: string) {
-    setRequirements((prev) => prev.map((r, i) => (i === index ? value : r)));
+  function updateRequirement(id: string, field: string, value: any) {
+    setRequirements((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)),
+    );
   }
 
   function addStep() {
-    setWorkflowSteps((prev) => [...prev, ""]);
+    setWorkflowSteps((prev) => [
+      ...prev,
+      {
+        id: String(prev.length + 1),
+        title: "",
+        stepNumber: prev.length + 1,
+        isOptional: false,
+      },
+    ]);
   }
 
-  function removeStep(index: number) {
-    setWorkflowSteps((prev) => prev.filter((_, i) => i !== index));
+  function removeStep(id: string) {
+    setWorkflowSteps((prev) => prev.filter((s) => s.id !== id));
   }
 
-  function updateStep(index: number, value: string) {
-    setWorkflowSteps((prev) => prev.map((s, i) => (i === index ? value : s)));
+  function updateStep(id: string, field: string, value: any) {
+    setWorkflowSteps((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
+    );
   }
 
   function parseKeywords(str: string): string[] {
@@ -140,6 +174,10 @@ export function ServiceForm({
       am: parseKeywords(keywordsAm),
       om: parseKeywords(keywordsOm),
     };
+    // Convert structured requirements back to simple strings for now
+    const requirementStrings = requirements
+      .filter((r) => r.label.trim())
+      .map((r) => r.label);
     onSave({
       title,
       authority,
@@ -147,7 +185,7 @@ export function ServiceForm({
       locationHint,
       feeHint,
       durationHint,
-      requirements: requirements.filter(Boolean),
+      requirements: requirementStrings,
       keywords,
     });
     onOpenChange(false);
@@ -243,29 +281,60 @@ export function ServiceForm({
                 Documents and items the citizen must bring.
               </p>
               {requirements.map((req, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className="shrink-0 text-xs font-mono w-6 justify-center"
-                  >
-                    {i + 1}
-                  </Badge>
-                  <Input
-                    value={req}
-                    onChange={(e) => updateRequirement(i, e.target.value)}
-                    placeholder={`Requirement ${i + 1}`}
-                  />
-                  {requirements.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0 h-8 w-8"
-                      onClick={() => removeRequirement(i)}
+                <div key={req.id} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="shrink-0 text-xs font-mono w-6 justify-center"
                     >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
+                      {i + 1}
+                    </Badge>
+                    <Input
+                      value={req.label}
+                      onChange={(e) => updateRequirement(req.id, "label", e.target.value)}
+                      placeholder={`Requirement ${i + 1}`}
+                      className="flex-1"
+                    />
+                    {requirements.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 h-8 w-8"
+                        onClick={() => removeRequirement(req.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 pl-8">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor={`req-type-${req.id}`} className="text-xs">Type:</Label>
+                      <Select
+                        value={req.type}
+                        onValueChange={(value) => updateRequirement(req.id, "type", value)}
+                      >
+                        <SelectTrigger id={`req-type-${req.id}`} className="h-8 w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="DOCUMENT">Document</SelectItem>
+                          <SelectItem value="FORM">Form</SelectItem>
+                          <SelectItem value="FEE_PAYMENT">Fee Payment</SelectItem>
+                          <SelectItem value="PREREQUISITE">Prerequisite</SelectItem>
+                          <SelectItem value="OTHER">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id={`req-required-${req.id}`}
+                        checked={req.isRequired}
+                        onCheckedChange={(checked) => updateRequirement(req.id, "isRequired", checked)}
+                      />
+                      <Label htmlFor={`req-required-${req.id}`} className="text-xs">Required</Label>
+                    </div>
+                  </div>
                 </div>
               ))}
               <Button
@@ -286,29 +355,42 @@ export function ServiceForm({
                 Step-by-step process the citizen follows.
               </p>
               {workflowSteps.map((step, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Badge
-                    variant="secondary"
-                    className="shrink-0 text-xs font-mono w-6 justify-center"
-                  >
-                    {i + 1}
-                  </Badge>
-                  <Input
-                    value={step}
-                    onChange={(e) => updateStep(i, e.target.value)}
-                    placeholder={`Step ${i + 1}...`}
-                  />
-                  {workflowSteps.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0 h-8 w-8"
-                      onClick={() => removeStep(i)}
+                <div key={step.id} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="secondary"
+                      className="shrink-0 text-xs font-mono w-6 justify-center"
                     >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
+                      {step.stepNumber}
+                    </Badge>
+                    <Input
+                      value={step.title}
+                      onChange={(e) => updateStep(step.id, "title", e.target.value)}
+                      placeholder={`Step ${step.stepNumber}...`}
+                      className="flex-1"
+                    />
+                    {workflowSteps.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 h-8 w-8"
+                        onClick={() => removeStep(step.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 pl-8">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor={`step-optional-${step.id}`} className="text-xs">Optional:</Label>
+                      <Switch
+                        id={`step-optional-${step.id}`}
+                        checked={step.isOptional}
+                        onCheckedChange={(checked) => updateStep(step.id, "isOptional", checked)}
+                      />
+                    </div>
+                  </div>
                 </div>
               ))}
               <Button

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Building2,
+  Folder,
   Layers,
   MessageSquare,
   BarChart3,
@@ -17,6 +18,8 @@ import {
   Monitor,
   User,
   Lock,
+  FileText,
+  History,
 } from "lucide-react";
 
 import {
@@ -57,6 +60,12 @@ const NAV_ITEMS = [
     badge: "6",
   },
   {
+    title: "Categories",
+    url: "/admin/categories",
+    icon: Folder,
+    badge: "5",
+  },
+  {
     title: "Services",
     url: "/admin/services",
     icon: Layers,
@@ -89,6 +98,16 @@ const ACCOUNT_ITEMS = [
     title: "Sessions",
     url: "/admin/sessions",
     icon: Monitor,
+  },
+  {
+    title: "System Config",
+    url: "/admin/system-config",
+    icon: FileText,
+  },
+  {
+    title: "Audit Logs",
+    url: "/admin/audit-logs",
+    icon: History,
   },
   {
     title: "Profile",
