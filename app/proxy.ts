@@ -19,6 +19,8 @@ export default async function proxy(req: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route))
   const isPublicRoute = publicRoutes.some(route => path.startsWith(route))
 
+  console.log(`[Proxy] Path: ${path}, Protected: ${isProtectedRoute}, Public: ${isPublicRoute}`)
+
   // 3. Verify session with backend API and get user data
   let isAuthenticated = false
   let userRole: string | null = null
@@ -26,6 +28,9 @@ export default async function proxy(req: NextRequest) {
   if (isProtectedRoute) {
     try {
       const cookieHeader = req.headers.get('cookie') || ''
+      console.log(`[Proxy] Checking auth with API: ${API_URL}/api/admin/me`)
+      console.log(`[Proxy] Cookie header: ${cookieHeader ? 'present' : 'missing'}`)
+      
       const response = await fetch(`${API_URL}/api/admin/me`, {
         method: 'GET',
         headers: {
@@ -34,19 +39,25 @@ export default async function proxy(req: NextRequest) {
         cache: 'no-store',
       })
 
+      console.log(`[Proxy] API response status: ${response.status}`)
+      
       if (response.ok) {
         const userData = await response.json()
         isAuthenticated = true
         userRole = userData.role
+        console.log(`[Proxy] User authenticated, role: ${userRole}`)
+      } else {
+        console.log(`[Proxy] User not authenticated`)
       }
     } catch (error) {
-      console.error('Auth verification failed:', error)
+      console.error('[Proxy] Auth verification failed:', error)
       isAuthenticated = false
     }
   }
 
   // 4. Redirect to /auth/login if the user is not authenticated on protected routes
   if (isProtectedRoute && !isAuthenticated) {
+    console.log(`[Proxy] Redirecting to login`)
     const loginUrl = new URL('/auth/login', req.nextUrl)
     loginUrl.searchParams.set('redirect', path)
     return NextResponse.redirect(loginUrl)
@@ -56,6 +67,7 @@ export default async function proxy(req: NextRequest) {
   if (isAuthenticated && userRole) {
     for (const [route, allowedRoles] of Object.entries(roleRestrictedRoutes)) {
       if (path.startsWith(route) && !allowedRoles.includes(userRole)) {
+        console.log(`[Proxy] User role ${userRole} not allowed for ${route}`)
         // User doesn't have the required role, redirect to admin dashboard
         return NextResponse.redirect(new URL('/admin', req.nextUrl))
       }
@@ -85,6 +97,7 @@ export default async function proxy(req: NextRequest) {
     }
   }
 
+  console.log(`[Proxy] Allowing request to proceed`)
   return NextResponse.next()
 }
 
