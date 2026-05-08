@@ -21,7 +21,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MOCK_AUDIT_LOGS, type AuditLog } from "@/lib/mock/audit-logs";
+import { auditLogsApi, ApiError } from "@/lib/api-client";
+import { toast } from "sonner";
+
+type AuditLog = {
+  id: string;
+  timestamp: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  ipAddress: string;
+};
 
 const ENTITY_TYPES = [
   "Service",
@@ -43,10 +56,34 @@ const ACTION_COLORS: Record<string, string> = {
 };
 
 export default function AuditLogsPage() {
-  const [logs, setLogs] = React.useState<AuditLog[]>(MOCK_AUDIT_LOGS);
+  const [logs, setLogs] = React.useState<AuditLog[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [entityFilter, setEntityFilter] = React.useState<string>("all");
   const [actionFilter, setActionFilter] = React.useState<string>("all");
+
+  React.useEffect(() => {
+    loadLogs();
+  }, [entityFilter, actionFilter]);
+
+  async function loadLogs() {
+    try {
+      setLoading(true);
+      const params: any = {};
+      if (entityFilter !== "all") params.entityType = entityFilter;
+      if (actionFilter !== "all") params.action = actionFilter;
+      const data = await auditLogsApi.list(params);
+      setLogs(data);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to load audit logs: ${error.message}`);
+      } else {
+        toast.error("Failed to load audit logs");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const filtered = logs.filter((log) => {
     const matchesSearch =
@@ -139,7 +176,13 @@ export default function AuditLogsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12">
+                    <div className="text-muted-foreground">Loading...</div>
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">

@@ -28,13 +28,46 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CategoryForm } from "@/components/admin/category-form";
-import { MOCK_CATEGORIES, type Category } from "@/lib/mock/categories";
+import { categoriesApi, ApiError } from "@/lib/api-client";
+import { toast } from "sonner";
+
+type Category = {
+  id: string;
+  slug: string;
+  name: string;
+  iconName?: string;
+  sortOrder: number;
+  isActive: boolean;
+  serviceCount: number;
+  createdAt: string;
+};
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = React.useState<Category[]>(MOCK_CATEGORIES);
+  const [categories, setCategories] = React.useState<Category[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Category | null>(null);
+
+  React.useEffect(() => {
+    loadCategories();
+  }, []);
+
+  async function loadCategories() {
+    try {
+      setLoading(true);
+      const data = await categoriesApi.list();
+      setCategories(data);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to load categories: ${error.message}`);
+      } else {
+        toast.error("Failed to load categories");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const filtered = categories.filter(
     (c) =>
@@ -42,25 +75,39 @@ export default function CategoriesPage() {
       c.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  function handleSave(data: Omit<Category, "id" | "createdAt" | "serviceCount">) {
-    if (editing) {
-      setCategories((prev) =>
-        prev.map((c) => (c.id === editing.id ? { ...c, ...data } : c)),
-      );
-    } else {
-      const newCategory: Category = {
-        ...data,
-        id: `cat-${Date.now()}`,
-        serviceCount: 0,
-        createdAt: new Date().toISOString().slice(0, 10),
-      };
-      setCategories((prev) => [...prev, newCategory]);
+  async function handleSave(data: Omit<Category, "id" | "createdAt" | "serviceCount">) {
+    try {
+      if (editing) {
+        await categoriesApi.update(editing.id, data);
+        toast.success("Category updated successfully");
+      } else {
+        await categoriesApi.create(data);
+        toast.success("Category created successfully");
+      }
+      await loadCategories();
+      setEditing(null);
+      setFormOpen(false);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to save category: ${error.message}`);
+      } else {
+        toast.error("Failed to save category");
+      }
     }
-    setEditing(null);
   }
 
-  function handleDelete(id: string) {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+  async function handleDelete(id: string) {
+    try {
+      await categoriesApi.delete(id);
+      toast.success("Category deleted successfully");
+      await loadCategories();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to delete category: ${error.message}`);
+      } else {
+        toast.error("Failed to delete category");
+      }
+    }
   }
 
   function openEdit(category: Category) {
@@ -121,7 +168,13 @@ export default function CategoriesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12">
+                    <div className="text-muted-foreground">Loading...</div>
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">

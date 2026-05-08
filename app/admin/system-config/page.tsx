@@ -16,6 +16,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { systemConfigApi, ApiError } from "@/lib/api-client";
+import { toast } from "sonner";
 
 type SystemConfigItem = {
   key: string;
@@ -110,9 +112,39 @@ const DEFAULT_CONFIGS: SystemConfigItem[] = [
 ];
 
 export default function SystemConfigPage() {
-  const [configs, setConfigs] = React.useState<SystemConfigItem[]>(DEFAULT_CONFIGS);
+  const [configs, setConfigs] = React.useState<SystemConfigItem[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [hasChanges, setHasChanges] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    loadConfigs();
+  }, []);
+
+  async function loadConfigs() {
+    try {
+      setLoading(true);
+      const data = await systemConfigApi.list();
+      // Convert backend array to our config format
+      const formattedConfigs: SystemConfigItem[] = DEFAULT_CONFIGS.map((defaultConfig) => {
+        const backendConfig = data.find((c: any) => c.key === defaultConfig.key);
+        return {
+          ...defaultConfig,
+          value: backendConfig?.value || defaultConfig.value,
+          description: backendConfig?.description || defaultConfig.description,
+        };
+      });
+      setConfigs(formattedConfigs);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to load system config: ${error.message}`);
+      } else {
+        toast.error("Failed to load system config");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const groupedConfigs = React.useMemo(() => {
     const groups: Record<string, SystemConfigItem[]> = {};
@@ -134,18 +166,42 @@ export default function SystemConfigPage() {
 
   async function handleSave() {
     setIsSaving(true);
-    // TODO: Integrate with backend API
-    // await fetch('/api/admin/system-config', { method: 'PUT', body: JSON.stringify(configs) })
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setHasChanges(false);
-    setIsSaving(false);
+    try {
+      // Save each config item
+      for (const config of configs) {
+        await systemConfigApi.upsert(config.key, {
+          value: config.value,
+          description: config.description,
+        });
+      }
+      toast.success("System configuration saved successfully");
+      setHasChanges(false);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to save system config: ${error.message}`);
+      } else {
+        toast.error("Failed to save system config");
+      }
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function handleReset() {
     setIsSaving(true);
-    setConfigs(DEFAULT_CONFIGS);
-    setHasChanges(false);
-    setIsSaving(false);
+    try {
+      await loadConfigs();
+      setHasChanges(false);
+      toast.success("System configuration reset to server values");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to reset system config: ${error.message}`);
+      } else {
+        toast.error("Failed to reset system config");
+      }
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function renderConfigInput(config: SystemConfigItem) {
@@ -229,30 +285,38 @@ export default function SystemConfigPage() {
       </div>
 
       {/* Config groups */}
-      {Object.entries(groupedConfigs).map(([category, items]) => (
-        <Card key={category} className="border-border/50 bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-base">{category}</CardTitle>
-            <CardDescription>
-              Configure {category.toLowerCase()} settings
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {items.map((config) => (
-              <div key={config.key} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor={config.key} className="font-mono text-sm">
-                    {config.key}
-                  </Label>
-                </div>
-                {renderConfigInput(config)}
-                <p className="text-xs text-muted-foreground">{config.description}</p>
-                {items.indexOf(config) < items.length - 1 && <Separator className="mt-4" />}
-              </div>
-            ))}
+      {loading ? (
+        <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="text-muted-foreground">Loading system configuration...</div>
           </CardContent>
         </Card>
-      ))}
+      ) : (
+        Object.entries(groupedConfigs).map(([category, items]) => (
+          <Card key={category} className="border-border/50 bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-base">{category}</CardTitle>
+              <CardDescription>
+                Configure {category.toLowerCase()} settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {items.map((config) => (
+                <div key={config.key} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={config.key} className="font-mono text-sm">
+                      {config.key}
+                    </Label>
+                  </div>
+                  {renderConfigInput(config)}
+                  <p className="text-xs text-muted-foreground">{config.description}</p>
+                  {items.indexOf(config) < items.length - 1 && <Separator className="mt-4" />}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))
+      )}
     </div>
   );
 }
