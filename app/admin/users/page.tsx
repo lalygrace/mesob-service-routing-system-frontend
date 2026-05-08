@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +58,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usersApi, ApiError } from "@/lib/api-client";
+import { toast } from "sonner";
 
 interface Admin {
   id: string;
@@ -70,36 +72,8 @@ interface Admin {
 }
 
 export default function UsersPage() {
-  const [admins, setAdmins] = useState<Admin[]>([
-    {
-      id: "1",
-      name: "Admin User",
-      email: "admin@mesob.gov.et",
-      role: "super_admin",
-      status: "active",
-      createdAt: "2024-01-15",
-      lastLogin: "2024-05-04",
-    },
-    {
-      id: "2",
-      name: "John Doe",
-      email: "john@mesob.gov.et",
-      role: "admin",
-      status: "active",
-      createdAt: "2024-02-20",
-      lastLogin: "2024-05-03",
-    },
-    {
-      id: "3",
-      name: "Jane Smith",
-      email: "jane@mesob.gov.et",
-      role: "moderator",
-      status: "inactive",
-      createdAt: "2024-03-10",
-      lastLogin: "2024-04-28",
-    },
-  ]);
-
+  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
@@ -112,6 +86,26 @@ export default function UsersPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  async function loadUsers() {
+    try {
+      setLoading(true);
+      const data = await usersApi.list();
+      setAdmins(data);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to load users: ${error.message}`);
+      } else {
+        toast.error("Failed to load users");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -122,23 +116,19 @@ export default function UsersPage() {
       return;
     }
 
-    // TODO: Replace with actual API call
-    const newAdmin: Admin = {
-      id: String(admins.length + 1),
-      name: formData.name,
-      email: formData.email,
-      role: formData.role,
-      status: "active",
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-
-    setAdmins([...admins, newAdmin]);
-    setSuccess("Admin added successfully");
-    setFormData({ name: "", email: "", password: "", role: "admin" });
-    setTimeout(() => {
+    try {
+      await usersApi.create(formData);
+      toast.success("Admin added successfully");
+      setFormData({ name: "", email: "", password: "", role: "admin" });
       setIsAddDialogOpen(false);
-      setSuccess("");
-    }, 1500);
+      await loadUsers();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setError(error.message);
+      } else {
+        setError("Failed to add admin");
+      }
+    }
   };
 
   const handleEditAdmin = async (e: React.FormEvent) => {
@@ -148,37 +138,56 @@ export default function UsersPage() {
     setError("");
     setSuccess("");
 
-    // TODO: Replace with actual API call
-    setAdmins(
-      admins.map((admin) =>
-        admin.id === selectedAdmin.id
-          ? { ...admin, name: formData.name, email: formData.email, role: formData.role }
-          : admin
-      )
-    );
-
-    setSuccess("Admin updated successfully");
-    setTimeout(() => {
+    try {
+      await usersApi.update(selectedAdmin.id, {
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+      });
+      toast.success("Admin updated successfully");
       setIsEditDialogOpen(false);
       setSelectedAdmin(null);
-      setSuccess("");
-    }, 1500);
-  };
-
-  const handleDeleteAdmin = (id: string) => {
-    if (confirm("Are you sure you want to delete this admin?")) {
-      setAdmins(admins.filter((admin) => admin.id !== id));
+      await loadUsers();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setError(error.message);
+      } else {
+        setError("Failed to update admin");
+      }
     }
   };
 
-  const handleToggleStatus = (id: string) => {
-    setAdmins(
-      admins.map((admin) =>
-        admin.id === id
-          ? { ...admin, status: admin.status === "active" ? "inactive" : "active" }
-          : admin
-      )
-    );
+  const handleDeleteAdmin = async (id: string) => {
+    if (confirm("Are you sure you want to delete this admin?")) {
+      try {
+        await usersApi.delete(id);
+        toast.success("Admin deleted successfully");
+        await loadUsers();
+      } catch (error) {
+        if (error instanceof ApiError) {
+          toast.error(`Failed to delete admin: ${error.message}`);
+        } else {
+          toast.error("Failed to delete admin");
+        }
+      }
+    }
+  };
+
+  const handleToggleStatus = async (id: string) => {
+    try {
+      const admin = admins.find((a) => a.id === id);
+      if (admin) {
+        await usersApi.update(id, { status: admin.status === "active" ? "inactive" : "active" });
+        toast.success("Admin status updated successfully");
+        await loadUsers();
+      }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to update status: ${error.message}`);
+      } else {
+        toast.error("Failed to update status");
+      }
+    }
   };
 
   const openEditDialog = (admin: Admin) => {
@@ -319,91 +328,95 @@ export default function UsersPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Last Login</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {admins.map((admin) => (
-                <TableRow key={admin.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback>
-                          {admin.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{admin.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {admin.email}
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading users...</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Last Login</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {admins.map((admin) => (
+                  <TableRow key={admin.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarFallback>
+                            {admin.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{admin.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {admin.email}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getRoleBadgeColor(admin.role)}>
-                      {admin.role.replace("_", " ")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={admin.status === "active" ? "default" : "secondary"}
-                    >
-                      {admin.status === "active" ? (
-                        <CheckCircle2 className="mr-1 h-3 w-3" />
-                      ) : (
-                        <XCircle className="mr-1 h-3 w-3" />
-                      )}
-                      {admin.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{admin.createdAt}</TableCell>
-                  <TableCell>{admin.lastLogin || "Never"}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => openEditDialog(admin)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleStatus(admin.id)}>
-                          <Shield className="mr-2 h-4 w-4" />
-                          {admin.status === "active" ? "Deactivate" : "Activate"}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteAdmin(admin.id)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getRoleBadgeColor(admin.role)}>
+                        {admin.role.replace("_", " ")}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={admin.status === "active" ? "default" : "secondary"}
+                      >
+                        {admin.status === "active" ? (
+                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                        ) : (
+                          <XCircle className="mr-1 h-3 w-3" />
+                        )}
+                        {admin.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{admin.createdAt}</TableCell>
+                    <TableCell>{admin.lastLogin || "Never"}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => openEditDialog(admin)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleStatus(admin.id)}>
+                            <Shield className="mr-2 h-4 w-4" />
+                            {admin.status === "active" ? "Deactivate" : "Activate"}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteAdmin(admin.id)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 

@@ -144,3 +144,48 @@ export const intentMappingsApi = {
   delete: (mappingId: string) =>
     api.delete<any>(`/api/admin/intent-mappings/${mappingId}`),
 };
+
+// Analytics API
+export const analyticsApi = {
+  getDailyUsage: (days?: number) => {
+    const params = days ? `?days=${days}` : '';
+    return api.get<any[]>(`/api/admin/analytics/daily-usage${params}`);
+  },
+  getLanguageDistribution: () => api.get<any[]>('/api/admin/analytics/languages'),
+  getTopServices: (limit?: number) => {
+    const params = limit ? `?limit=${limit}` : '';
+    return api.get<any[]>(`/api/admin/analytics/top-services${params}`);
+  },
+  getPeakHours: () => api.get<any[]>('/api/admin/analytics/peak-hours'),
+  getRecentInteractions: (limit?: number) => {
+    const params = limit ? `?limit=${limit}` : '';
+    return api.get<any[]>(`/api/admin/analytics/recent-interactions${params}`);
+  },
+};
+
+// Users API
+export const usersApi = {
+  list: () => api.get<any[]>('/api/admin/users'),
+  get: (id: string) => api.get<any>(`/api/admin/users/${id}`),
+  create: (data: any) => api.post<any>('/api/admin/users', data),
+  update: (id: string, data: any) => api.patch<any>(`/api/admin/users/${id}`, data),
+  delete: (id: string) => api.delete<any>(`/api/admin/users/${id}`),
+  updateRole: (id: string, role: string) =>
+    api.patch<any>(`/api/admin/users/${id}/role`, { role }),
+};
+
+// Sessions API
+export const sessionsApi = {
+  list: (params?: { status?: string; userId?: string; skip?: number; take?: number }) => {
+    const queryString = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) queryString.append(key, String(value));
+      });
+    }
+    return api.get<any[]>(`/api/admin/sessions?${queryString}`);
+  },
+  get: (id: string) => api.get<any>(`/api/admin/sessions/${id}`),
+  getInteractions: (sessionId: string) =>
+    api.get<any[]>(`/api/admin/sessions/${sessionId}/interactions`),
+};

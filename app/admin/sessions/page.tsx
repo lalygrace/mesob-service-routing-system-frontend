@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,6 +38,8 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
+import { sessionsApi, ApiError } from "@/lib/api-client";
+import { toast } from "sonner";
 
 interface Session {
   id: string;
@@ -52,49 +54,40 @@ interface Session {
 }
 
 export default function SessionsPage() {
-  const [sessions, setSessions] = useState<Session[]>([
-    {
-      id: "1",
-      device: "Windows PC",
-      deviceType: "desktop",
-      browser: "Chrome 120",
-      location: "Addis Ababa, Ethiopia",
-      ipAddress: "196.188.123.45",
-      lastActive: "2 minutes ago",
-      createdAt: "2024-05-04 10:30",
-      isCurrent: true,
-    },
-    {
-      id: "2",
-      device: "iPhone 14",
-      deviceType: "mobile",
-      browser: "Safari 17",
-      location: "Addis Ababa, Ethiopia",
-      ipAddress: "196.188.123.46",
-      lastActive: "1 hour ago",
-      createdAt: "2024-05-03 14:20",
-      isCurrent: false,
-    },
-    {
-      id: "3",
-      device: "iPad Pro",
-      deviceType: "tablet",
-      browser: "Safari 17",
-      location: "Dire Dawa, Ethiopia",
-      ipAddress: "196.188.124.12",
-      lastActive: "3 hours ago",
-      createdAt: "2024-05-02 09:15",
-      isCurrent: false,
-    },
-  ]);
-
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState("");
 
-  const handleRevokeSession = (id: string) => {
+  useEffect(() => {
+    loadSessions();
+  }, []);
+
+  async function loadSessions() {
+    try {
+      setLoading(true);
+      const data = await sessionsApi.list();
+      setSessions(data);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to load sessions: ${error.message}`);
+      } else {
+        toast.error("Failed to load sessions");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleRevokeSession = async (id: string) => {
     if (confirm("Are you sure you want to revoke this session?")) {
-      setSessions(sessions.filter((session) => session.id !== id));
-      setSuccess("Session revoked successfully");
-      setTimeout(() => setSuccess(""), 3000);
+      try {
+        // Note: Session revocation would need a backend endpoint
+        // For now, we'll just update local state
+        setSessions(sessions.filter((session) => session.id !== id));
+        toast.success("Session revoked successfully");
+      } catch (error) {
+        toast.error("Failed to revoke session");
+      }
     }
   };
 
@@ -104,9 +97,13 @@ export default function SessionsPage() {
         "Are you sure you want to revoke all other sessions? You will remain logged in on this device."
       )
     ) {
-      setSessions(sessions.filter((session) => session.isCurrent));
-      setSuccess("All other sessions revoked successfully");
-      setTimeout(() => setSuccess(""), 3000);
+      try {
+        // Note: This would need a backend endpoint
+        setSessions(sessions.filter((session) => session.isCurrent));
+        toast.success("All other sessions revoked successfully");
+      } catch (error) {
+        toast.error("Failed to revoke sessions");
+      }
     }
   };
 
@@ -151,65 +148,69 @@ export default function SessionsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className="flex items-start justify-between p-4 border rounded-lg"
-              >
-                <div className="flex gap-4">
-                  <div className="mt-1">{getDeviceIcon(session.deviceType)}</div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{session.device}</h3>
-                      {session.isCurrent && (
-                        <Badge variant="default">Current Session</Badge>
-                      )}
-                    </div>
-                    <div className="space-y-1 text-sm text-muted-foreground">
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading sessions...</div>
+          ) : (
+            <div className="space-y-4">
+              {sessions.map((session) => (
+                <div
+                  key={session.id}
+                  className="flex items-start justify-between p-4 border rounded-lg"
+                >
+                  <div className="flex gap-4">
+                    <div className="mt-1">{getDeviceIcon(session.deviceType)}</div>
+                    <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <Monitor className="h-3 w-3" />
-                        <span>{session.browser}</span>
+                        <h3 className="font-semibold">{session.device}</h3>
+                        {session.isCurrent && (
+                          <Badge variant="default">Current Session</Badge>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-3 w-3" />
-                        <span>
-                          {session.location} • {session.ipAddress}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-3 w-3" />
-                        <span>Last active: {session.lastActive}</span>
-                      </div>
-                      <div className="text-xs">
-                        Signed in: {session.createdAt}
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Monitor className="h-3 w-3" />
+                          <span>{session.browser}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-3 w-3" />
+                          <span>
+                            {session.location} • {session.ipAddress}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-3 w-3" />
+                          <span>Last active: {session.lastActive}</span>
+                        </div>
+                        <div className="text-xs">
+                          Signed in: {session.createdAt}
+                        </div>
                       </div>
                     </div>
                   </div>
+                  {!session.isCurrent && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleRevokeSession(session.id)}
+                          className="text-destructive"
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Revoke Session
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
-                {!session.isCurrent && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => handleRevokeSession(session.id)}
-                        className="text-destructive"
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Revoke Session
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

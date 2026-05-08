@@ -16,8 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { systemConfigApi, ApiError } from "@/lib/api-client";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
+  const [loading, setLoading] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
   const [systemName, setSystemName] = React.useState("Mesob Service Navigator");
   const [defaultLang, setDefaultLang] = React.useState("en");
   const [kioskMode, setKioskMode] = React.useState(true);
@@ -25,6 +29,82 @@ export default function SettingsPage() {
   const [autoTimeout, setAutoTimeout] = React.useState(120);
   const [emailAlerts, setEmailAlerts] = React.useState(false);
   const [dailyReports, setDailyReports] = React.useState(true);
+
+  React.useEffect(() => {
+    loadSettings();
+  }, []);
+
+  async function loadSettings() {
+    try {
+      setLoading(true);
+      const configs = await systemConfigApi.list();
+      configs.forEach((config: any) => {
+        switch (config.key) {
+          case "system_name":
+            setSystemName(config.value);
+            break;
+          case "default_language":
+            setDefaultLang(config.value);
+            break;
+          case "kiosk_mode":
+            setKioskMode(config.value === "true");
+            break;
+          case "voice_enabled":
+            setVoiceEnabled(config.value === "true");
+            break;
+          case "auto_timeout":
+            setAutoTimeout(Number(config.value));
+            break;
+          case "email_alerts":
+            setEmailAlerts(config.value === "true");
+            break;
+          case "daily_reports":
+            setDailyReports(config.value === "true");
+            break;
+        }
+      });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to load settings: ${error.message}`);
+      } else {
+        toast.error("Failed to load settings");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSave() {
+    try {
+      setSaving(true);
+      const settings = [
+        { key: "system_name", value: systemName, description: "System display name" },
+        { key: "default_language", value: defaultLang, description: "Default language for kiosk" },
+        { key: "kiosk_mode", value: String(kioskMode), description: "Kiosk fullscreen mode" },
+        { key: "voice_enabled", value: String(voiceEnabled), description: "Enable voice interaction" },
+        { key: "auto_timeout", value: String(autoTimeout), description: "Auto-reset timeout in seconds" },
+        { key: "email_alerts", value: String(emailAlerts), description: "Email error alerts" },
+        { key: "daily_reports", value: String(dailyReports), description: "Daily usage reports" },
+      ];
+
+      for (const setting of settings) {
+        await systemConfigApi.upsert(setting.key, {
+          value: setting.value,
+          description: setting.description,
+        });
+      }
+
+      toast.success("Settings saved successfully");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(`Failed to save settings: ${error.message}`);
+      } else {
+        toast.error("Failed to save settings");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -272,8 +352,8 @@ export default function SettingsPage() {
 
       {/* Save button */}
       <div className="flex justify-end">
-        <Button size="lg" className="px-8">
-          Save All Settings
+        <Button size="lg" className="px-8" onClick={handleSave} disabled={loading || saving}>
+          {saving ? "Saving..." : "Save All Settings"}
         </Button>
       </div>
     </div>
