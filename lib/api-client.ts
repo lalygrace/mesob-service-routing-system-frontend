@@ -110,8 +110,8 @@ export const servicesApi = {
   create: (data: any) => api.post<any>('/api/admin/services', data),
   update: (id: string, data: any) => api.patch<any>(`/api/admin/services/${id}`, data),
   delete: (id: string) => api.delete<any>(`/api/admin/services/${id}`),
-  publish: (id: string) => api.post<any>(`/api/admin/services/${id}/publish`),
-  unpublish: (id: string) => api.post<any>(`/api/admin/services/${id}/unpublish`),
+  publish: (id: string) => api.post<any>(`/api/admin/services/${id}/publish`, {}),
+  unpublish: (id: string) => api.post<any>(`/api/admin/services/${id}/unpublish`, {}),
   upsertTranslation: (id: string, lang: string, data: any) =>
     api.put<any>(`/api/admin/services/${id}/translations/${lang}`, data),
   listIntentMappings: (serviceId: string, lang?: string) => {
@@ -127,6 +127,8 @@ export const authoritiesApi = {
   create: (data: any) => api.post<any>('/api/admin/authorities', data),
   update: (id: string, data: any) => api.patch<any>(`/api/admin/authorities/${id}`, data),
   delete: (id: string) => api.delete<any>(`/api/admin/authorities/${id}`),
+  upsertTranslation: (id: string, lang: string, data: any) =>
+    api.put<any>(`/api/admin/authorities/${id}/translations/${lang}`, data),
 };
 
 // Intent Mappings API
@@ -147,45 +149,72 @@ export const intentMappingsApi = {
 
 // Analytics API
 export const analyticsApi = {
-  getDailyUsage: (days?: number) => {
-    const params = days ? `?days=${days}` : '';
-    return api.get<any[]>(`/api/admin/analytics/daily-usage${params}`);
-  },
-  getLanguageDistribution: () => api.get<any[]>('/api/admin/analytics/languages'),
-  getTopServices: (limit?: number) => {
-    const params = limit ? `?limit=${limit}` : '';
-    return api.get<any[]>(`/api/admin/analytics/top-services${params}`);
-  },
-  getPeakHours: () => api.get<any[]>('/api/admin/analytics/peak-hours'),
-  getRecentInteractions: (limit?: number) => {
-    const params = limit ? `?limit=${limit}` : '';
-    return api.get<any[]>(`/api/admin/analytics/recent-interactions${params}`);
-  },
-};
-
-// Users API
-export const usersApi = {
-  list: () => api.get<any[]>('/api/admin/users'),
-  get: (id: string) => api.get<any>(`/api/admin/users/${id}`),
-  create: (data: any) => api.post<any>('/api/admin/users', data),
-  update: (id: string, data: any) => api.patch<any>(`/api/admin/users/${id}`, data),
-  delete: (id: string) => api.delete<any>(`/api/admin/users/${id}`),
-  updateRole: (id: string, role: string) =>
-    api.patch<any>(`/api/admin/users/${id}/role`, { role }),
-};
-
-// Sessions API
-export const sessionsApi = {
-  list: (params?: { status?: string; userId?: string; skip?: number; take?: number }) => {
+  getSnapshots: (params?: { granularity?: 'DAILY' | 'WEEKLY' | 'MONTHLY'; from?: string; to?: string }) => {
     const queryString = new URLSearchParams();
     if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) queryString.append(key, String(value));
-      });
+      if (params.granularity) queryString.append('granularity', params.granularity);
+      if (params.from) queryString.append('from', params.from);
+      if (params.to) queryString.append('to', params.to);
     }
-    return api.get<any[]>(`/api/admin/sessions?${queryString}`);
+    const paramsStr = queryString.toString();
+    return api.get<{ data: any[] }>(`/api/admin/analytics/snapshots${paramsStr ? `?${paramsStr}` : ''}`);
   },
-  get: (id: string) => api.get<any>(`/api/admin/sessions/${id}`),
-  getInteractions: (sessionId: string) =>
-    api.get<any[]>(`/api/admin/sessions/${sessionId}/interactions`),
+  rebuildSnapshots: (data: { granularity: 'DAILY' | 'WEEKLY' | 'MONTHLY'; from: string; to: string }) =>
+    api.post<any>('/api/admin/analytics/snapshots/rebuild', data),
+};
+
+// Users API (planned - not yet implemented in backend)
+// export const usersApi = {
+//   list: () => api.get<any[]>('/api/admin/users'),
+//   get: (id: string) => api.get<any>(`/api/admin/users/${id}`),
+//   create: (data: any) => api.post<any>('/api/admin/users', data),
+//   update: (id: string, data: any) => api.patch<any>(`/api/admin/users/${id}`, data),
+//   delete: (id: string) => api.delete<any>(`/api/admin/users/${id}`),
+//   updateRole: (id: string, role: string) =>
+//     api.patch<any>(`/api/admin/users/${id}/role`, { role }),
+// };
+
+// Admin Me API
+export const adminMeApi = {
+  getMe: () => api.get<any>('/api/admin/me'),
+};
+
+// Admin Invitation API
+export const adminInvitationApi = {
+  create: (data: { email: string; name: string; role: string; authorityId?: string }) =>
+    api.post<any>('/admin-invitation/create', data),
+  accept: (data: { token: string; password: string }) =>
+    api.post<any>('/admin-invitation/accept', data),
+  listPending: () => api.get<any[]>('/admin-invitation/pending'),
+};
+
+// Citizen Sessions API (for citizen kiosk flow)
+export const citizenSessionsApi = {
+  create: (data: { lang: string; inputMode: string; rawInput?: string; deviceType?: string }) =>
+    api.post<any>('/api/citizen/sessions', data),
+  get: (id: string) => api.get<any>(`/api/citizen/sessions/${id}`),
+  createInteraction: (sessionId: string, data: { userInput?: string; inputMode?: string }) =>
+    api.post<any>(`/api/citizen/sessions/${sessionId}/interactions`, data),
+  clarify: (sessionId: string, data: { userInput: string }) =>
+    api.post<any>(`/api/citizen/sessions/${sessionId}/clarify`, data),
+  selectService: (sessionId: string, data: { serviceId: string }) =>
+    api.post<any>(`/api/citizen/sessions/${sessionId}/select`, data),
+  complete: (sessionId: string, data: { wasSuccessful: boolean }) =>
+    api.post<any>(`/api/citizen/sessions/${sessionId}/complete`, data),
+  abandon: (sessionId: string, data?: { reason?: string }) =>
+    api.post<any>(`/api/citizen/sessions/${sessionId}/abandon`, data || {}),
+  submitFeedback: (sessionId: string, data: { wasHelpful?: boolean; rating?: number; comment?: string }) =>
+    api.post<any>(`/api/citizen/sessions/${sessionId}/feedback`, data),
+};
+
+// Public API (for anonymous citizen access)
+export const publicApi = {
+  getCategories: (lang: string = 'en') =>
+    api.get<any[]>(`/api/public/categories?lang=${lang}`),
+  getAuthorities: (lang: string = 'en') =>
+    api.get<any[]>(`/api/public/authorities?lang=${lang}`),
+  getServices: (lang: string = 'en') =>
+    api.get<any[]>(`/api/public/services?lang=${lang}`),
+  getService: (id: string, lang: string = 'en') =>
+    api.get<any>(`/api/public/services/${id}?lang=${lang}`),
 };

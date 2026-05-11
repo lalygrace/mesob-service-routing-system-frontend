@@ -38,8 +38,11 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
-import { sessionsApi, ApiError } from "@/lib/api-client";
-import { toast } from "sonner";
+// import { sessionsApi, ApiError } from "@/lib/api-client";
+// import { toast } from "sonner";
+
+// NOTE: Admin sessions management is not implemented in backend
+// Citizen sessions are managed via citizenSessionsApi for kiosk flow
 
 interface Session {
   id: string;
@@ -55,28 +58,24 @@ interface Session {
 
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    loadSessions();
-  }, []);
-
-  async function loadSessions() {
-    try {
-      setLoading(true);
-      const data = await sessionsApi.list();
-      setSessions(data);
-    } catch (error) {
-      if (error instanceof ApiError) {
-        toast.error(`Failed to load sessions: ${error.message}`);
-      } else {
-        toast.error("Failed to load sessions");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
+  // async function loadSessions() {
+  //   try {
+  //     setLoading(true);
+  //     const data = await sessionsApi.list();
+  //     setSessions(data);
+  //   } catch (error) {
+  //     if (error instanceof ApiError) {
+  //       toast.error(`Failed to load sessions: ${error.message}`);
+  //     } else {
+  //       toast.error("Failed to load sessions");
+  //     }
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
 
   const handleRevokeSession = async (id: string) => {
     if (confirm("Are you sure you want to revoke this session?")) {
@@ -84,9 +83,9 @@ export default function SessionsPage() {
         // Note: Session revocation would need a backend endpoint
         // For now, we'll just update local state
         setSessions(sessions.filter((session) => session.id !== id));
-        toast.success("Session revoked successfully");
+        // toast.success("Session revoked successfully");
       } catch (error) {
-        toast.error("Failed to revoke session");
+        // toast.error("Failed to revoke session");
       }
     }
   };
@@ -100,9 +99,9 @@ export default function SessionsPage() {
       try {
         // Note: This would need a backend endpoint
         setSessions(sessions.filter((session) => session.isCurrent));
-        toast.success("All other sessions revoked successfully");
+        // toast.success("All other sessions revoked successfully");
       } catch (error) {
-        toast.error("Failed to revoke sessions");
+        // toast.error("Failed to revoke sessions");
       }
     }
   };

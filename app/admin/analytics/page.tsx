@@ -92,30 +92,102 @@ export default function AnalyticsPage() {
     try {
       setLoading(true);
       const days = range === "7d" ? 7 : range === "90d" ? 90 : 30;
-      const [dailyData, langData, servicesData, hoursData, interactionsData] = await Promise.all([
-        analyticsApi.getDailyUsage(days),
-        analyticsApi.getLanguageDistribution(),
-        analyticsApi.getTopServices(8),
-        analyticsApi.getPeakHours(),
-        analyticsApi.getRecentInteractions(10),
-      ]);
+      const granularity = range === "7d" ? "DAILY" : range === "90d" ? "DAILY" : "DAILY" as const;
+      
+      // Calculate date range
+      const to = new Date();
+      const from = new Date();
+      from.setDate(from.getDate() - days);
+      
+      const fromDate = from.toISOString().split('T')[0];
+      const toDate = to.toISOString().split('T')[0];
+      
+      const snapshotsResponse = await analyticsApi.getSnapshots({
+        granularity,
+        from: fromDate,
+        to: toDate,
+      });
+      
+      const snapshots = snapshotsResponse.data || [];
+      
+      // Transform snapshots into the format the UI expects
+      const dailyData = snapshots.map((snap: any) => ({
+        date: snap.date,
+        sessions: snap.totalSessions || 0,
+        resolved: snap.completedSessions || 0,
+        clarifications: snap.mediumConfidenceCount || 0,
+      }));
       
       setDailyUsage(dailyData);
+      
+      // Aggregate language data from snapshots
+      const langData = [
+        { language: "Amharic", sessions: snapshots.reduce((sum: number, s: any) => sum + (s.sessionsAmharic || 0), 0), code: "am" },
+        { language: "English", sessions: snapshots.reduce((sum: number, s: any) => sum + (s.sessionsEnglish || 0), 0), code: "en" },
+        { language: "Afaan Oromo", sessions: snapshots.reduce((sum: number, s: any) => sum + (s.sessionsAfaanOromo || 0), 0), code: "om" },
+      ];
       setLanguageUsage(langData);
+      
+      // Aggregate top services from snapshots
+      const serviceMap = new Map<string, number>();
+      snapshots.forEach((snap: any) => {
+        if (snap.topServices && Array.isArray(snap.topServices)) {
+          snap.topServices.forEach((svc: any) => {
+            const existing = serviceMap.get(svc.name) || 0;
+            serviceMap.set(svc.name, existing + svc.count);
+          });
+        }
+      });
+      const servicesData = Array.from(serviceMap.entries())
+        .map(([serviceName, requests]) => ({ serviceName, requests }))
+        .sort((a, b) => b.requests - a.requests)
+        .slice(0, 8);
       setServicePopularity(servicesData);
-      setHourlyUsage(hoursData);
-      setRecentSessions(interactionsData);
       
-      const totalSessions = dailyData.reduce((sum: number, d: any) => sum + d.sessions, 0);
-      const clarifications = dailyData.reduce((sum: number, d: any) => sum + (d.clarifications || 0), 0);
+      // Hourly data is not available in snapshots
+      setHourlyUsage([]);
       
+      // Recent interactions from top unclear inputs
+      const recentSessions: any[] = [];
+      snapshots.forEach((snap: any) => {
+        if (snap.topUnclearInputs && Array.isArray(snap.topUnclearInputs)) {
+          snap.topUnclearInputs.slice(0, 2).forEach((input: string, idx: number) => {
+            recentSessions.push({
+              id: `${snap.date}-${idx}`,
+              query: input,
+              language: "en",
+              service: null,
+              result: "failed",
+              timestamp: snap.date,
+            });
+          });
+        }
+      });
+      setRecentSessions(recentSessions.slice(0, 10));
+      
+      const totalSessions = snapshots.reduce((sum: number, s: any) => sum + (s.totalSessions || 0), 0);
+      const clarifications = snapshots.reduce((sum: number, s: any) => sum + (s.mediumConfidenceCount || 0), 0);
+      const completed = snapshots.reduce((sum: number, s: any) => sum + (s.completedSessions || 0), 0);
+      
+      // Calculate trends (compare last 7 days to previous 7 days)
+      const last7Days = dailyData.slice(-7);
+      const previous7Days = dailyData.slice(-14, -7);
+      const last7Total = last7Days.reduce((sum: number, d: any) => sum + d.sessions, 0);
+      const previous7Total = previous7Days.reduce((sum: number, d: any) => sum + d.sessions, 0);
+      const sessionsTrend = previous7Total > 0 ? ((last7Total - previous7Total) / previous7Total * 100).toFixed(1) : '0';
+      
+      const avgSatisfaction = snapshots.reduce((sum: number, s: any) => sum + (s.avgRating || 0), 0) / (snapshots.length || 1);
+      const currentSatisfaction = snapshots.length > 0 ? snapshots[snapshots.length - 1].avgRating || 0 : 0;
+      const previousSatisfaction = snapshots.length > 7 ? snapshots[snapshots.length - 8].avgRating || 0 : 0;
+      const satisfactionTrend = previousSatisfaction > 0 ? ((currentSatisfaction - previousSatisfaction) / previousSatisfaction * 100).toFixed(1) : '0';
+
       setKpis({
         totalSessions,
-        avgResolutionTimeSec: 45,
+        avgResolutionTimeSec: 0,
         clarificationRate: totalSessions > 0 ? Math.round((clarifications / totalSessions) * 100) : 0,
-        avgSatisfaction: 4.2,
-        sessionsTrend: 12.5,
-        satisfactionTrend: 5.3,
+        avgSatisfaction: avgSatisfaction ? avgSatisfaction.toFixed(1) : 0,
+        sessionsTrend: sessionsTrend,
+        satisfactionTrend: satisfactionTrend,
       });
     } catch (error) {
       if (error instanceof ApiError) {

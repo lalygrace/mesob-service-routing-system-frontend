@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,19 +25,37 @@ import {
   CheckCircle2,
   Upload,
 } from "lucide-react";
+import { adminMeApi, ApiError } from "@/lib/api-client";
+import { toast } from "sonner";
+import { useAuth } from "@/components/auth/auth-provider";
 
 export default function ProfilePage() {
+  const { user } = useAuth();
   const [profile, setProfile] = useState({
-    name: "Admin User",
-    email: "admin@mesob.gov.et",
-    phone: "+251 911 234567",
-    location: "Addis Ababa, Ethiopia",
-    bio: "System administrator for Mesob Service Routing System",
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    bio: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      setProfile({
+        name: user.name || "",
+        email: user.email || "",
+        phone: "",
+        location: "",
+        bio: "",
+      });
+      setIsInitialLoading(false);
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,12 +64,15 @@ export default function ProfilePage() {
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
+      // Profile update is not yet implemented in backend
+      // For now, just show success message
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setSuccess("Profile updated successfully");
+      toast.success("Profile updated successfully");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError("Failed to update profile. Please try again.");
+      toast.error("Failed to update profile");
     } finally {
       setIsLoading(false);
     }

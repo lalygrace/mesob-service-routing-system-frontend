@@ -58,8 +58,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usersApi, ApiError } from "@/lib/api-client";
-import { toast } from "sonner";
+// import { usersApi, ApiError } from "@/lib/api-client";
+// import { toast } from "sonner";
+
+// NOTE: Users API is not yet implemented in backend
+// Use admin invitation flow to add new admins instead
 
 interface Admin {
   id: string;
@@ -73,7 +76,7 @@ interface Admin {
 
 export default function UsersPage() {
   const [admins, setAdmins] = useState<Admin[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
@@ -86,25 +89,21 @@ export default function UsersPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  async function loadUsers() {
-    try {
-      setLoading(true);
-      const data = await usersApi.list();
-      setAdmins(data);
-    } catch (error) {
-      if (error instanceof ApiError) {
-        toast.error(`Failed to load users: ${error.message}`);
-      } else {
-        toast.error("Failed to load users");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
+  // async function loadUsers() {
+  //   try {
+  //     setLoading(true);
+  //     const data = await usersApi.list();
+  //     setAdmins(data);
+  //   } catch (error) {
+  //     if (error instanceof ApiError) {
+  //       toast.error(`Failed to load users: ${error.message}`);
+  //     } else {
+  //       toast.error("Failed to load users");
+  //     }
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
 
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,17 +116,16 @@ export default function UsersPage() {
     }
 
     try {
-      await usersApi.create(formData);
-      toast.success("Admin added successfully");
-      setFormData({ name: "", email: "", password: "", role: "admin" });
-      setIsAddDialogOpen(false);
-      await loadUsers();
+      // Users API is not implemented in backend
+      // Use admin invitation flow instead
+      setError("User management is not available. Use admin invitation flow to add new admins.");
+      // await usersApi.create(formData);
+      // toast.success("Admin added successfully");
+      // setFormData({ name: "", email: "", password: "", role: "admin" });
+      // setIsAddDialogOpen(false);
+      // await loadUsers();
     } catch (error) {
-      if (error instanceof ApiError) {
-        setError(error.message);
-      } else {
-        setError("Failed to add admin");
-      }
+      setError("Failed to add admin");
     }
   };
 
@@ -139,36 +137,32 @@ export default function UsersPage() {
     setSuccess("");
 
     try {
-      await usersApi.update(selectedAdmin.id, {
-        name: formData.name,
-        email: formData.email,
-        role: formData.role,
-      });
-      toast.success("Admin updated successfully");
-      setIsEditDialogOpen(false);
-      setSelectedAdmin(null);
-      await loadUsers();
+      // Users API is not implemented in backend
+      setError("User management is not available.");
+      // await usersApi.update(selectedAdmin.id, {
+      //   name: formData.name,
+      //   email: formData.email,
+      //   role: formData.role,
+      // });
+      // toast.success("Admin updated successfully");
+      // setIsEditDialogOpen(false);
+      // setSelectedAdmin(null);
+      // await loadUsers();
     } catch (error) {
-      if (error instanceof ApiError) {
-        setError(error.message);
-      } else {
-        setError("Failed to update admin");
-      }
+      setError("Failed to update admin");
     }
   };
 
   const handleDeleteAdmin = async (id: string) => {
     if (confirm("Are you sure you want to delete this admin?")) {
       try {
-        await usersApi.delete(id);
-        toast.success("Admin deleted successfully");
-        await loadUsers();
+        // Users API is not implemented in backend
+        setError("User management is not available.");
+        // await usersApi.delete(id);
+        // toast.success("Admin deleted successfully");
+        // await loadUsers();
       } catch (error) {
-        if (error instanceof ApiError) {
-          toast.error(`Failed to delete admin: ${error.message}`);
-        } else {
-          toast.error("Failed to delete admin");
-        }
+        setError("Failed to delete admin");
       }
     }
   };
@@ -177,16 +171,14 @@ export default function UsersPage() {
     try {
       const admin = admins.find((a) => a.id === id);
       if (admin) {
-        await usersApi.update(id, { status: admin.status === "active" ? "inactive" : "active" });
-        toast.success("Admin status updated successfully");
-        await loadUsers();
+        // Users API is not implemented in backend
+        setError("User management is not available.");
+        // await usersApi.update(id, { status: admin.status === "active" ? "inactive" : "active" });
+        // toast.success("Admin status updated successfully");
+        // await loadUsers();
       }
     } catch (error) {
-      if (error instanceof ApiError) {
-        toast.error(`Failed to update status: ${error.message}`);
-      } else {
-        toast.error("Failed to update status");
-      }
+      setError("Failed to update status");
     }
   };
 

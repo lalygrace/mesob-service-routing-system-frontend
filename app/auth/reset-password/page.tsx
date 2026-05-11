@@ -40,8 +40,8 @@ function ResetPasswordPageContent() {
   }, [searchParams]);
 
   const validatePassword = (pwd: string) => {
-    if (pwd.length < 8) {
-      return "Password must be at least 8 characters long";
+    if (pwd.length < 10) {
+      return "Password must be at least 10 characters long";
     }
     if (!/[A-Z]/.test(pwd)) {
       return "Password must contain at least one uppercase letter";
@@ -73,17 +73,38 @@ function ResetPasswordPageContent() {
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Call the backend API to accept the invitation and set password
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8888"}/admin-invitation/accept`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Important: include cookies for CSRF token
+          body: JSON.stringify({
+            token,
+            password,
+          }),
+        }
+      );
 
-      if (token) {
-        setSuccess(true);
-        setTimeout(() => {
-          router.push("/auth/login");
-        }, 2000);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to set password");
       }
+
+      setSuccess(true);
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 2000);
     } catch (err) {
-      setError("Failed to reset password. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to reset password. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -159,7 +180,7 @@ function ResetPasswordPageContent() {
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Must be at least 8 characters with uppercase, lowercase, and
+                Must be at least 10 characters with uppercase, lowercase, and
                 numbers
               </p>
             </div>

@@ -55,45 +55,95 @@ export default function AdminDashboardPage() {
   async function loadDashboardData() {
     try {
       setLoading(true);
-      const [dailyData, servicesData, interactionsData, servicesList, authoritiesList] = await Promise.all([
-        analyticsApi.getDailyUsage(30),
-        analyticsApi.getTopServices(5),
-        analyticsApi.getRecentInteractions(6),
+      const days = 30;
+      const granularity = "DAILY" as const;
+      
+      // Calculate date range
+      const to = new Date();
+      const from = new Date();
+      from.setDate(from.getDate() - days);
+      
+      const fromDate = from.toISOString().split('T')[0];
+      const toDate = to.toISOString().split('T')[0];
+      
+      const [snapshotsResponse, servicesList, authoritiesList] = await Promise.all([
+        analyticsApi.getSnapshots({ granularity, from: fromDate, to: toDate }),
         servicesApi.list(),
         authoritiesApi.list(),
       ]);
-
+      
+      const snapshots = snapshotsResponse.data || [];
+      
+      // Transform snapshots into the format the UI expects
+      const dailyData = snapshots.map((snap: any) => ({
+        date: snap.date,
+        sessions: snap.totalSessions || 0,
+        resolved: snap.completedSessions || 0,
+      }));
+      
       setDailyUsage(dailyData);
+      
+      // Aggregate top services from snapshots
+      const serviceMap = new Map<string, number>();
+      snapshots.forEach((snap: any) => {
+        if (snap.topServices && Array.isArray(snap.topServices)) {
+          snap.topServices.forEach((svc: any) => {
+            const existing = serviceMap.get(svc.name) || 0;
+            serviceMap.set(svc.name, existing + svc.count);
+          });
+        }
+      });
+      const servicesData = Array.from(serviceMap.entries())
+        .map(([serviceName, requests]) => ({ serviceName, requests }))
+        .sort((a, b) => b.requests - a.requests)
+        .slice(0, 5);
       setServicePopularity(servicesData);
-      setRecentSessions(interactionsData);
+      
+      // Recent interactions from top unclear inputs
+      const recentSessions: any[] = [];
+      snapshots.forEach((snap: any) => {
+        if (snap.topUnclearInputs && Array.isArray(snap.topUnclearInputs)) {
+          snap.topUnclearInputs.slice(0, 2).forEach((input: string, idx: number) => {
+            recentSessions.push({
+              id: `${snap.date}-${idx}`,
+              query: input,
+              language: "en",
+              service: null,
+              result: "failed",
+              timestamp: snap.date,
+            });
+          });
+        }
+      });
+      setRecentSessions(recentSessions.slice(0, 6).reverse());
 
       // Calculate KPIs
       const totalServices = servicesList.length;
       const totalAuthorities = authoritiesList.length;
       const todaySessions = dailyData.length > 0 ? dailyData[dailyData.length - 1].sessions : 0;
       const totalSessions = dailyData.reduce((sum: number, d: any) => sum + d.sessions, 0);
-      const resolved = dailyData.reduce((sum: number, d: any) => sum + (d.resolved || 0), 0);
-      const avgSatisfaction = totalSessions > 0 ? 4.2 : 0; // Would come from backend
+      const avgSatisfaction = snapshots.reduce((sum: number, s: any) => sum + (s.avgRating || 0), 0) / (snapshots.length || 1);
+
+      // Calculate trends (compare last 7 days to previous 7 days)
+      const last7Days = dailyData.slice(-7);
+      const previous7Days = dailyData.slice(-14, -7);
+      const last7Total = last7Days.reduce((sum: number, d: any) => sum + d.sessions, 0);
+      const previous7Total = previous7Days.reduce((sum: number, d: any) => sum + d.sessions, 0);
+      const sessionsTrend = previous7Total > 0 ? ((last7Total - previous7Total) / previous7Total * 100).toFixed(1) : '0';
 
       setKpis({
         totalServices,
         totalAuthorities,
         todaySessions,
-        avgSatisfaction,
-        serviceTrend: 12.5,
-        authoritiesTrend: 5.3,
-        sessionsTrend: 8.7,
-        satisfactionTrend: 5.3,
+        avgSatisfaction: avgSatisfaction ? avgSatisfaction.toFixed(1) : 0,
+        serviceTrend: 0,
+        authoritiesTrend: 0,
+        sessionsTrend: sessionsTrend,
+        satisfactionTrend: 0,
       });
 
-      // Mock rating distribution (would come from backend)
-      setRatingDistribution([
-        { rating: 1, count: 5 },
-        { rating: 2, count: 8 },
-        { rating: 3, count: 12 },
-        { rating: 4, count: 25 },
-        { rating: 5, count: 50 },
-      ]);
+      // Rating distribution - not available in current snapshots
+      setRatingDistribution([]);
     } catch (error) {
       if (error instanceof ApiError) {
         toast.error(`Failed to load dashboard data: ${error.message}`);
