@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { logout } from "@/lib/auth";
+import { signOut } from "@/lib/auth-client";
 
 interface LogoutDialogProps {
   open: boolean;
@@ -23,10 +23,10 @@ export function LogoutDialog({ open, onOpenChange }: LogoutDialogProps) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggingOut(true);
-    logout();
-    // The logout function will handle the redirect
+    await signOut();
+    router.push("/auth/login");
   };
 
   return (

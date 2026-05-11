@@ -11,8 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { PublicRoute } from "@/components/auth/public-route";
 import { toast } from "sonner";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+import { signIn } from "@/lib/auth-client";
 
 function LoginPageContent() {
   const router = useRouter();
@@ -28,20 +27,14 @@ function LoginPageContent() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/sign-in/email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
+      const result = await signIn.email({
+        email,
+        password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "Invalid credentials. Please try again.");
-        toast.error(data.message || "Login failed");
+      if (result.error) {
+        setError(result.error.message || "Invalid credentials. Please try again.");
+        toast.error(result.error.message || "Login failed");
         return;
       }
 

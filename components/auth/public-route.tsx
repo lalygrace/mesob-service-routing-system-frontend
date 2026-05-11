@@ -2,16 +2,17 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { isAuthenticated } from "@/lib/auth";
+import { useSession } from "@/lib/auth-client";
 
 export function PublicRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { data: session } = useSession();
 
   useEffect(() => {
-    if (isAuthenticated()) {
+    if (session?.user) {
       router.push("/admin");
     }
-  }, [router]);
+  }, [session, router]);
 
   return <>{children}</>;
 }

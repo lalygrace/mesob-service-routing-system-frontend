@@ -3,7 +3,7 @@
  * Handles communication with the NestJS backend
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
 
 export class ApiError extends Error {
   constructor(

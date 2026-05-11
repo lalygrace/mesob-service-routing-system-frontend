@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { isAuthenticated } from "@/lib/auth";
+import { useSession } from "@/lib/auth-client";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { data: session, isPending } = useSession();
   const [isChecking, setIsChecking] = useState(true);
   const isRedirecting = useRef(false);
   const checkInProgress = useRef(false);
@@ -15,28 +16,17 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     // Prevent infinite loop - skip if already checking or redirecting
     if (isRedirecting.current || checkInProgress.current) return;
     
-    // Don't check if already on login page
-    if (pathname === "/auth/login") {
+    // Don't check if already on login page or other auth pages
+    if (pathname.startsWith("/auth/")) {
       setIsChecking(false);
       return;
     }
 
-    // Check sessionStorage to prevent rapid re-checks
-    const lastCheck = sessionStorage.getItem('auth_check_timestamp');
-    const now = Date.now();
-    if (lastCheck && now - parseInt(lastCheck) < 5000) {
-      // If checked within last 5 seconds, skip
-      setIsChecking(false);
-      return;
-    }
-
-    const checkAuth = async () => {
+    const checkAuth = () => {
       checkInProgress.current = true;
-      sessionStorage.setItem('auth_check_timestamp', now.toString());
       
       try {
-        const authenticated = await isAuthenticated();
-        if (!authenticated) {
+        if (!session?.user) {
           isRedirecting.current = true;
           router.push("/auth/login");
         } else {
@@ -57,9 +47,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     };
 
     checkAuth();
-  }, [router, pathname]);
+  }, [router, pathname, session]);
 
-  if (isChecking) {
+  if (isChecking || isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

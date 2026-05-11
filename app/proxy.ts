@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // Backend API URL - typically runs on a different port than frontend
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888'
 
 // 1. Specify protected and public routes
 const protectedRoutes = ['/admin']
