@@ -14,13 +14,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import type { Authority } from "@/lib/mock/authorities";
+
+interface Authority {
+  id: string;
+  code: string;
+  isActive: boolean;
+  floor: string | null;
+  wing: string | null;
+  logoUrl: string | null;
+  translations: {
+    id: string;
+    authorityId: string;
+    language: string;
+    name: string;
+    description: string | null;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}
 
 type AuthorityFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   authority?: Authority | null;
-  onSave: (data: Omit<Authority, "id" | "createdAt" | "serviceCount">) => void;
+  onSave: (data: { code: string; isActive?: boolean; floor?: string; wing?: string; logoUrl?: string }) => void;
 };
 
 export function AuthorityForm({
@@ -31,37 +48,37 @@ export function AuthorityForm({
 }: AuthorityFormProps) {
   const isEdit = !!authority;
 
-  const [name, setName] = React.useState("");
-  const [abbreviation, setAbbreviation] = React.useState("");
-  const [description, setDescription] = React.useState("");
+  const [code, setCode] = React.useState("");
   const [floor, setFloor] = React.useState("");
-  const [room, setRoom] = React.useState("");
-  const [contactPhone, setContactPhone] = React.useState("");
-  const [status, setStatus] = React.useState<"active" | "inactive">("active");
+  const [wing, setWing] = React.useState("");
+  const [logoUrl, setLogoUrl] = React.useState("");
+  const [isActive, setIsActive] = React.useState(true);
 
   React.useEffect(() => {
     if (authority) {
-      setName(authority.name);
-      setAbbreviation(authority.abbreviation);
-      setDescription(authority.description);
-      setFloor(authority.floor);
-      setRoom(authority.room);
-      setContactPhone(authority.contactPhone);
-      setStatus(authority.status);
+      setCode(authority.code);
+      setFloor(authority.floor || "");
+      setWing(authority.wing || "");
+      setLogoUrl(authority.logoUrl || "");
+      setIsActive(authority.isActive);
     } else {
-      setName("");
-      setAbbreviation("");
-      setDescription("");
+      setCode("");
       setFloor("");
-      setRoom("");
-      setContactPhone("");
-      setStatus("active");
+      setWing("");
+      setLogoUrl("");
+      setIsActive(true);
     }
   }, [authority, open]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSave({ name, abbreviation, description, floor, room, contactPhone, status });
+    onSave({ 
+      code: code.toUpperCase(),
+      floor: floor || undefined,
+      wing: wing || undefined,
+      logoUrl: logoUrl || undefined,
+      isActive,
+    });
     onOpenChange(false);
   }
 
@@ -81,38 +98,19 @@ export function AuthorityForm({
           </DialogHeader>
 
           <div className="grid gap-4 py-5">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="auth-name">Name</Label>
-                <Input
-                  id="auth-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. National ID Authority"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="auth-abbr">Abbreviation</Label>
-                <Input
-                  id="auth-abbr"
-                  value={abbreviation}
-                  onChange={(e) => setAbbreviation(e.target.value)}
-                  placeholder="e.g. NIDA"
-                  required
-                />
-              </div>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="auth-desc">Description</Label>
-              <Textarea
-                id="auth-desc"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description of this authority's role..."
-                rows={3}
+              <Label htmlFor="auth-code">Code (Abbreviation)</Label>
+              <Input
+                id="auth-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="e.g. NIDA"
+                required
+                maxLength={20}
               />
+              <p className="text-xs text-muted-foreground">
+                Authority code (max 20 characters, will be uppercase)
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -123,43 +121,50 @@ export function AuthorityForm({
                   value={floor}
                   onChange={(e) => setFloor(e.target.value)}
                   placeholder="e.g. Floor 1"
+                  maxLength={50}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="auth-room">Room / Counter</Label>
+                <Label htmlFor="auth-wing">Wing</Label>
                 <Input
-                  id="auth-room"
-                  value={room}
-                  onChange={(e) => setRoom(e.target.value)}
-                  placeholder="e.g. Counter A"
+                  id="auth-wing"
+                  value={wing}
+                  onChange={(e) => setWing(e.target.value)}
+                  placeholder="e.g. North"
+                  maxLength={50}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="auth-phone">Contact Phone</Label>
+              <Label htmlFor="auth-logo">Logo URL</Label>
               <Input
-                id="auth-phone"
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
-                placeholder="+251-111-234567"
+                id="auth-logo"
+                value={logoUrl}
+                onChange={(e) => setLogoUrl(e.target.value)}
+                placeholder="https://example.com/logo.png"
+                maxLength={500}
               />
             </div>
 
             <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
               <div>
-                <Label htmlFor="auth-status" className="font-medium">Active</Label>
+                <Label htmlFor="auth-active" className="font-medium">Active</Label>
                 <p className="text-xs text-muted-foreground">
                   Inactive authorities are hidden from the kiosk
                 </p>
               </div>
               <Switch
-                id="auth-status"
-                checked={status === "active"}
-                onCheckedChange={(checked) =>
-                  setStatus(checked ? "active" : "inactive")
-                }
+                id="auth-active"
+                checked={isActive}
+                onCheckedChange={setIsActive}
               />
+            </div>
+            
+            <div className="rounded-lg border border-border/50 p-3 bg-muted/50">
+              <p className="text-xs text-muted-foreground">
+                <strong>Note:</strong> Translations (name, description) are managed separately after creating the authority.
+              </p>
             </div>
           </div>
 

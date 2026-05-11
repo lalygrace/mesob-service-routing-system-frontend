@@ -26,18 +26,43 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ServiceForm } from "@/components/admin/service-form";
 import { servicesApi, ApiError } from "@/lib/api-client";
 import { toast } from "sonner";
-import type { Service, ServiceTopicId } from "@/lib/service-navigator/types";
+
+interface Service {
+  id: string;
+  authorityId: string;
+  categoryId: string | null;
+  code: string;
+  isActive: boolean;
+  isPublished: boolean;
+  floor: string | null;
+  room: string | null;
+  counter: string | null;
+  processingTimeDays: number | null;
+  feeAmount: number | null;
+  feeDescription: string | null;
+  priorityWeight: number;
+  translations: {
+    id: string;
+    serviceId: string;
+    language: string;
+    name: string;
+    shortDesc: string | null;
+    fullDesc: string | null;
+  }[];
+  category: {
+    id: string;
+    slug: string;
+  } | null;
+  authority: {
+    id: string;
+    code: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function ServicesPage() {
   const [services, setServices] = React.useState<Service[]>([]);
@@ -53,8 +78,8 @@ export default function ServicesPage() {
   async function loadServices() {
     try {
       setLoading(true);
-      const data = await servicesApi.list();
-      setServices(data);
+      const response = await servicesApi.list();
+      setServices((response as any).data || []);
     } catch (error) {
       if (error instanceof ApiError) {
         toast.error(`Failed to load services: ${error.message}`);
@@ -67,13 +92,14 @@ export default function ServicesPage() {
   }
 
   const filtered = services.filter((s) => {
-    return (
-      s.title.toLowerCase().includes(search.toLowerCase()) ||
-      s.authority.toLowerCase().includes(search.toLowerCase())
-    );
+    const enTranslation = s.translations.find(t => t.language === 'en') || s.translations[0];
+    const name = enTranslation?.name || s.code;
+    return name.toLowerCase().includes(search.toLowerCase()) ||
+           s.code.toLowerCase().includes(search.toLowerCase()) ||
+           s.authority.code.toLowerCase().includes(search.toLowerCase());
   });
 
-  async function handleSave(data: Omit<Service, "id">) {
+  async function handleSave(data: any) {
     try {
       if (editing) {
         await servicesApi.update(editing.id, data);
@@ -120,7 +146,6 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Services</h1>
@@ -134,7 +159,6 @@ export default function ServicesPage() {
         </Button>
       </div>
 
-      {/* Table */}
       <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -163,8 +187,9 @@ export default function ServicesPage() {
                 <TableHead className="hidden md:table-cell">Authority</TableHead>
                 <TableHead className="hidden lg:table-cell">Location</TableHead>
                 <TableHead className="hidden lg:table-cell text-center">
-                  Requirements
+                  Translations
                 </TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
@@ -185,66 +210,90 @@ export default function ServicesPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((svc) => (
-                  <TableRow key={svc.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{svc.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {svc.feeHint} • {svc.durationHint}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                      {svc.authority}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                      {svc.locationHint}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-center">
-                      <Badge variant="secondary" className="text-xs">
-                        {svc.requirements.length}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="gap-2"
-                            onClick={() => openEdit(svc)}
+                filtered.map((svc) => {
+                  const enTranslation = svc.translations.find(t => t.language === 'en') || svc.translations[0];
+                  const name = enTranslation?.name || svc.code;
+                  const shortDesc = enTranslation?.shortDesc || '';
+                  return (
+                    <TableRow key={svc.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {shortDesc}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                        <Badge variant="outline" className="font-mono text-xs">
+                          {svc.authority.code}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                        {svc.floor || '-'} {svc.room ? `• ${svc.room}` : ''}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-center">
+                        <Badge variant="secondary" className="text-xs">
+                          {svc.translations.length}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Badge
+                            variant={svc.isActive ? "default" : "secondary"}
+                            className={
+                              svc.isActive
+                                ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20"
+                                : "bg-muted text-muted-foreground"
+                            }
                           >
-                            <Pencil className="h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="gap-2 text-destructive focus:text-destructive"
-                            onClick={() => handleDelete(svc.id)}
+                            {svc.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                          <Badge
+                            variant={svc.isPublished ? "default" : "secondary"}
+                            className={
+                              svc.isPublished
+                                ? "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-blue-500/20"
+                                : "bg-muted text-muted-foreground"
+                            }
                           >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
+                            {svc.isPublished ? "Published" : "Draft"}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="gap-2"
+                              onClick={() => openEdit(svc)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="gap-2 text-destructive focus:text-destructive"
+                              onClick={() => handleDelete(svc.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
-
-      <ServiceForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        service={editing}
-        onSave={handleSave}
-      />
     </div>
   );
 }

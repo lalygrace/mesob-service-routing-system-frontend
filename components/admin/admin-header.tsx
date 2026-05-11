@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { usePathname } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -44,15 +45,17 @@ export function AdminHeader() {
             const href = "/" + segments.slice(0, index + 1).join("/");
             const label = ROUTE_LABELS[segment] ?? segment;
 
-            return isLast ? (
-              <BreadcrumbItem key={segment}>
-                <BreadcrumbPage className="font-medium">{label}</BreadcrumbPage>
-              </BreadcrumbItem>
-            ) : (
-              <BreadcrumbItem key={segment}>
-                <BreadcrumbLink href={href}>{label}</BreadcrumbLink>
-                <BreadcrumbSeparator />
-              </BreadcrumbItem>
+            return (
+              <React.Fragment key={segment}>
+                <BreadcrumbItem>
+                  {isLast ? (
+                    <BreadcrumbPage className="font-medium">{label}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink href={href}>{label}</BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+                {!isLast && <BreadcrumbSeparator />}
+              </React.Fragment>
             );
           })}
         </BreadcrumbList>

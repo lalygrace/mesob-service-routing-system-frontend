@@ -30,7 +30,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AuthorityForm } from "@/components/admin/authority-form";
 import { authoritiesApi, ApiError } from "@/lib/api-client";
 import { toast } from "sonner";
-import type { Authority } from "@/lib/mock/authorities";
+
+interface Authority {
+  id: string;
+  code: string;
+  isActive: boolean;
+  floor: string | null;
+  wing: string | null;
+  logoUrl: string | null;
+  translations: {
+    id: string;
+    authorityId: string;
+    language: string;
+    name: string;
+    description: string | null;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function AuthoritiesPage() {
   const [authorities, setAuthorities] = React.useState<Authority[]>([]);
@@ -46,8 +63,8 @@ export default function AuthoritiesPage() {
   async function loadAuthorities() {
     try {
       setLoading(true);
-      const data = await authoritiesApi.list();
-      setAuthorities(data);
+      const response = await authoritiesApi.list();
+      setAuthorities((response as any).data || []);
     } catch (error) {
       if (error instanceof ApiError) {
         toast.error(`Failed to load authorities: ${error.message}`);
@@ -60,12 +77,15 @@ export default function AuthoritiesPage() {
   }
 
   const filtered = authorities.filter(
-    (a) =>
-      a.name.toLowerCase().includes(search.toLowerCase()) ||
-      a.abbreviation.toLowerCase().includes(search.toLowerCase()),
+    (a) => {
+      const enTranslation = a.translations.find(t => t.language === 'en') || a.translations[0];
+      const name = enTranslation?.name || a.code;
+      return name.toLowerCase().includes(search.toLowerCase()) ||
+             a.code.toLowerCase().includes(search.toLowerCase());
+    },
   );
 
-  async function handleSave(data: Omit<Authority, "id" | "createdAt" | "serviceCount">) {
+  async function handleSave(data: any) {
     try {
       if (editing) {
         await authoritiesApi.update(editing.id, data);
@@ -112,7 +132,6 @@ export default function AuthoritiesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Authorities</h1>
@@ -126,7 +145,6 @@ export default function AuthoritiesPage() {
         </Button>
       </div>
 
-      {/* Table */}
       <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -150,9 +168,9 @@ export default function AuthoritiesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Authority</TableHead>
-                <TableHead className="hidden md:table-cell">Abbreviation</TableHead>
+                <TableHead className="hidden md:table-cell">Code</TableHead>
                 <TableHead className="hidden lg:table-cell">Location</TableHead>
-                <TableHead className="text-center">Services</TableHead>
+                <TableHead className="text-center">Translations</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
@@ -174,68 +192,73 @@ export default function AuthoritiesPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((auth) => (
-                  <TableRow key={auth.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{auth.name}</p>
-                        <p className="text-xs text-muted-foreground truncate max-w-[250px]">
-                          {auth.description}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {auth.abbreviation}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                      {auth.floor} • {auth.room}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="secondary" className="text-xs">
-                        {auth.serviceCount}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={auth.status === "active" ? "default" : "secondary"}
-                        className={
-                          auth.status === "active"
-                            ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20"
-                            : "bg-muted text-muted-foreground"
-                        }
-                      >
-                        {auth.status === "active" ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="gap-2"
-                            onClick={() => openEdit(auth)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="gap-2 text-destructive focus:text-destructive"
-                            onClick={() => handleDelete(auth.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
+                filtered.map((auth) => {
+                  const enTranslation = auth.translations.find(t => t.language === 'en') || auth.translations[0];
+                  const name = enTranslation?.name || auth.code;
+                  const description = enTranslation?.description || '';
+                  return (
+                    <TableRow key={auth.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{name}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-[250px]">
+                            {description}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant="outline" className="font-mono text-xs">
+                          {auth.code}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                        {auth.floor || '-'} {auth.wing ? `• ${auth.wing}` : ''}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary" className="text-xs">
+                          {auth.translations.length}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={auth.isActive ? "default" : "secondary"}
+                          className={
+                            auth.isActive
+                              ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20"
+                              : "bg-muted text-muted-foreground"
+                          }
+                        >
+                          {auth.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="gap-2"
+                              onClick={() => openEdit(auth)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="gap-2 text-destructive focus:text-destructive"
+                              onClick={() => handleDelete(auth.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
