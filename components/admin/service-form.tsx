@@ -22,61 +22,86 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import type {
-  Service,
-  ServiceTopicId,
-  LanguageCode,
-} from "@/lib/service-navigator/types";
-
-const AUTHORITIES = [
-  { value: "Identity Services (placeholder)", label: "National ID Authority" },
-  {
-    value: "Passport Services (placeholder)",
-    label: "Immigration & Passport Services",
-  },
-  {
-    value: "Business Services (placeholder)",
-    label: "Business Registration & Licensing",
-  },
-  { value: "Transport Services (placeholder)", label: "Transport Authority" },
-  {
-    value: "Revenue Services (placeholder)",
-    label: "Revenue & Customs Authority",
-  },
-];
+import { Separator } from "@/components/ui/separator";
+import type { Service, LanguageCode } from "@/lib/service-navigator/types";
+import type { Authority } from "@/lib/mock/authorities";
 
 type ServiceFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   service?: Service | null;
+  authorities: Authority[];
   onSave: (data: Omit<Service, "id">) => void;
 };
+
+function LanguageSectionHeader({
+  flag,
+  label,
+  code,
+}: {
+  flag: string;
+  label: string;
+  code: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <Badge
+        variant="outline"
+        className="gap-1.5 text-xs font-medium px-2.5 py-0.5"
+      >
+        <span>{flag}</span>
+        {code}
+      </Badge>
+      <Separator className="flex-1" />
+      <span className="text-xs text-muted-foreground">{label}</span>
+    </div>
+  );
+}
 
 export function ServiceForm({
   open,
   onOpenChange,
   service,
+  authorities,
   onSave,
 }: ServiceFormProps) {
   const isEdit = !!service;
 
   const [title, setTitle] = React.useState("");
-  const [authority, setAuthority] = React.useState("");
-  const [topicId, setTopicId] = React.useState<ServiceTopicId>("id");
+  const [titleAm, setTitleAm] = React.useState("");
+  const [titleOm, setTitleOm] = React.useState("");
+  const [authorityId, setAuthorityId] = React.useState("");
   const [locationHint, setLocationHint] = React.useState("");
   const [feeHint, setFeeHint] = React.useState("");
   const [durationHint, setDurationHint] = React.useState("");
   const [requirements, setRequirements] = React.useState<string[]>([""]);
   const [workflowSteps, setWorkflowSteps] = React.useState<string[]>([""]);
-  const [keywordsEn, setKeywordsEn] = React.useState("");
-  const [keywordsAm, setKeywordsAm] = React.useState("");
-  const [keywordsOm, setKeywordsOm] = React.useState("");
+
+  // Auto-fill location when authority changes
+  const selectedAuthority = React.useMemo(
+    () => authorities.find((a) => a.id === authorityId),
+    [authorityId, authorities],
+  );
+
+  React.useEffect(() => {
+    if (selectedAuthority) {
+      const loc = selectedAuthority.room
+        ? `${selectedAuthority.floor} • ${selectedAuthority.room}`
+        : selectedAuthority.floor;
+      setLocationHint(loc);
+    }
+  }, [selectedAuthority]);
 
   React.useEffect(() => {
     if (service) {
       setTitle(service.title);
-      setAuthority(service.authority);
-      setTopicId(service.topicId);
+      setTitleAm("");
+      setTitleOm("");
+      // Try to find matching authority by name
+      const matchedAuth = authorities.find(
+        (a) => a.name === service.authority,
+      );
+      setAuthorityId(matchedAuth?.id ?? "");
       setLocationHint(service.locationHint);
       setFeeHint(service.feeHint);
       setDurationHint(service.durationHint);
@@ -84,23 +109,18 @@ export function ServiceForm({
         service.requirements.length > 0 ? service.requirements : [""],
       );
       setWorkflowSteps([""]);
-      setKeywordsEn(service.keywords.en.join(", "));
-      setKeywordsAm(service.keywords.am.join(", "));
-      setKeywordsOm(service.keywords.om.join(", "));
     } else {
       setTitle("");
-      setAuthority("");
-      setTopicId("id");
+      setTitleAm("");
+      setTitleOm("");
+      setAuthorityId("");
       setLocationHint("");
       setFeeHint("");
       setDurationHint("");
       setRequirements([""]);
       setWorkflowSteps([""]);
-      setKeywordsEn("");
-      setKeywordsAm("");
-      setKeywordsOm("");
     }
-  }, [service, open]);
+  }, [service, open, authorities]);
 
   function addRequirement() {
     setRequirements((prev) => [...prev, ""]);
@@ -126,24 +146,23 @@ export function ServiceForm({
     setWorkflowSteps((prev) => prev.map((s, i) => (i === index ? value : s)));
   }
 
-  function parseKeywords(str: string): string[] {
-    return str
-      .split(",")
-      .map((k) => k.trim())
-      .filter(Boolean);
-  }
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const authorityName = selectedAuthority?.name ?? "";
+    // Build keywords from title words as a baseline
+    const titleWords = title
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 2);
     const keywords: Record<LanguageCode, string[]> = {
-      en: parseKeywords(keywordsEn),
-      am: parseKeywords(keywordsAm),
-      om: parseKeywords(keywordsOm),
+      en: titleWords,
+      am: titleAm ? titleAm.split(/\s+/).filter(Boolean) : titleWords,
+      om: titleOm ? titleOm.split(/\s+/).filter(Boolean) : titleWords,
     };
     onSave({
       title,
-      authority,
-      topicId,
+      authority: authorityName,
+      topicId: "id", // Default — AI engine handles routing, not manual topicId
       locationHint,
       feeHint,
       durationHint,
@@ -164,20 +183,21 @@ export function ServiceForm({
             <DialogDescription>
               {isEdit
                 ? "Update the service configuration."
-                : "Define a new service for citizens."}
+                : "Define a new service for citizens in all supported languages."}
             </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="general" className="mt-4">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="requirements">Requirements</TabsTrigger>
               <TabsTrigger value="workflow">Workflow</TabsTrigger>
-              <TabsTrigger value="keywords">Keywords</TabsTrigger>
             </TabsList>
 
             {/* ── General Tab ─────────────────────────────────────── */}
             <TabsContent value="general" className="space-y-4 mt-4">
+              {/* English */}
+              <LanguageSectionHeader flag="🇬🇧" label="English" code="EN" />
               <div className="space-y-2">
                 <Label htmlFor="svc-title">Service Title</Label>
                 <Input
@@ -189,16 +209,52 @@ export function ServiceForm({
                 />
               </div>
 
+              {/* Amharic */}
+              <LanguageSectionHeader flag="🇪🇹" label="Amharic" code="አማ" />
+              <div className="space-y-2">
+                <Label htmlFor="svc-title-am">Service Title in Amharic</Label>
+                <Input
+                  id="svc-title-am"
+                  value={titleAm}
+                  onChange={(e) => setTitleAm(e.target.value)}
+                  placeholder="e.g. የጠፋ መታወቂያ መተካት"
+                  required
+                  dir="auto"
+                />
+              </div>
+
+              {/* Afaan Oromo */}
+              <LanguageSectionHeader
+                flag="🇪🇹"
+                label="Afaan Oromo"
+                code="OM"
+              />
+              <div className="space-y-2">
+                <Label htmlFor="svc-title-om">
+                  Service Title in Afaan Oromo
+                </Label>
+                <Input
+                  id="svc-title-om"
+                  value={titleOm}
+                  onChange={(e) => setTitleOm(e.target.value)}
+                  placeholder="e.g. Eenyummaa bade bakka buusuu"
+                  required
+                />
+              </div>
+
+              <Separator />
+
+              {/* Authority & Location */}
               <div className="space-y-2">
                 <Label>Authority</Label>
-                <Select value={authority} onValueChange={setAuthority}>
+                <Select value={authorityId} onValueChange={setAuthorityId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select authority" />
                   </SelectTrigger>
                   <SelectContent>
-                    {AUTHORITIES.map((a) => (
-                      <SelectItem key={a.value} value={a.value}>
-                        {a.label}
+                    {authorities.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>
+                        {a.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -210,9 +266,13 @@ export function ServiceForm({
                 <Input
                   id="svc-location"
                   value={locationHint}
-                  onChange={(e) => setLocationHint(e.target.value)}
-                  placeholder="e.g. Floor 1 • Counter A"
+                  readOnly
+                  className="bg-muted/50 text-muted-foreground cursor-not-allowed"
+                  placeholder="Auto-filled from authority"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Automatically set from the selected authority's location
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -321,40 +381,6 @@ export function ServiceForm({
                 <Plus className="h-3.5 w-3.5" />
                 Add Step
               </Button>
-            </TabsContent>
-
-            {/* ── Keywords Tab ────────────────────────────────────── */}
-            <TabsContent value="keywords" className="space-y-4 mt-4">
-              <p className="text-sm text-muted-foreground">
-                Comma-separated keywords used by the matching engine.
-              </p>
-              <div className="space-y-2">
-                <Label htmlFor="kw-en">English Keywords</Label>
-                <Input
-                  id="kw-en"
-                  value={keywordsEn}
-                  onChange={(e) => setKeywordsEn(e.target.value)}
-                  placeholder="id, lost, replace, missing"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="kw-am">Amharic Keywords</Label>
-                <Input
-                  id="kw-am"
-                  value={keywordsAm}
-                  onChange={(e) => setKeywordsAm(e.target.value)}
-                  placeholder="መታወቂያ, ጠፋ"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="kw-om">Afaan Oromo Keywords</Label>
-                <Input
-                  id="kw-om"
-                  value={keywordsOm}
-                  onChange={(e) => setKeywordsOm(e.target.value)}
-                  placeholder="eenyummaa, dhabe"
-                />
-              </div>
             </TabsContent>
           </Tabs>
 

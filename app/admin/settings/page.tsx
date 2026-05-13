@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Globe, Palette, Bell, Monitor } from "lucide-react";
+import { Globe, Palette, Bell, Monitor, Sparkles, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,15 @@ export default function SettingsPage() {
   const [autoTimeout, setAutoTimeout] = React.useState(120);
   const [emailAlerts, setEmailAlerts] = React.useState(false);
   const [dailyReports, setDailyReports] = React.useState(true);
+
+  // AI Engine state
+  const [aiApiKey, setAiApiKey] = React.useState("");
+  const [aiApiKeyVisible, setAiApiKeyVisible] = React.useState(false);
+  const [aiBaseUrl, setAiBaseUrl] = React.useState("https://api.addisassistant.com");
+  const [aiModel, setAiModel] = React.useState("Addis-፩-አሌፍ");
+  const [aiTemperature, setAiTemperature] = React.useState(0.7);
+  const [aiMaxTokens, setAiMaxTokens] = React.useState(1200);
+  const [aiTargetLang, setAiTargetLang] = React.useState("am");
 
   return (
     <div className="space-y-6">
@@ -266,6 +275,138 @@ export default function SettingsPage() {
             <Button variant="outline" className="w-full" disabled>
               Configure Email Recipients
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* ── AI Engine (Addis AI) ──────────────────────────── */}
+        <Card className="border-border/50 bg-card/80 backdrop-blur-sm lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-base">AI Engine (Addis AI)</CardTitle>
+                <CardDescription>Configure the Addis AI integration for service routing</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="ai-api-key">ADDIS_AI_API_KEY</Label>
+              <div className="relative">
+                <Input
+                  id="ai-api-key"
+                  type={aiApiKeyVisible ? "text" : "password"}
+                  value={aiApiKey}
+                  onChange={(e) => setAiApiKey(e.target.value)}
+                  placeholder="sk_..."
+                  className="pr-10 font-mono text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1 h-7 w-7"
+                  onClick={() => setAiApiKeyVisible(!aiApiKeyVisible)}
+                >
+                  {aiApiKeyVisible ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Your secret API key from the{" "}
+                <a
+                  href="https://platform.addisassistant.com/api-keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline"
+                >
+                  Addis AI Dashboard
+                </a>
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="ai-base-url">ADDIS_AI_BASE_URL</Label>
+              <Input
+                id="ai-base-url"
+                value={aiBaseUrl}
+                onChange={(e) => setAiBaseUrl(e.target.value)}
+                placeholder="https://api.addisassistant.com"
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                Production API base URL. Change only for custom deployments.
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>ADDIS_AI_MODEL</Label>
+                <Select value={aiModel} onValueChange={setAiModel}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Addis-፩-አሌፍ">Addis-፩-አሌፍ (Text)</SelectItem>
+                    <SelectItem value="አሌፍ-Audio-AM">አሌፍ-Audio-AM (Amharic TTS)</SelectItem>
+                    <SelectItem value="አሌፍ-Audio-OM">አሌፍ-Audio-OM (Oromo TTS)</SelectItem>
+                    <SelectItem value="addis-whisper">addis-whisper (STT)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>ADDIS_AI_TARGET_LANGUAGE</Label>
+                <Select value={aiTargetLang} onValueChange={setAiTargetLang}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="am">Amharic (am)</SelectItem>
+                    <SelectItem value="om">Afaan Oromo (om)</SelectItem>
+                    <SelectItem value="en">English (en)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="ai-temperature">ADDIS_AI_TEMPERATURE</Label>
+                <Input
+                  id="ai-temperature"
+                  type="number"
+                  min={0.1}
+                  max={1.0}
+                  step={0.1}
+                  value={aiTemperature}
+                  onChange={(e) => setAiTemperature(Number(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  0.1–0.3 for factual, 0.7–0.9 for creative
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ai-max-tokens">ADDIS_AI_MAX_TOKENS</Label>
+                <Input
+                  id="ai-max-tokens"
+                  type="number"
+                  min={100}
+                  max={8000}
+                  value={aiMaxTokens}
+                  onChange={(e) => setAiMaxTokens(Number(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Max output tokens per response (1 Amharic word ≈ 1.8 tokens)
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Building2,
   Layers,
-  MessageSquare,
   BarChart3,
   Settings,
   ChevronUp,
@@ -61,11 +60,6 @@ const NAV_ITEMS = [
     url: "/admin/services",
     icon: Layers,
     badge: "8",
-  },
-  {
-    title: "Intent Mapping",
-    url: "/admin/intents",
-    icon: MessageSquare,
   },
   {
     title: "Analytics",

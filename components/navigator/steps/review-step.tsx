@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import {
   AlertCircle,
   Building2,
@@ -10,6 +11,8 @@ import {
   MapPin,
   Navigation,
   Star,
+  RotateCcw,
+  Hash,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,6 +48,67 @@ function DetailTile({
   );
 }
 
+/* ── Rating labels per star count ──────────────────────── */
+const RATING_LABELS: Record<string, string[]> = {
+  en: ["", "Poor", "Fair", "Good", "Great", "Excellent"],
+  am: ["", "ደካማ", "መካከለኛ", "ጥሩ", "በጣም ጥሩ", "እጅግ በጣም ጥሩ"],
+  om: ["", "Dadhabaa", "Giddugaleessa", "Gaarii", "Baay'ee Gaarii", "Addaa"],
+};
+
+/* ── Interactive Star ──────────────────────────────────── */
+function InteractiveStar({
+  value,
+  currentRating,
+  hoverRating,
+  onHover,
+  onClick,
+  ariaLabel,
+  delay,
+}: {
+  value: number;
+  currentRating: number;
+  hoverRating: number;
+  onHover: (v: number) => void;
+  onClick: (v: number) => void;
+  ariaLabel: string;
+  delay: number;
+}) {
+  const isActive = value <= (hoverRating || currentRating);
+  const isExact = value === currentRating && currentRating > 0;
+
+  return (
+    <button
+      type="button"
+      className={[
+        "relative flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer",
+        "h-14 w-14 sm:h-16 sm:w-16",
+        "hover:scale-125",
+        isActive ? "text-primary" : "text-muted-foreground/40",
+        isExact ? "animate-in zoom-in-75 duration-500" : "",
+      ].join(" ")}
+      style={{ transitionDelay: `${delay}ms` }}
+      onMouseEnter={() => onHover(value)}
+      onMouseLeave={() => onHover(0)}
+      onClick={() => onClick(value)}
+      aria-label={`${ariaLabel}: ${value}`}
+    >
+      {/* Glow effect */}
+      {isActive && (
+        <div className="absolute inset-0 rounded-full bg-primary/15 blur-md transition-opacity duration-300" />
+      )}
+      <Star
+        className={[
+          "relative z-10 transition-all duration-300",
+          "h-8 w-8 sm:h-10 sm:w-10",
+          isActive ? "drop-shadow-[0_0_8px_var(--primary)]" : "",
+        ].join(" ")}
+        fill={isActive ? "currentColor" : "none"}
+        strokeWidth={isActive ? 0 : 1.5}
+      />
+    </button>
+  );
+}
+
 export function ReviewStep({
   strings,
   service,
@@ -54,6 +118,8 @@ export function ReviewStep({
   submitted,
   onSubmit,
   onStartOver,
+  sessionCount,
+  language,
 }: {
   strings: Strings;
   service: Service | null;
@@ -63,7 +129,14 @@ export function ReviewStep({
   submitted: boolean;
   onSubmit: () => void;
   onStartOver: () => void;
+  sessionCount?: number;
+  language?: string;
 }) {
+  const [hoverRating, setHoverRating] = React.useState(0);
+  const langKey = language ?? "en";
+  const labels = RATING_LABELS[langKey] ?? RATING_LABELS.en;
+  const displayRating = hoverRating || rating;
+
   if (!service) {
     return (
       <div className="flex flex-col items-center gap-3 py-10 text-center">
@@ -81,31 +154,69 @@ export function ReviewStep({
   const confirmedDocs = service.requirements.filter((req) => checked[req]);
   const missingDocs = service.requirements.filter((req) => !checked[req]);
 
+  /* ── Thank-you screen after submission ── */
   if (submitted) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-5 py-10 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-foreground">
-          <CheckCircle2 className="h-8 w-8" />
+      <div className="flex flex-col items-center justify-center space-y-6 py-10 text-center">
+        {/* Animated checkmark */}
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse" />
+          <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 border border-primary/30">
+            <CheckCircle2 className="h-10 w-10 text-primary animate-in zoom-in-50 duration-700" />
+          </div>
         </div>
-        <div>
+
+        <div className="space-y-2">
           <h2 className="text-2xl font-bold tracking-tight text-foreground">
             {strings.feedbackForm.thankYou}
           </h2>
-          <p className="mt-2 text-muted-foreground">
+          <p className="text-muted-foreground max-w-sm">
             {strings.feedbackForm.thankYouDesc}
           </p>
         </div>
+
+        {/* Star display */}
+        {rating > 0 && (
+          <div className="flex items-center gap-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                className={[
+                  "h-5 w-5 transition-colors",
+                  i < rating ? "text-primary" : "text-muted-foreground/20",
+                ].join(" ")}
+                fill={i < rating ? "currentColor" : "none"}
+              />
+            ))}
+            <span className="ml-2 text-sm font-medium text-muted-foreground">
+              {labels[rating] ?? ""}
+            </span>
+          </div>
+        )}
+
+        {/* Session counter */}
+        {typeof sessionCount === "number" && (
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-background/40 backdrop-blur-sm px-4 py-2">
+            <Hash className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">
+              Session #{sessionCount + 1}
+            </span>
+          </div>
+        )}
+
         <Button
           onClick={onStartOver}
           size="lg"
-          className="rounded-xl h-12 px-8"
+          className="rounded-xl h-12 px-8 gap-2"
         >
+          <RotateCcw className="h-4 w-4" />
           Serve next customer
         </Button>
       </div>
     );
   }
 
+  /* ── Main review view ── */
   return (
     <div className="space-y-5">
       <Card className="overflow-hidden bg-card/40 backdrop-blur-md border-white/20 shadow-xl">
@@ -160,6 +271,7 @@ export function ReviewStep({
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+        {/* Requirements summary */}
         <Card className="bg-card/40 backdrop-blur-md border-white/20 shadow-xl">
           <CardContent className="space-y-4 p-5">
             <div className="flex items-start gap-3">
@@ -206,6 +318,7 @@ export function ReviewStep({
           </CardContent>
         </Card>
 
+        {/* Rating card */}
         <Card className="bg-card/40 backdrop-blur-md border-white/20 shadow-xl">
           <CardContent className="space-y-5 p-5">
             <div className="flex items-start gap-3">
@@ -222,38 +335,43 @@ export function ReviewStep({
               </div>
             </div>
 
-            <div className="space-y-3 text-center">
-              <h3 className="text-sm font-semibold text-foreground">
+            {/* Star rating with hover effects */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-foreground text-center">
                 {strings.feedbackForm.rating}
               </h3>
+
               <div className="flex items-center justify-center gap-1">
                 {Array.from({ length: 5 }).map((_, i) => {
                   const starValue = i + 1;
-                  const active = starValue <= rating;
                   return (
-                    <Button
+                    <InteractiveStar
                       key={starValue}
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-12 w-12 rounded-full"
-                      onClick={() => {
-                        onRatingChange(starValue);
+                      value={starValue}
+                      currentRating={rating}
+                      hoverRating={hoverRating}
+                      onHover={setHoverRating}
+                      onClick={(v) => {
+                        onRatingChange(v);
                         onSubmit();
                       }}
-                      aria-label={`${strings.feedbackForm.rating}: ${starValue}`}
-                    >
-                      <Star
-                        className={
-                          active
-                            ? "h-7 w-7 text-primary"
-                            : "h-7 w-7 text-muted-foreground"
-                        }
-                        fill={active ? "currentColor" : "none"}
-                      />
-                    </Button>
+                      ariaLabel={strings.feedbackForm.rating}
+                      delay={i * 50}
+                    />
                   );
                 })}
+              </div>
+
+              {/* Dynamic rating label */}
+              <div className="h-6 flex items-center justify-center">
+                {displayRating > 0 && (
+                  <span
+                    className="text-sm font-medium text-primary animate-in fade-in-0 slide-in-from-bottom-2 duration-200"
+                    key={displayRating}
+                  >
+                    {labels[displayRating] ?? ""}
+                  </span>
+                )}
               </div>
             </div>
 

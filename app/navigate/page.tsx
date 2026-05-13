@@ -91,6 +91,7 @@ function NavigateContent() {
   >({});
   const [rating, setRating] = React.useState(0);
   const [feedbackSubmitted, setFeedbackSubmitted] = React.useState(false);
+  const [sessionCount, setSessionCount] = React.useState(0);
 
   const strings = getStrings(language);
   const isFullscreen = useFullscreenStatus();
@@ -155,6 +156,7 @@ function NavigateContent() {
   }
 
   function resetFlow() {
+    setSessionCount((c) => c + 1);
     setStep("language");
     setIntakeMethod(null);
     setCaseText("");
@@ -319,6 +321,8 @@ function NavigateContent() {
                     submitted={feedbackSubmitted}
                     onSubmit={() => setFeedbackSubmitted(true)}
                     onStartOver={resetFlow}
+                    sessionCount={sessionCount}
+                    language={language}
                   />
                 )}
               </div>
