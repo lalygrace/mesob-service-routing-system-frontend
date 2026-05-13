@@ -63,7 +63,8 @@ interface Admin {
   id: string;
   name: string;
   email: string;
-  role: "super_admin" | "admin" | "moderator";
+  emailVerified: boolean;
+  role: "super_admin" | "admin";
   status: "active" | "inactive";
   createdAt: string;
   lastLogin?: string;
@@ -75,6 +76,7 @@ export default function UsersPage() {
       id: "1",
       name: "Admin User",
       email: "admin@mesob.gov.et",
+      emailVerified: true,
       role: "super_admin",
       status: "active",
       createdAt: "2024-01-15",
@@ -84,6 +86,7 @@ export default function UsersPage() {
       id: "2",
       name: "John Doe",
       email: "john@mesob.gov.et",
+      emailVerified: false,
       role: "admin",
       status: "active",
       createdAt: "2024-02-20",
@@ -93,7 +96,8 @@ export default function UsersPage() {
       id: "3",
       name: "Jane Smith",
       email: "jane@mesob.gov.et",
-      role: "moderator",
+      emailVerified: true,
+      role: "admin",
       status: "inactive",
       createdAt: "2024-03-10",
       lastLogin: "2024-04-28",
@@ -106,7 +110,6 @@ export default function UsersPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    role: "admin" as Admin["role"],
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -126,14 +129,15 @@ export default function UsersPage() {
       id: String(admins.length + 1),
       name: formData.name,
       email: formData.email,
-      role: formData.role,
+      emailVerified: false,
+      role: "admin",
       status: "active",
       createdAt: new Date().toISOString().split("T")[0],
     };
 
     setAdmins([...admins, newAdmin]);
     setSuccess("Admin added successfully");
-    setFormData({ name: "", email: "", role: "admin" });
+    setFormData({ name: "", email: "" });
     setTimeout(() => {
       setIsAddDialogOpen(false);
       setSuccess("");
@@ -185,7 +189,6 @@ export default function UsersPage() {
     setFormData({
       name: admin.name,
       email: admin.email,
-      role: admin.role,
     });
     setIsEditDialogOpen(true);
   };
@@ -196,8 +199,6 @@ export default function UsersPage() {
         return "bg-purple-500 text-white";
       case "admin":
         return "bg-blue-500 text-white";
-      case "moderator":
-        return "bg-green-500 text-white";
       default:
         return "";
     }
@@ -275,26 +276,7 @@ export default function UsersPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="add-role">Role</Label>
-                  <div className="relative">
-                    <Shield className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Select
-                      value={formData.role}
-                      onValueChange={(v) =>
-                        setFormData({ ...formData, role: v as Admin["role"] })
-                      }
-                    >
-                      <SelectTrigger className="pl-10">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="moderator">Moderator</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+
 
               </div>
               <DialogFooter>
@@ -325,6 +307,7 @@ export default function UsersPage() {
               <TableRow>
                 <TableHead>User</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Email Verified</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Last Login</TableHead>
@@ -357,6 +340,19 @@ export default function UsersPage() {
                     <Badge className={getRoleBadgeColor(admin.role)}>
                       {admin.role.replace("_", " ")}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {admin.emailVerified ? (
+                      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                        <CheckCircle2 className="mr-1 h-3 w-3" />
+                        Verified
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
+                        <XCircle className="mr-1 h-3 w-3" />
+                        Pending
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge
