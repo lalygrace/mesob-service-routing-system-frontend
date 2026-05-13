@@ -106,7 +106,6 @@ export default function UsersPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: "",
     role: "admin" as Admin["role"],
   });
   const [error, setError] = useState("");
@@ -117,8 +116,8 @@ export default function UsersPage() {
     setError("");
     setSuccess("");
 
-    if (!formData.name || !formData.email || !formData.password) {
-      setError("All fields are required");
+    if (!formData.name || !formData.email) {
+      setError("Name and email are required");
       return;
     }
 
@@ -134,7 +133,7 @@ export default function UsersPage() {
 
     setAdmins([...admins, newAdmin]);
     setSuccess("Admin added successfully");
-    setFormData({ name: "", email: "", password: "", role: "admin" });
+    setFormData({ name: "", email: "", role: "admin" });
     setTimeout(() => {
       setIsAddDialogOpen(false);
       setSuccess("");
@@ -186,7 +185,6 @@ export default function UsersPage() {
     setFormData({
       name: admin.name,
       email: admin.email,
-      password: "",
       role: admin.role,
     });
     setIsEditDialogOpen(true);
@@ -278,20 +276,23 @@ export default function UsersPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="add-role">Role</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
+                    <Shield className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Select
+                      value={formData.role}
+                      onValueChange={(v) =>
+                        setFormData({ ...formData, role: v as Admin["role"] })
                       }
-                      className="pl-10"
-                      required
-                    />
+                    >
+                      <SelectTrigger className="pl-10">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="moderator">Moderator</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 

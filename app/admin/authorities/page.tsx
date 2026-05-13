@@ -116,14 +116,13 @@ export default function AuthoritiesPage() {
                 <TableHead className="hidden md:table-cell">Abbreviation</TableHead>
                 <TableHead className="hidden lg:table-cell">Location</TableHead>
                 <TableHead className="text-center">Services</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12">
+                  <TableCell colSpan={5} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Building2 className="h-8 w-8" />
                       <p>No authorities found</p>
@@ -147,25 +146,14 @@ export default function AuthoritiesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                      {auth.floor} • {auth.room}
+                      {auth.floor}{auth.room ? ` • ${auth.room}` : ""}
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="secondary" className="text-xs">
                         {auth.serviceCount}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={auth.status === "active" ? "default" : "secondary"}
-                        className={
-                          auth.status === "active"
-                            ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20"
-                            : "bg-muted text-muted-foreground"
-                        }
-                      >
-                        {auth.status === "active" ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
+
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

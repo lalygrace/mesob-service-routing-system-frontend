@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -32,7 +31,6 @@ export default function ProfilePage() {
     email: "admin@mesob.gov.et",
     phone: "+251 911 234567",
     location: "Addis Ababa, Ethiopia",
-    bio: "System administrator for Mesob Service Routing System",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -199,18 +197,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  value={profile.bio}
-                  onChange={(e) =>
-                    setProfile({ ...profile, bio: e.target.value })
-                  }
-                  rows={4}
-                  placeholder="Tell us about yourself..."
-                />
-              </div>
+
             </CardContent>
             <CardFooter>
               <Button type="submit" disabled={isLoading}>

@@ -36,7 +36,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServiceForm } from "@/components/admin/service-form";
 import { MOCK_SERVICES } from "@/lib/mock/services";
-import type { Service, ServiceTopicId } from "@/lib/service-navigator/types";
+import { MOCK_AUTHORITIES } from "@/lib/mock/authorities";
+import type { Service } from "@/lib/service-navigator/types";
 
 export default function ServicesPage() {
   const [services, setServices] = React.useState<Service[]>(MOCK_SERVICES);
@@ -199,6 +200,7 @@ export default function ServicesPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         service={editing}
+        authorities={MOCK_AUTHORITIES}
         onSave={handleSave}
       />
     </div>
