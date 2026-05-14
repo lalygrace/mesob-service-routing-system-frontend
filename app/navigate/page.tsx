@@ -28,7 +28,17 @@ import type {
   MatchCandidate,
   Service,
 } from "@/lib/service-navigator/types";
-import { MOCK_SERVICES } from "@/lib/mock/services";
+import {
+  completeCitizenSession,
+  createCitizenInteraction,
+  createCitizenSession,
+  matchesToServices,
+  selectCitizenService,
+  submitCitizenFeedback,
+} from "@/lib/api/citizen";
+import { listPublicServices } from "@/lib/api/services";
+import { getApiErrorMessage } from "@/lib/api/client";
+import { toast } from "sonner";
 
 type StepId =
   | "language"
@@ -66,13 +76,17 @@ function NavigateContent() {
   const searchParams = useSearchParams();
   const langParam = searchParams.get("lang") as LanguageCode | null;
 
-  const services = MOCK_SERVICES;
   const initialLanguage: LanguageCode =
     langParam === "am" || langParam === "om" || langParam === "en"
       ? langParam
       : "en";
 
   const [language, setLanguage] = React.useState<LanguageCode>(initialLanguage);
+  const [services, setServices] = React.useState<Service[]>([]);
+  const [isLoadingServices, setIsLoadingServices] = React.useState(false);
+  const [citizenSessionId, setCitizenSessionId] = React.useState<string | null>(
+    null,
+  );
   const [step, setStep] = React.useState<StepId>("language");
 
   const [intakeMethod, setIntakeMethod] = React.useState<
@@ -95,6 +109,31 @@ function NavigateContent() {
 
   const strings = getStrings(language);
   const isFullscreen = useFullscreenStatus();
+  React.useEffect(() => {
+    let mounted = true;
+
+    async function loadServices() {
+      setIsLoadingServices(true);
+      try {
+        const data = await listPublicServices(language);
+        if (mounted) setServices(data);
+      } catch (error) {
+        toast.error(
+          getApiErrorMessage(error, "Failed to load service catalog"),
+        );
+        if (mounted) setServices([]);
+      } finally {
+        if (mounted) setIsLoadingServices(false);
+      }
+    }
+
+    loadServices();
+
+    return () => {
+      mounted = false;
+    };
+  }, [language]);
+
   const selectedService = React.useMemo(() => {
     if (!selectedServiceId) return null;
     return findServiceById(services, selectedServiceId);
@@ -112,6 +151,35 @@ function NavigateContent() {
 
   function goTo(next: StepId) {
     setStep(next);
+  }
+
+  async function ensureCitizenSession(rawInput?: string) {
+    if (citizenSessionId) return citizenSessionId;
+
+    const session = await createCitizenSession({
+      lang: language,
+      inputMode: intakeMethod === "voice" ? "voice" : "text",
+      rawInput,
+      deviceType: "kiosk",
+    });
+
+    setCitizenSessionId(session.id);
+    return session.id;
+  }
+
+  async function selectServiceForSession(
+    serviceId: string,
+    sessionId = citizenSessionId,
+  ) {
+    if (!sessionId) return;
+
+    try {
+      await selectCitizenService(sessionId, serviceId);
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(error, "Failed to record selected service"),
+      );
+    }
   }
 
   function goToInput() {
@@ -141,18 +209,93 @@ function NavigateContent() {
       return;
     }
 
-    const nextDecision = decide({ services, input: cleaned, language });
-    setDecision(nextDecision);
-
-    if (nextDecision.mode === "clarify") {
+    if (services.length === 0) {
+      setDecision(null);
       setSelectedServiceId(null);
+      setAssistantError({
+        title: strings.assistant.failedTitle,
+        message: "The service catalog is not available yet. Please try again.",
+      });
       goTo("assistant");
       return;
     }
 
-    setCheckedRequirements({});
-    setSelectedServiceId(nextDecision.candidates[0]?.service.id ?? null);
-    goTo("results");
+    try {
+      const sessionId = await ensureCitizenSession(cleaned);
+      const result = await createCitizenInteraction(sessionId, {
+        userInput: cleaned,
+        inputMode: intakeMethod === "voice" ? "voice" : "text",
+      });
+
+      const candidates = matchesToServices(result.matches, services);
+
+      if (candidates.length === 0) {
+        setDecision(null);
+        setSelectedServiceId(null);
+        setAssistantError({
+          title: strings.assistant.failedTitle,
+          message: result.message || strings.assistant.failedDesc,
+        });
+        goTo("assistant");
+        return;
+      }
+
+      const nextDecision: Decision = {
+        mode: "suggest",
+        candidates,
+        reason: "high-confidence",
+      };
+
+      const serviceId = candidates[0]?.service.id ?? null;
+      setDecision(nextDecision);
+      setCheckedRequirements({});
+      setSelectedServiceId(serviceId);
+      if (serviceId) await selectServiceForSession(serviceId, sessionId);
+      goTo("results");
+    } catch (error) {
+      const fallbackDecision = decide({ services, input: cleaned, language });
+      setDecision(fallbackDecision);
+
+      if (fallbackDecision.mode === "clarify") {
+        setSelectedServiceId(null);
+        toast.error(
+          getApiErrorMessage(
+            error,
+            "Backend routing failed. Using local clarification.",
+          ),
+        );
+        goTo("assistant");
+        return;
+      }
+
+      setCheckedRequirements({});
+      setSelectedServiceId(fallbackDecision.candidates[0]?.service.id ?? null);
+      toast.error(
+        getApiErrorMessage(
+          error,
+          "Backend routing failed. Using local matching.",
+        ),
+      );
+      goTo("results");
+    }
+  }
+
+  async function submitFeedback(nextRating: number) {
+    setFeedbackSubmitted(true);
+
+    if (!citizenSessionId) return;
+
+    try {
+      await submitCitizenFeedback(citizenSessionId, {
+        serviceId: selectedServiceId ?? undefined,
+        wasHelpful: nextRating >= 3,
+        rating: nextRating,
+      });
+      await completeCitizenSession(citizenSessionId, true);
+      toast.success("Feedback submitted successfully");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to submit feedback"));
+    }
   }
 
   function resetFlow() {
@@ -163,6 +306,7 @@ function NavigateContent() {
     setDecision(null);
     setAssistantError(null);
     setSelectedServiceId(null);
+    setCitizenSessionId(null);
     setCheckedRequirements({});
     setRating(0);
     setFeedbackSubmitted(false);
@@ -225,9 +369,16 @@ function NavigateContent() {
                     language={language}
                     onLanguageChange={(nextLanguage) => {
                       setLanguage(nextLanguage);
+                      setCitizenSessionId(null);
                       goTo("intake");
                     }}
                   />
+                )}
+
+                {isLoadingServices && step !== "language" && (
+                  <div className="mb-4 rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                    Loading service catalog...
+                  </div>
                 )}
 
                 {step === "intake" && (
@@ -278,10 +429,15 @@ function NavigateContent() {
                     userText={caseText}
                     decision={decision}
                     error={assistantError}
-                    onPickClarification={(serviceIds) => {
-                      const next = candidatesFromServiceIds(services, serviceIds);
+                    onPickClarification={async (serviceIds) => {
+                      const next = candidatesFromServiceIds(
+                        services,
+                        serviceIds,
+                      );
+                      const serviceId = next[0]?.service.id ?? null;
                       setCheckedRequirements({});
-                      setSelectedServiceId(next[0]?.service.id ?? null);
+                      setSelectedServiceId(serviceId);
+                      if (serviceId) await selectServiceForSession(serviceId);
                       goTo("results");
                     }}
                     onRetry={() => {
@@ -319,7 +475,7 @@ function NavigateContent() {
                     rating={rating}
                     onRatingChange={setRating}
                     submitted={feedbackSubmitted}
-                    onSubmit={() => setFeedbackSubmitted(true)}
+                    onSubmit={submitFeedback}
                     onStartOver={resetFlow}
                     sessionCount={sessionCount}
                     language={language}

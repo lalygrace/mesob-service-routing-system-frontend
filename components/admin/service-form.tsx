@@ -24,7 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { Service, LanguageCode } from "@/lib/service-navigator/types";
-import type { Authority } from "@/lib/mock/authorities";
+import type { Authority } from "@/lib/api/authorities";
 
 type ServiceFormProps = {
   open: boolean;
@@ -84,42 +84,45 @@ export function ServiceForm({
   );
 
   React.useEffect(() => {
-    if (selectedAuthority) {
-      const loc = selectedAuthority.room
-        ? `${selectedAuthority.floor} • ${selectedAuthority.room}`
-        : selectedAuthority.floor;
-      setLocationHint(loc);
-    }
+    if (!selectedAuthority) return;
+
+    const loc = selectedAuthority.room
+      ? `${selectedAuthority.floor} • ${selectedAuthority.room}`
+      : selectedAuthority.floor;
+
+    queueMicrotask(() => setLocationHint(loc));
   }, [selectedAuthority]);
 
   React.useEffect(() => {
-    if (service) {
-      setTitle(service.title);
-      setTitleAm("");
-      setTitleOm("");
-      // Try to find matching authority by name
-      const matchedAuth = authorities.find(
-        (a) => a.name === service.authority,
-      );
-      setAuthorityId(matchedAuth?.id ?? "");
-      setLocationHint(service.locationHint);
-      setFeeHint(service.feeHint);
-      setDurationHint(service.durationHint);
-      setRequirements(
-        service.requirements.length > 0 ? service.requirements : [""],
-      );
-      setWorkflowSteps([""]);
-    } else {
-      setTitle("");
-      setTitleAm("");
-      setTitleOm("");
-      setAuthorityId("");
-      setLocationHint("");
-      setFeeHint("");
-      setDurationHint("");
-      setRequirements([""]);
-      setWorkflowSteps([""]);
-    }
+    queueMicrotask(() => {
+      if (service) {
+        setTitle(service.title);
+        setTitleAm("");
+        setTitleOm("");
+        // Try to find matching authority by name
+        const matchedAuth = authorities.find(
+          (a) => a.name === service.authority,
+        );
+        setAuthorityId(matchedAuth?.id ?? "");
+        setLocationHint(service.locationHint);
+        setFeeHint(service.feeHint);
+        setDurationHint(service.durationHint);
+        setRequirements(
+          service.requirements.length > 0 ? service.requirements : [""],
+        );
+        setWorkflowSteps([""]);
+      } else {
+        setTitle("");
+        setTitleAm("");
+        setTitleOm("");
+        setAuthorityId("");
+        setLocationHint("");
+        setFeeHint("");
+        setDurationHint("");
+        setRequirements([""]);
+        setWorkflowSteps([""]);
+      }
+    });
   }, [service, open, authorities]);
 
   function addRequirement() {
@@ -224,11 +227,7 @@ export function ServiceForm({
               </div>
 
               {/* Afaan Oromo */}
-              <LanguageSectionHeader
-                flag="🇪🇹"
-                label="Afaan Oromo"
-                code="OM"
-              />
+              <LanguageSectionHeader flag="🇪🇹" label="Afaan Oromo" code="OM" />
               <div className="space-y-2">
                 <Label htmlFor="svc-title-om">
                   Service Title in Afaan Oromo
@@ -271,7 +270,7 @@ export function ServiceForm({
                   placeholder="Auto-filled from authority"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Automatically set from the selected authority's location
+                  Automatically set from the selected authority location
                 </p>
               </div>
 

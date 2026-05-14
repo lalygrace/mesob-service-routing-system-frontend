@@ -12,8 +12,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Lock, CheckCircle2, Shield } from "lucide-react";
+import { toast } from "sonner";
+import { Eye, EyeOff, Lock, Shield } from "lucide-react";
+import { changeAdminPassword } from "@/lib/api/auth";
+import { getApiErrorMessage } from "@/lib/api/client";
 
 export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -22,8 +24,6 @@ export default function ChangePasswordPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const validatePassword = (pwd: string) => {
@@ -47,43 +47,46 @@ export default function ChangePasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
-
     if (!currentPassword) {
-      setError("Please enter your current password");
+      toast.error("Please enter your current password");
       return;
     }
 
     const passwordError = validatePassword(newPassword);
     if (passwordError) {
-      setError(passwordError);
+      toast.error(passwordError);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match");
+      toast.error("New passwords do not match");
       return;
     }
 
     if (currentPassword === newPassword) {
-      setError("New password must be different from current password");
+      toast.error("New password must be different from current password");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      setSuccess("Password changed successfully");
+      await changeAdminPassword({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+      toast.success("Password changed successfully");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setTimeout(() => setSuccess(""), 5000);
     } catch (err) {
-      setError("Failed to change password. Please check your current password and try again.");
+      toast.error(
+        getApiErrorMessage(
+          err,
+          "Failed to change password. Please check your current password and try again.",
+        ),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -98,12 +101,16 @@ export default function ChangePasswordPage() {
     if (/[0-9]/.test(pwd)) strength++;
     if (/[!@#$%^&*]/.test(pwd)) strength++;
 
-    if (strength <= 2) return { label: "Weak", color: "bg-red-500", width: "33%" };
-    if (strength <= 4) return { label: "Medium", color: "bg-yellow-500", width: "66%" };
+    if (strength <= 2)
+      return { label: "Weak", color: "bg-red-500", width: "33%" };
+    if (strength <= 4)
+      return { label: "Medium", color: "bg-yellow-500", width: "66%" };
     return { label: "Strong", color: "bg-green-500", width: "100%" };
   };
 
-  const passwordStrength = newPassword ? getPasswordStrength(newPassword) : null;
+  const passwordStrength = newPassword
+    ? getPasswordStrength(newPassword)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -113,13 +120,6 @@ export default function ChangePasswordPage() {
           Update your password to keep your account secure
         </p>
       </div>
-
-      {success && (
-        <Alert>
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
 
       <div className="grid gap-6 max-w-2xl">
         <Card>
@@ -131,12 +131,6 @@ export default function ChangePasswordPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Current Password</Label>
                 <div className="relative">
@@ -192,12 +186,18 @@ export default function ChangePasswordPage() {
                 {passwordStrength && (
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Password strength:</span>
-                      <span className={`font-medium ${
-                        passwordStrength.label === "Weak" ? "text-red-500" :
-                        passwordStrength.label === "Medium" ? "text-yellow-500" :
-                        "text-green-500"
-                      }`}>
+                      <span className="text-muted-foreground">
+                        Password strength:
+                      </span>
+                      <span
+                        className={`font-medium ${
+                          passwordStrength.label === "Weak"
+                            ? "text-red-500"
+                            : passwordStrength.label === "Medium"
+                              ? "text-yellow-500"
+                              : "text-green-500"
+                        }`}
+                      >
                         {passwordStrength.label}
                       </span>
                     </div>
@@ -242,23 +242,33 @@ export default function ChangePasswordPage() {
                 <p className="text-sm font-medium">Password Requirements:</p>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li className="flex items-center gap-2">
-                    <div className={`h-1.5 w-1.5 rounded-full ${newPassword.length >= 8 ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                    <div
+                      className={`h-1.5 w-1.5 rounded-full ${newPassword.length >= 8 ? "bg-green-500" : "bg-muted-foreground"}`}
+                    />
                     At least 8 characters
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className={`h-1.5 w-1.5 rounded-full ${/[A-Z]/.test(newPassword) ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                    <div
+                      className={`h-1.5 w-1.5 rounded-full ${/[A-Z]/.test(newPassword) ? "bg-green-500" : "bg-muted-foreground"}`}
+                    />
                     One uppercase letter
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className={`h-1.5 w-1.5 rounded-full ${/[a-z]/.test(newPassword) ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                    <div
+                      className={`h-1.5 w-1.5 rounded-full ${/[a-z]/.test(newPassword) ? "bg-green-500" : "bg-muted-foreground"}`}
+                    />
                     One lowercase letter
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className={`h-1.5 w-1.5 rounded-full ${/[0-9]/.test(newPassword) ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                    <div
+                      className={`h-1.5 w-1.5 rounded-full ${/[0-9]/.test(newPassword) ? "bg-green-500" : "bg-muted-foreground"}`}
+                    />
                     One number
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className={`h-1.5 w-1.5 rounded-full ${/[!@#$%^&*]/.test(newPassword) ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                    <div
+                      className={`h-1.5 w-1.5 rounded-full ${/[!@#$%^&*]/.test(newPassword) ? "bg-green-500" : "bg-muted-foreground"}`}
+                    />
                     One special character (!@#$%^&*)
                   </li>
                 </ul>
@@ -278,10 +288,18 @@ export default function ChangePasswordPage() {
             <CardTitle>Security Tips</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>• Use a unique password that you don't use for other accounts</p>
+            <p>
+              • Use a unique password that you do not use for other accounts
+            </p>
             <p>• Avoid using personal information in your password</p>
-            <p>• Consider using a password manager to generate and store strong passwords</p>
-            <p>• Change your password regularly, especially if you suspect unauthorized access</p>
+            <p>
+              • Consider using a password manager to generate and store strong
+              passwords
+            </p>
+            <p>
+              • Change your password regularly, especially if you suspect
+              unauthorized access
+            </p>
           </CardContent>
         </Card>
       </div>

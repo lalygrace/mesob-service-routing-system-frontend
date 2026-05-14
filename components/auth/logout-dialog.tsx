@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +13,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { logout } from "@/lib/auth";
+import { getApiErrorMessage } from "@/lib/api/client";
 
 interface LogoutDialogProps {
   open: boolean;
@@ -20,13 +21,16 @@ interface LogoutDialogProps {
 }
 
 export function LogoutDialog({ open, onOpenChange }: LogoutDialogProps) {
-  const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggingOut(true);
-    logout();
-    // The logout function will handle the redirect
+    try {
+      await logout();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to sign out"));
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -35,7 +39,8 @@ export function LogoutDialog({ open, onOpenChange }: LogoutDialogProps) {
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
           <AlertDialogDescription>
-            You will be redirected to the login page and will need to sign in again to access the admin panel.
+            You will be redirected to the login page and will need to sign in
+            again to access the admin panel.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

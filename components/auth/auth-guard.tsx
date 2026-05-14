@@ -9,11 +9,25 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push("/auth/login");
-    } else {
+    let mounted = true;
+
+    async function checkAuth() {
+      const authenticated = await isAuthenticated();
+      if (!mounted) return;
+
+      if (!authenticated) {
+        router.push("/auth/login");
+        return;
+      }
+
       setIsChecking(false);
     }
+
+    checkAuth();
+
+    return () => {
+      mounted = false;
+    };
   }, [router]);
 
   if (isChecking) {

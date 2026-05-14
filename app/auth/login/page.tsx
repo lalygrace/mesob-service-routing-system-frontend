@@ -6,39 +6,45 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "sonner";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { PublicRoute } from "@/components/auth/public-route";
+import { signInWithEmail } from "@/lib/api/auth";
+import { getApiErrorMessage } from "@/lib/api/client";
 
 function LoginPageContent() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    if (!email.trim() || !password) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Mock authentication
-      if (email && password) {
-        // Store auth token (mock)
-        localStorage.setItem("authToken", "mock-token");
-        localStorage.setItem("userEmail", email);
-        router.push("/admin");
-      } else {
-        setError("Please enter both email and password");
-      }
+      await signInWithEmail(email.trim(), password);
+      toast.success("Signed in successfully");
+      router.push("/admin");
+      router.refresh();
     } catch (err) {
-      setError("Invalid credentials. Please try again.");
+      toast.error(
+        getApiErrorMessage(err, "Invalid credentials. Please try again."),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -60,12 +66,6 @@ function LoginPageContent() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -120,11 +120,7 @@ function LoginPageContent() {
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </CardFooter>

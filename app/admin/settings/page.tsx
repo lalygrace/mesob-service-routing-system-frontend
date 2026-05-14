@@ -1,8 +1,23 @@
 "use client";
 
 import * as React from "react";
-import { Globe, Palette, Bell, Monitor, Sparkles, Eye, EyeOff } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
+import {
+  Globe,
+  Palette,
+  Bell,
+  Monitor,
+  Sparkles,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -16,6 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { listSystemConfig, updateSystemConfig } from "@/lib/api/admin";
+import { getApiErrorMessage } from "@/lib/api/client";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   const [systemName, setSystemName] = React.useState("Mesob Service Navigator");
@@ -29,11 +47,97 @@ export default function SettingsPage() {
   // AI Engine state
   const [aiApiKey, setAiApiKey] = React.useState("");
   const [aiApiKeyVisible, setAiApiKeyVisible] = React.useState(false);
-  const [aiBaseUrl, setAiBaseUrl] = React.useState("https://api.addisassistant.com");
+  const [aiBaseUrl, setAiBaseUrl] = React.useState(
+    "https://api.addisassistant.com",
+  );
   const [aiModel, setAiModel] = React.useState("Addis-፩-አሌፍ");
   const [aiTemperature, setAiTemperature] = React.useState(0.7);
   const [aiMaxTokens, setAiMaxTokens] = React.useState(1200);
   const [aiTargetLang, setAiTargetLang] = React.useState("am");
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    queueMicrotask(() => {
+      listSystemConfig()
+        .then((configs) => {
+          if (!mounted) return;
+          const byKey = new Map(
+            configs.map((config) => [config.key, config.value]),
+          );
+          setSystemName(byKey.get("system_name") ?? "Mesob Service Navigator");
+          setDefaultLang(byKey.get("default_language") ?? "en");
+          setKioskMode((byKey.get("kiosk_mode") ?? "true") === "true");
+          setVoiceEnabled((byKey.get("voice_enabled") ?? "true") === "true");
+          setAutoTimeout(
+            Number(byKey.get("auto_reset_timeout_seconds") ?? 120),
+          );
+          setEmailAlerts(
+            (byKey.get("email_alerts_enabled") ?? "false") === "true",
+          );
+          setDailyReports(
+            (byKey.get("daily_reports_enabled") ?? "true") === "true",
+          );
+          setAiApiKey(byKey.get("addis_ai_api_key") ?? "");
+          setAiBaseUrl(
+            byKey.get("addis_ai_base_url") ?? "https://api.addisassistant.com",
+          );
+          setAiModel(byKey.get("addis_ai_model") ?? "Addis-፩-አሌፍ");
+          setAiTemperature(Number(byKey.get("addis_ai_temperature") ?? 0.7));
+          setAiMaxTokens(Number(byKey.get("addis_ai_max_tokens") ?? 1200));
+          setAiTargetLang(byKey.get("addis_ai_target_language") ?? "am");
+        })
+        .catch((error) => {
+          toast.error(getApiErrorMessage(error, "Failed to load settings"));
+        })
+        .finally(() => {
+          if (mounted) setIsLoading(false);
+        });
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  async function handleSaveSettings() {
+    setIsSaving(true);
+
+    try {
+      await Promise.all([
+        updateSystemConfig("system_name", { value: systemName }),
+        updateSystemConfig("default_language", { value: defaultLang }),
+        updateSystemConfig("kiosk_mode", { value: String(kioskMode) }),
+        updateSystemConfig("voice_enabled", { value: String(voiceEnabled) }),
+        updateSystemConfig("auto_reset_timeout_seconds", {
+          value: String(autoTimeout),
+        }),
+        updateSystemConfig("email_alerts_enabled", {
+          value: String(emailAlerts),
+        }),
+        updateSystemConfig("daily_reports_enabled", {
+          value: String(dailyReports),
+        }),
+        updateSystemConfig("addis_ai_api_key", { value: aiApiKey }),
+        updateSystemConfig("addis_ai_base_url", { value: aiBaseUrl }),
+        updateSystemConfig("addis_ai_model", { value: aiModel }),
+        updateSystemConfig("addis_ai_temperature", {
+          value: String(aiTemperature),
+        }),
+        updateSystemConfig("addis_ai_max_tokens", {
+          value: String(aiMaxTokens),
+        }),
+        updateSystemConfig("addis_ai_target_language", { value: aiTargetLang }),
+      ]);
+      toast.success("Settings saved successfully");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to save settings"));
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -159,15 +263,19 @@ export default function SettingsPage() {
               <Label>Logo</Label>
               <div className="flex items-center gap-3">
                 <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-dashed border-border bg-muted/50">
-                  <img
+                  <Image
                     src="/mesoblogo.png"
                     alt="Mesob Logo"
-                    className="h-10 w-10 object-contain"
+                    width={40}
+                    height={40}
+                    className="object-contain"
                   />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium">mesoblogo.png</p>
-                  <p className="text-xs text-muted-foreground">Current brand logo</p>
+                  <p className="text-xs text-muted-foreground">
+                    Current brand logo
+                  </p>
                 </div>
                 <Button variant="outline" size="sm" disabled>
                   Change
@@ -286,8 +394,12 @@ export default function SettingsPage() {
                 <Sparkles className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-base">AI Engine (Addis AI)</CardTitle>
-                <CardDescription>Configure the Addis AI integration for service routing</CardDescription>
+                <CardTitle className="text-base">
+                  AI Engine (Addis AI)
+                </CardTitle>
+                <CardDescription>
+                  Configure the Addis AI integration for service routing
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -354,10 +466,18 @@ export default function SettingsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Addis-፩-አሌፍ">Addis-፩-አሌፍ (Text)</SelectItem>
-                    <SelectItem value="አሌፍ-Audio-AM">አሌፍ-Audio-AM (Amharic TTS)</SelectItem>
-                    <SelectItem value="አሌፍ-Audio-OM">አሌፍ-Audio-OM (Oromo TTS)</SelectItem>
-                    <SelectItem value="addis-whisper">addis-whisper (STT)</SelectItem>
+                    <SelectItem value="Addis-፩-አሌፍ">
+                      Addis-፩-አሌፍ (Text)
+                    </SelectItem>
+                    <SelectItem value="አሌፍ-Audio-AM">
+                      አሌፍ-Audio-AM (Amharic TTS)
+                    </SelectItem>
+                    <SelectItem value="አሌፍ-Audio-OM">
+                      አሌፍ-Audio-OM (Oromo TTS)
+                    </SelectItem>
+                    <SelectItem value="addis-whisper">
+                      addis-whisper (STT)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -413,8 +533,13 @@ export default function SettingsPage() {
 
       {/* Save button */}
       <div className="flex justify-end">
-        <Button size="lg" className="px-8">
-          Save All Settings
+        <Button
+          size="lg"
+          className="px-8"
+          onClick={handleSaveSettings}
+          disabled={isSaving || isLoading}
+        >
+          {isSaving ? "Saving..." : "Save All Settings"}
         </Button>
       </div>
     </div>

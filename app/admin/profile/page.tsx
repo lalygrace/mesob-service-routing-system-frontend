@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,44 +12,72 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Save,
-  CheckCircle2,
-  Upload,
-} from "lucide-react";
+import { User, Mail, Phone, MapPin, Save, Upload } from "lucide-react";
+import { getAdminMe, updateAdminMe } from "@/lib/api/auth";
+import { getApiErrorMessage } from "@/lib/api/client";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState({
-    name: "Admin User",
-    email: "admin@mesob.gov.et",
-    phone: "+251 911 234567",
-    location: "Addis Ababa, Ethiopia",
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadProfile() {
+      try {
+        const data = await getAdminMe();
+        if (!mounted || !data.user) return;
+        setProfile({
+          name: data.user.name ?? "",
+          email: data.user.email ?? "",
+          phone: data.user.phone ?? "",
+          location: data.user.location ?? "",
+        });
+      } catch (error) {
+        toast.error(getApiErrorMessage(error, "Failed to load profile"));
+      } finally {
+        if (mounted) setIsLoadingProfile(false);
+      }
+    }
+
+    loadProfile();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setSuccess("Profile updated successfully");
-      setTimeout(() => setSuccess(""), 3000);
+      const updated = await updateAdminMe({
+        name: profile.name,
+        phone: profile.phone || null,
+        location: profile.location || null,
+        image: undefined,
+      });
+      setProfile((prev) => ({
+        ...prev,
+        name: updated.name ?? prev.name,
+        phone: updated.phone ?? "",
+        location: updated.location ?? "",
+      }));
+      toast.success("Profile updated successfully");
     } catch (err) {
-      setError("Failed to update profile. Please try again.");
+      toast.error(
+        getApiErrorMessage(err, "Failed to update profile. Please try again."),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -58,8 +86,7 @@ export default function ProfilePage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // TODO: Handle image upload
-      console.log("Upload image:", file);
+      toast.info("Profile image upload is not available from the backend yet");
     }
   };
 
@@ -72,26 +99,11 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      {success && (
-        <Alert>
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
       <div className="grid gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Profile Picture</CardTitle>
-            <CardDescription>
-              Update your profile picture
-            </CardDescription>
+            <CardDescription>Update your profile picture</CardDescription>
           </CardHeader>
           <CardContent className="flex items-center gap-6">
             <Avatar className="h-24 w-24">
@@ -128,9 +140,7 @@ export default function ProfilePage() {
           <form onSubmit={handleSubmit}>
             <CardHeader>
               <CardTitle>Personal Information</CardTitle>
-              <CardDescription>
-                Update your personal details
-              </CardDescription>
+              <CardDescription>Update your personal details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -196,11 +206,9 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
-
-
             </CardContent>
             <CardFooter>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || isLoadingProfile}>
                 <Save className="mr-2 h-4 w-4" />
                 {isLoading ? "Saving..." : "Save Changes"}
               </Button>

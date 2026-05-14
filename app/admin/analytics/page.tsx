@@ -1,14 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  Users,
-  Clock,
-  HelpCircle,
-  Star,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
+import { Users, Clock, HelpCircle, Star } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -21,7 +14,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -42,13 +41,13 @@ import {
 } from "@/components/ui/chart";
 import { StatCard } from "@/components/admin/stat-card";
 import {
-  MOCK_DAILY_USAGE,
-  MOCK_KPIS,
-  MOCK_SERVICE_POPULARITY,
-  MOCK_LANGUAGE_USAGE,
-  MOCK_HOURLY_USAGE,
-  MOCK_RECENT_SESSIONS,
-} from "@/lib/mock/analytics";
+  getAnalyticsSummary,
+  listAnalyticsSnapshots,
+  type AnalyticsSnapshot,
+  type AnalyticsSummary,
+} from "@/lib/api/admin";
+import { getApiErrorMessage } from "@/lib/api/client";
+import { toast } from "sonner";
 
 // ── Chart configs ────────────────────────────────────────────────────
 
@@ -80,18 +79,95 @@ const PIE_COLORS = [
 
 // ── Page ─────────────────────────────────────────────────────────────
 
+function dateKey(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function daysAgo(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return dateKey(date);
+}
+
+function toDailyUsage(snapshot: AnalyticsSnapshot) {
+  return {
+    date: snapshot.date.slice(0, 10),
+    sessions: snapshot.totalSessions,
+    resolved: snapshot.completedSessions,
+    clarifications:
+      snapshot.mediumConfidenceCount + snapshot.lowConfidenceCount,
+  };
+}
+
 export default function AnalyticsPage() {
   const [range, setRange] = React.useState("30d");
+  const [summary, setSummary] = React.useState<AnalyticsSummary | null>(null);
+  const [snapshots, setSnapshots] = React.useState<AnalyticsSnapshot[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  const rangeData = React.useMemo(() => {
+  React.useEffect(() => {
+    let mounted = true;
     const days = range === "7d" ? 7 : range === "90d" ? 90 : 30;
-    return MOCK_DAILY_USAGE.slice(-Math.min(days, MOCK_DAILY_USAGE.length));
+
+    queueMicrotask(() => {
+      Promise.all([
+        getAnalyticsSummary(),
+        listAnalyticsSnapshots({
+          granularity: "DAILY",
+          from: daysAgo(days),
+          to: dateKey(new Date()),
+        }),
+      ])
+        .then(([summaryData, snapshotData]) => {
+          if (!mounted) return;
+          setSummary(summaryData);
+          setSnapshots(snapshotData);
+        })
+        .catch((error) => {
+          toast.error(getApiErrorMessage(error, "Failed to load analytics"));
+        })
+        .finally(() => {
+          if (mounted) setIsLoading(false);
+        });
+    });
+
+    return () => {
+      mounted = false;
+    };
   }, [range]);
 
-  const languagePieData = MOCK_LANGUAGE_USAGE.map((l) => ({
-    name: l.language,
-    value: l.sessions,
-    code: l.code,
+  const rangeData = React.useMemo(
+    () => snapshots.map(toDailyUsage),
+    [snapshots],
+  );
+  const latestSnapshot = snapshots.at(-1) ?? summary?.latestSnapshot ?? null;
+
+  const languagePieData = [
+    {
+      name: "Amharic",
+      value: latestSnapshot?.sessionsAmharic ?? 0,
+      code: "am",
+    },
+    {
+      name: "English",
+      value: latestSnapshot?.sessionsEnglish ?? 0,
+      code: "en",
+    },
+    {
+      name: "Afaan Oromo",
+      value: latestSnapshot?.sessionsAfaanOromo ?? 0,
+      code: "om",
+    },
+  ];
+
+  const topServices = (latestSnapshot?.topServices ?? []).map((service) => ({
+    serviceName: service.name,
+    requests: service.count,
+  }));
+
+  const hourlyUsage = Array.from({ length: 8 }).map((_, index) => ({
+    hour: `${8 + index}:00`,
+    sessions: 0,
   }));
 
   return (
@@ -117,31 +193,29 @@ export default function AnalyticsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Sessions"
-          value={MOCK_KPIS.totalSessions.toLocaleString()}
+          value={
+            isLoading ? "..." : (summary?.totalSessions ?? 0).toLocaleString()
+          }
           icon={Users}
-          trend={MOCK_KPIS.sessionsTrend}
-          trendLabel="vs prior period"
+          trendLabel="live data"
         />
         <StatCard
           title="Avg. Resolution Time"
-          value={`${MOCK_KPIS.avgResolutionTimeSec}s`}
+          value={`${latestSnapshot?.completedSessions ?? 0}`}
           icon={Clock}
-          trend={-5.3}
-          trendLabel="faster"
+          trendLabel="completed sessions"
         />
         <StatCard
           title="Clarification Rate"
-          value={`${MOCK_KPIS.clarificationRate}%`}
+          value={`${latestSnapshot?.lowConfidenceCount ?? 0}`}
           icon={HelpCircle}
-          trend={-2.1}
-          trendLabel="improvement"
+          trendLabel="low confidence"
         />
         <StatCard
           title="Satisfaction Score"
-          value={`${MOCK_KPIS.avgSatisfaction}/5`}
+          value={`${(latestSnapshot?.avgRating ?? summary?.avgRating ?? 0).toFixed(1)}/5`}
           icon={Star}
-          trend={MOCK_KPIS.satisfactionTrend}
-          trendLabel="vs prior period"
+          trendLabel="live data"
         />
       </div>
 
@@ -155,16 +229,50 @@ export default function AnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={sessionsConfig} className="h-[300px] w-full">
-              <AreaChart data={rangeData} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
+            <ChartContainer
+              config={sessionsConfig}
+              className="h-[300px] w-full"
+            >
+              <AreaChart
+                data={rangeData}
+                margin={{ top: 5, right: 5, bottom: 0, left: -20 }}
+              >
                 <defs>
-                  <linearGradient id="aFillSessions" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-sessions)" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="var(--color-sessions)" stopOpacity={0} />
+                  <linearGradient
+                    id="aFillSessions"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="5%"
+                      stopColor="var(--color-sessions)"
+                      stopOpacity={0.25}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="var(--color-sessions)"
+                      stopOpacity={0}
+                    />
                   </linearGradient>
-                  <linearGradient id="aFillResolved" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-resolved)" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="var(--color-resolved)" stopOpacity={0} />
+                  <linearGradient
+                    id="aFillResolved"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="5%"
+                      stopColor="var(--color-resolved)"
+                      stopOpacity={0.25}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="var(--color-resolved)"
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                 </defs>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -203,9 +311,14 @@ export default function AnalyticsPage() {
             <CardDescription>Sessions by preferred language</CardDescription>
           </CardHeader>
           <CardContent className="flex items-center justify-center">
-            <ChartContainer config={languageConfig} className="h-[260px] w-full">
+            <ChartContainer
+              config={languageConfig}
+              className="h-[260px] w-full"
+            >
               <PieChart>
-                <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
+                <ChartTooltip
+                  content={<ChartTooltipContent nameKey="name" />}
+                />
                 <Pie
                   data={languagePieData}
                   dataKey="value"
@@ -241,12 +354,17 @@ export default function AnalyticsPage() {
           <CardContent>
             <ChartContainer config={serviceConfig} className="h-[300px] w-full">
               <BarChart
-                data={MOCK_SERVICE_POPULARITY}
+                data={topServices}
                 layout="vertical"
                 margin={{ top: 5, right: 5, bottom: 0, left: 0 }}
               >
                 <CartesianGrid horizontal={false} strokeDasharray="3 3" />
-                <XAxis type="number" tickLine={false} axisLine={false} tickMargin={8} />
+                <XAxis
+                  type="number"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
                 <YAxis
                   type="category"
                   dataKey="serviceName"
@@ -256,7 +374,11 @@ export default function AnalyticsPage() {
                   tick={{ fontSize: 11 }}
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="requests" fill="var(--color-requests)" radius={[0, 6, 6, 0]} />
+                <Bar
+                  dataKey="requests"
+                  fill="var(--color-requests)"
+                  radius={[0, 6, 6, 0]}
+                />
               </BarChart>
             </ChartContainer>
           </CardContent>
@@ -265,11 +387,16 @@ export default function AnalyticsPage() {
         <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-base">Peak Usage Hours</CardTitle>
-            <CardDescription>When citizens visit the kiosk most</CardDescription>
+            <CardDescription>
+              When citizens visit the kiosk most
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={hourlyConfig} className="h-[300px] w-full">
-              <BarChart data={MOCK_HOURLY_USAGE} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
+              <BarChart
+                data={hourlyUsage}
+                margin={{ top: 5, right: 5, bottom: 0, left: -20 }}
+              >
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis
                   dataKey="hour"
@@ -280,7 +407,11 @@ export default function AnalyticsPage() {
                 />
                 <YAxis tickLine={false} axisLine={false} tickMargin={8} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="sessions" fill="var(--color-sessions)" radius={[6, 6, 0, 0]} />
+                <Bar
+                  dataKey="sessions"
+                  fill="var(--color-sessions)"
+                  radius={[6, 6, 0, 0]}
+                />
               </BarChart>
             </ChartContainer>
           </CardContent>
@@ -302,53 +433,51 @@ export default function AnalyticsPage() {
                 <TableHead className="w-8" />
                 <TableHead>Query</TableHead>
                 <TableHead>Language</TableHead>
-                <TableHead className="hidden md:table-cell">Routed To</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Routed To
+                </TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Time</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {MOCK_RECENT_SESSIONS.map((session) => (
-                <TableRow key={session.id}>
+              {(latestSnapshot?.topUnclearInputs ?? []).map((query, index) => (
+                <TableRow key={`${query}-${index}`}>
                   <TableCell>
-                    {session.result === "resolved" && (
-                      <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    )}
-                    {session.result === "clarified" && (
-                      <HelpCircle className="h-4 w-4 text-amber-500" />
-                    )}
-                    {session.result === "failed" && (
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    )}
+                    <HelpCircle className="h-4 w-4 text-amber-500" />
                   </TableCell>
-                  <TableCell className="font-medium">{session.query}</TableCell>
+                  <TableCell className="font-medium">{query}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-xs">
-                      {session.language.toUpperCase()}
+                      —
                     </Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                    {session.service ?? "—"}
+                    —
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={
-                        session.result === "resolved"
-                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                          : session.result === "clarified"
-                            ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                            : "bg-red-500/10 text-red-600 border-red-500/20"
-                      }
+                      className="bg-amber-500/10 text-amber-600 border-amber-500/20"
                     >
-                      {session.result}
+                      low confidence
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">
-                    {session.timestamp}
+                    latest snapshot
                   </TableCell>
                 </TableRow>
               ))}
+              {(latestSnapshot?.topUnclearInputs ?? []).length === 0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="py-10 text-center text-muted-foreground"
+                  >
+                    No unclear interactions in the selected range.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
