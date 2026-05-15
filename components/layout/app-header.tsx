@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Home } from "lucide-react";
 import { FullscreenToggle } from "@/components/layout/fullscreen-toggle";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -30,10 +31,12 @@ export function AppHeader({
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         {/* Left: Logo & Title */}
         <Link href="/" className="flex items-center gap-3 min-w-0">
-          <img
+          <Image
             src="/mesoblogo.png"
             alt="Mesob Logo"
-            className="h-10 w-10 shrink-0 object-contain"
+            width={40}
+            height={40}
+            className="shrink-0 object-contain"
           />
           <div className="min-w-0 hidden sm:block">
             <p className="text-sm font-semibold leading-5 tracking-tight text-foreground truncate">

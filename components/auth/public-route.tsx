@@ -8,9 +8,20 @@ export function PublicRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      router.push("/admin");
+    let mounted = true;
+
+    async function redirectIfAuthenticated() {
+      const authenticated = await isAuthenticated();
+      if (mounted && authenticated) {
+        router.push("/admin");
+      }
     }
+
+    redirectIfAuthenticated();
+
+    return () => {
+      mounted = false;
+    };
   }, [router]);
 
   return <>{children}</>;

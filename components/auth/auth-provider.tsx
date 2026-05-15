@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, getCurrentUser, isAuthenticated } from "@/lib/auth";
+import { User, getCurrentUser } from "@/lib/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -20,15 +20,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = () => {
-      if (isAuthenticated()) {
-        const currentUser = getCurrentUser();
-        setUser(currentUser);
-      }
+    let mounted = true;
+
+    async function checkAuth() {
+      const currentUser = await getCurrentUser();
+      if (!mounted) return;
+
+      setUser(currentUser);
       setIsLoading(false);
-    };
+    }
 
     checkAuth();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (

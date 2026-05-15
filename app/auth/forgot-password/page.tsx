@@ -5,33 +5,42 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "sonner";
 import { ArrowLeft, Mail, CheckCircle2 } from "lucide-react";
 import { PublicRoute } from "@/components/auth/public-route";
+import { requestPasswordReset } from "@/lib/api/auth";
+import { getApiErrorMessage } from "@/lib/api/client";
 
 function ForgotPasswordPageContent() {
   const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    if (!email.trim()) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      if (email) {
-        setSuccess(true);
-      } else {
-        setError("Please enter your email address");
-      }
+      await requestPasswordReset(email.trim());
+      toast.success("Password reset link sent");
+      setSuccess(true);
     } catch (err) {
-      setError("Failed to send reset link. Please try again.");
+      toast.error(
+        getApiErrorMessage(err, "Failed to send reset link. Please try again."),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -47,14 +56,17 @@ function ForgotPasswordPageContent() {
                 <CheckCircle2 className="w-8 h-8 text-white" />
               </div>
             </div>
-            <CardTitle className="text-2xl text-center">Check Your Email</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              Check Your Email
+            </CardTitle>
             <CardDescription className="text-center">
-              We've sent a password reset link to <strong>{email}</strong>
+              We have sent a password reset link to <strong>{email}</strong>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground text-center">
-              Click the link in the email to reset your password. If you don't see the email, check your spam folder.
+              Click the link in the email to reset your password. If you do not
+              see the email, check your spam folder.
             </p>
           </CardContent>
           <CardFooter>
@@ -79,19 +91,16 @@ function ForgotPasswordPageContent() {
               <Mail className="w-8 h-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Forgot Password?</CardTitle>
+          <CardTitle className="text-2xl text-center">
+            Forgot Password?
+          </CardTitle>
           <CardDescription className="text-center">
-            Enter your email address and we'll send you a link to reset your password
+            Enter your email address and we will send you a link to reset your
+            password
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
               <div className="relative">
@@ -110,11 +119,7 @@ function ForgotPasswordPageContent() {
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-3">
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Sending..." : "Send Reset Link"}
             </Button>
             <Link href="/auth/login" className="w-full">

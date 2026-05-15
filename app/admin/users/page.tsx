@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,12 +38,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import {
   UserPlus,
   MoreVertical,
   Mail,
-  Lock,
   User,
   Shield,
   Trash2,
@@ -58,6 +57,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { listAdminAuthorities, type Authority } from "@/lib/api/authorities";
+import {
+  createAdminUser,
+  deleteAdminUser,
+  listAdminUsers,
+  updateAdminUser,
+} from "@/lib/api/admin";
+import { getApiErrorMessage } from "@/lib/api/client";
 
 interface Admin {
   id: string;
@@ -65,44 +72,17 @@ interface Admin {
   email: string;
   emailVerified: boolean;
   role: "super_admin" | "admin";
+  systemRole?: string | null;
   status: "active" | "inactive";
   createdAt: string;
   lastLogin?: string;
+  authorityId?: string | null;
 }
 
 export default function UsersPage() {
-  const [admins, setAdmins] = useState<Admin[]>([
-    {
-      id: "1",
-      name: "Admin User",
-      email: "admin@mesob.gov.et",
-      emailVerified: true,
-      role: "super_admin",
-      status: "active",
-      createdAt: "2024-01-15",
-      lastLogin: "2024-05-04",
-    },
-    {
-      id: "2",
-      name: "John Doe",
-      email: "john@mesob.gov.et",
-      emailVerified: false,
-      role: "admin",
-      status: "active",
-      createdAt: "2024-02-20",
-      lastLogin: "2024-05-03",
-    },
-    {
-      id: "3",
-      name: "Jane Smith",
-      email: "jane@mesob.gov.et",
-      emailVerified: true,
-      role: "admin",
-      status: "inactive",
-      createdAt: "2024-03-10",
-      lastLogin: "2024-04-28",
-    },
-  ]);
+  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [authorities, setAuthorities] = useState<Authority[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -110,78 +90,102 @@ export default function UsersPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    role: "ADMIN",
+    authorityId: "",
   });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+
+  async function loadData() {
+    try {
+      const [usersData, authoritiesData] = await Promise.all([
+        listAdminUsers(),
+        listAdminAuthorities(),
+      ]);
+      setAdmins(usersData);
+      setAuthorities(authoritiesData);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to load admin users"));
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      loadData();
+    });
+  }, []);
 
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
-
     if (!formData.name || !formData.email) {
-      setError("Name and email are required");
+      toast.error("Name and email are required");
       return;
     }
 
-    // TODO: Replace with actual API call
-    const newAdmin: Admin = {
-      id: String(admins.length + 1),
-      name: formData.name,
-      email: formData.email,
-      emailVerified: false,
-      role: "admin",
-      status: "active",
-      createdAt: new Date().toISOString().split("T")[0],
-    };
+    if (!formData.authorityId) {
+      toast.error("Please select an authority for this admin");
+      return;
+    }
 
-    setAdmins([...admins, newAdmin]);
-    setSuccess("Admin added successfully");
-    setFormData({ name: "", email: "" });
-    setTimeout(() => {
+    try {
+      await createAdminUser({
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+        authorityId: formData.authorityId,
+      });
+      toast.success("Admin invitation created successfully");
+      setFormData({ name: "", email: "", role: "ADMIN", authorityId: "" });
       setIsAddDialogOpen(false);
-      setSuccess("");
-    }, 1500);
+      await loadData();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to add admin"));
+    }
   };
 
   const handleEditAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAdmin) return;
 
-    setError("");
-    setSuccess("");
-
-    // TODO: Replace with actual API call
-    setAdmins(
-      admins.map((admin) =>
-        admin.id === selectedAdmin.id
-          ? { ...admin, name: formData.name, email: formData.email, role: formData.role }
-          : admin
-      )
-    );
-
-    setSuccess("Admin updated successfully");
-    setTimeout(() => {
+    try {
+      await updateAdminUser(selectedAdmin.id, {
+        name: formData.name,
+        role: formData.role,
+        authorityId: formData.authorityId || null,
+      });
+      toast.success("Admin updated successfully");
       setIsEditDialogOpen(false);
       setSelectedAdmin(null);
-      setSuccess("");
-    }, 1500);
-  };
-
-  const handleDeleteAdmin = (id: string) => {
-    if (confirm("Are you sure you want to delete this admin?")) {
-      setAdmins(admins.filter((admin) => admin.id !== id));
+      await loadData();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to update admin"));
     }
   };
 
-  const handleToggleStatus = (id: string) => {
-    setAdmins(
-      admins.map((admin) =>
-        admin.id === id
-          ? { ...admin, status: admin.status === "active" ? "inactive" : "active" }
-          : admin
-      )
-    );
+  const handleDeleteAdmin = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this admin?")) return;
+
+    try {
+      await deleteAdminUser(id);
+      setAdmins(admins.filter((admin) => admin.id !== id));
+      toast.success("Admin deleted successfully");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to delete admin"));
+    }
+  };
+
+  const handleToggleStatus = async (admin: Admin) => {
+    try {
+      await updateAdminUser(admin.id, {
+        isActive: admin.status !== "active",
+      });
+      await loadData();
+      toast.success(
+        admin.status === "active" ? "Admin deactivated" : "Admin activated",
+      );
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to update admin status"));
+    }
   };
 
   const openEditDialog = (admin: Admin) => {
@@ -189,6 +193,11 @@ export default function UsersPage() {
     setFormData({
       name: admin.name,
       email: admin.email,
+      role:
+        admin.systemRole && admin.systemRole !== "SUPER_ADMIN"
+          ? admin.systemRole
+          : "ADMIN",
+      authorityId: admin.authorityId ?? "",
     });
     setIsEditDialogOpen(true);
   };
@@ -229,18 +238,6 @@ export default function UsersPage() {
             </DialogHeader>
             <form onSubmit={handleAddAdmin}>
               <div className="space-y-4 py-4">
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                {success && (
-                  <Alert>
-                    <CheckCircle2 className="h-4 w-4" />
-                    <AlertDescription>{success}</AlertDescription>
-                  </Alert>
-                )}
-
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
                   <div className="relative">
@@ -276,8 +273,46 @@ export default function UsersPage() {
                   </div>
                 </div>
 
-
-
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Role</Label>
+                    <Select
+                      value={formData.role}
+                      onValueChange={(role) =>
+                        setFormData({ ...formData, role })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ADMIN">Admin</SelectItem>
+                        <SelectItem value="EDITOR">Editor</SelectItem>
+                        <SelectItem value="VIEWER">Viewer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Authority</Label>
+                    <Select
+                      value={formData.authorityId}
+                      onValueChange={(authorityId) =>
+                        setFormData({ ...formData, authorityId })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select authority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {authorities.map((authority) => (
+                          <SelectItem key={authority.id} value={authority.id}>
+                            {authority.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
               <DialogFooter>
                 <Button
@@ -315,90 +350,124 @@ export default function UsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {admins.map((admin) => (
-                <TableRow key={admin.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback>
-                          {admin.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{admin.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {admin.email}
-                        </div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getRoleBadgeColor(admin.role)}>
-                      {admin.role.replace("_", " ")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {admin.emailVerified ? (
-                      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                        <CheckCircle2 className="mr-1 h-3 w-3" />
-                        Verified
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-                        <XCircle className="mr-1 h-3 w-3" />
-                        Pending
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={admin.status === "active" ? "default" : "secondary"}
-                    >
-                      {admin.status === "active" ? (
-                        <CheckCircle2 className="mr-1 h-3 w-3" />
-                      ) : (
-                        <XCircle className="mr-1 h-3 w-3" />
-                      )}
-                      {admin.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{admin.createdAt}</TableCell>
-                  <TableCell>{admin.lastLogin || "Never"}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => openEditDialog(admin)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleStatus(admin.id)}>
-                          <Shield className="mr-2 h-4 w-4" />
-                          {admin.status === "active" ? "Deactivate" : "Activate"}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteAdmin(admin.id)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="py-12 text-center text-muted-foreground"
+                  >
+                    Loading admin users...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : admins.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="py-12 text-center text-muted-foreground"
+                  >
+                    No admin users found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                admins.map((admin) => (
+                  <TableRow key={admin.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarFallback>
+                            {admin.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{admin.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {admin.email}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getRoleBadgeColor(admin.role)}>
+                        {admin.role.replace("_", " ")}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {admin.emailVerified ? (
+                        <Badge
+                          variant="outline"
+                          className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                        >
+                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                          Verified
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="bg-amber-500/10 text-amber-600 border-amber-500/20"
+                        >
+                          <XCircle className="mr-1 h-3 w-3" />
+                          Pending
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          admin.status === "active" ? "default" : "secondary"
+                        }
+                      >
+                        {admin.status === "active" ? (
+                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                        ) : (
+                          <XCircle className="mr-1 h-3 w-3" />
+                        )}
+                        {admin.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{admin.createdAt}</TableCell>
+                    <TableCell>{admin.lastLogin || "Never"}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => openEditDialog(admin)}
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleToggleStatus(admin)}
+                          >
+                            <Shield className="mr-2 h-4 w-4" />
+                            {admin.status === "active"
+                              ? "Deactivate"
+                              : "Activate"}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteAdmin(admin.id)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -413,18 +482,6 @@ export default function UsersPage() {
           </DialogHeader>
           <form onSubmit={handleEditAdmin}>
             <div className="space-y-4 py-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              {success && (
-                <Alert>
-                  <CheckCircle2 className="h-4 w-4" />
-                  <AlertDescription>{success}</AlertDescription>
-                </Alert>
-              )}
-
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Full Name</Label>
                 <Input
@@ -443,13 +500,50 @@ export default function UsersPage() {
                   id="edit-email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  disabled
+                  className="bg-muted/40"
                   required
                 />
               </div>
 
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Role</Label>
+                  <Select
+                    value={formData.role}
+                    onValueChange={(role) => setFormData({ ...formData, role })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ADMIN">Admin</SelectItem>
+                      <SelectItem value="EDITOR">Editor</SelectItem>
+                      <SelectItem value="VIEWER">Viewer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Authority</Label>
+                  <Select
+                    value={formData.authorityId}
+                    onValueChange={(authorityId) =>
+                      setFormData({ ...formData, authorityId })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select authority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {authorities.map((authority) => (
+                        <SelectItem key={authority.id} value={authority.id}>
+                          {authority.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button

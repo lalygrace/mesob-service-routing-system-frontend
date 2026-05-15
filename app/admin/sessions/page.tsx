@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,117 +9,113 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  MoreVertical,
   Monitor,
   Smartphone,
   Tablet,
   LogOut,
-  MapPin,
   Clock,
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
+import { getAdminMe } from "@/lib/api/auth";
+import { getApiErrorMessage } from "@/lib/api/client";
+import { logout } from "@/lib/auth";
+import { toast } from "sonner";
 
-interface Session {
+type SessionView = {
   id: string;
-  device: string;
   deviceType: "desktop" | "mobile" | "tablet";
   browser: string;
-  location: string;
-  ipAddress: string;
-  lastActive: string;
-  createdAt: string;
+  expiresAt: string;
   isCurrent: boolean;
+};
+
+function detectDeviceType(): SessionView["deviceType"] {
+  if (typeof navigator === "undefined") return "desktop";
+  const agent = navigator.userAgent.toLowerCase();
+  if (agent.includes("ipad") || agent.includes("tablet")) return "tablet";
+  if (
+    agent.includes("mobile") ||
+    agent.includes("iphone") ||
+    agent.includes("android")
+  ) {
+    return "mobile";
+  }
+  return "desktop";
+}
+
+function detectBrowser() {
+  if (typeof navigator === "undefined") return "Current browser";
+  const agent = navigator.userAgent;
+  if (agent.includes("Edg/")) return "Microsoft Edge";
+  if (agent.includes("Chrome/")) return "Chrome";
+  if (agent.includes("Firefox/")) return "Firefox";
+  if (agent.includes("Safari/") && !agent.includes("Chrome/")) return "Safari";
+  return "Current browser";
+}
+
+function getDeviceIcon(deviceType: SessionView["deviceType"]) {
+  switch (deviceType) {
+    case "desktop":
+      return <Monitor className="h-5 w-5" />;
+    case "mobile":
+      return <Smartphone className="h-5 w-5" />;
+    case "tablet":
+      return <Tablet className="h-5 w-5" />;
+  }
 }
 
 export default function SessionsPage() {
-  const [sessions, setSessions] = useState<Session[]>([
-    {
-      id: "1",
-      device: "Windows PC",
-      deviceType: "desktop",
-      browser: "Chrome 120",
-      location: "Addis Ababa, Ethiopia",
-      ipAddress: "196.188.123.45",
-      lastActive: "2 minutes ago",
-      createdAt: "2024-05-04 10:30",
-      isCurrent: true,
-    },
-    {
-      id: "2",
-      device: "iPhone 14",
-      deviceType: "mobile",
-      browser: "Safari 17",
-      location: "Addis Ababa, Ethiopia",
-      ipAddress: "196.188.123.46",
-      lastActive: "1 hour ago",
-      createdAt: "2024-05-03 14:20",
-      isCurrent: false,
-    },
-    {
-      id: "3",
-      device: "iPad Pro",
-      deviceType: "tablet",
-      browser: "Safari 17",
-      location: "Dire Dawa, Ethiopia",
-      ipAddress: "196.188.124.12",
-      lastActive: "3 hours ago",
-      createdAt: "2024-05-02 09:15",
-      isCurrent: false,
-    },
-  ]);
+  const [session, setSession] = useState<SessionView | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const [success, setSuccess] = useState("");
+  useEffect(() => {
+    let mounted = true;
 
-  const handleRevokeSession = (id: string) => {
-    if (confirm("Are you sure you want to revoke this session?")) {
-      setSessions(sessions.filter((session) => session.id !== id));
-      setSuccess("Session revoked successfully");
-      setTimeout(() => setSuccess(""), 3000);
+    async function loadSession() {
+      try {
+        const data = await getAdminMe();
+        if (!mounted) return;
+        setSession({
+          id: data.session.id,
+          expiresAt: data.session.expiresAt,
+          deviceType: detectDeviceType(),
+          browser: detectBrowser(),
+          isCurrent: true,
+        });
+      } catch (error) {
+        toast.error(getApiErrorMessage(error, "Failed to load active session"));
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
     }
-  };
 
-  const handleRevokeAllSessions = () => {
-    if (
-      confirm(
-        "Are you sure you want to revoke all other sessions? You will remain logged in on this device."
-      )
-    ) {
-      setSessions(sessions.filter((session) => session.isCurrent));
-      setSuccess("All other sessions revoked successfully");
-      setTimeout(() => setSuccess(""), 3000);
-    }
-  };
+    loadSession();
 
-  const getDeviceIcon = (deviceType: Session["deviceType"]) => {
-    switch (deviceType) {
-      case "desktop":
-        return <Monitor className="h-5 w-5" />;
-      case "mobile":
-        return <Smartphone className="h-5 w-5" />;
-      case "tablet":
-        return <Tablet className="h-5 w-5" />;
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const expiresAtLabel = session?.expiresAt
+    ? new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(new Date(session.expiresAt))
+    : "Unknown";
+
+  async function handleSignOutCurrentSession() {
+    setIsSigningOut(true);
+    try {
+      await logout();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to sign out"));
+      setIsSigningOut(false);
     }
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -127,89 +123,61 @@ export default function SessionsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Active Sessions</h1>
           <p className="text-muted-foreground">
-            Manage your active login sessions across devices
+            Manage your current authenticated backend session
           </p>
         </div>
-        <Button variant="destructive" onClick={handleRevokeAllSessions}>
+        <Button
+          variant="destructive"
+          onClick={handleSignOutCurrentSession}
+          disabled={isSigningOut || isLoading}
+        >
           <LogOut className="mr-2 h-4 w-4" />
-          Revoke All Other Sessions
+          {isSigningOut ? "Signing Out..." : "Sign Out Current Session"}
         </Button>
       </div>
 
-      {success && (
-        <Alert>
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
-
       <Card>
         <CardHeader>
-          <CardTitle>Your Sessions</CardTitle>
+          <CardTitle>Your Session</CardTitle>
           <CardDescription>
-            These are the devices currently logged into your account
+            The backend currently exposes your authenticated session.
+            Other-device session management can be added when the backend
+            exposes those endpoints.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className="flex items-start justify-between p-4 border rounded-lg"
-              >
-                <div className="flex gap-4">
-                  <div className="mt-1">{getDeviceIcon(session.deviceType)}</div>
-                  <div className="space-y-2">
+          {isLoading ? (
+            <div className="p-4 text-sm text-muted-foreground">
+              Loading session...
+            </div>
+          ) : !session ? (
+            <div className="p-4 text-sm text-muted-foreground">
+              No active session found.
+            </div>
+          ) : (
+            <div className="flex items-start justify-between rounded-lg border p-4">
+              <div className="flex gap-4">
+                <div className="mt-1">{getDeviceIcon(session.deviceType)}</div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">Current Device</h3>
+                    <Badge variant="default">Current Session</Badge>
+                  </div>
+                  <div className="space-y-1 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{session.device}</h3>
-                      {session.isCurrent && (
-                        <Badge variant="default">Current Session</Badge>
-                      )}
+                      <Monitor className="h-3 w-3" />
+                      <span>{session.browser}</span>
                     </div>
-                    <div className="space-y-1 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Monitor className="h-3 w-3" />
-                        <span>{session.browser}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-3 w-3" />
-                        <span>
-                          {session.location} • {session.ipAddress}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-3 w-3" />
-                        <span>Last active: {session.lastActive}</span>
-                      </div>
-                      <div className="text-xs">
-                        Signed in: {session.createdAt}
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3 w-3" />
+                      <span>Expires: {expiresAtLabel}</span>
                     </div>
+                    <div className="text-xs">Session ID: {session.id}</div>
                   </div>
                 </div>
-                {!session.isCurrent && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => handleRevokeSession(session.id)}
-                        className="text-destructive"
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Revoke Session
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -220,24 +188,22 @@ export default function SessionsPage() {
         <CardContent>
           <div className="space-y-3">
             <div className="flex gap-3">
-              <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
+              <AlertTriangle className="mt-0.5 h-5 w-5 text-yellow-500" />
               <div>
                 <p className="font-medium">
-                  Don't recognize a session?
+                  Do not recognize account activity?
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  If you see a session you don't recognize, revoke it immediately
-                  and change your password.
+                  Sign out and change your password immediately.
                 </p>
               </div>
             </div>
             <div className="flex gap-3">
-              <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+              <CheckCircle2 className="mt-0.5 h-5 w-5 text-green-500" />
               <div>
                 <p className="font-medium">Keep your account secure</p>
                 <p className="text-sm text-muted-foreground">
-                  Always log out from shared or public devices. Use strong,
-                  unique passwords.
+                  Always sign out from shared or public devices.
                 </p>
               </div>
             </div>

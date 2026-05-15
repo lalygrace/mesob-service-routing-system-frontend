@@ -14,9 +14,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import { Eye, EyeOff, Lock, CheckCircle2 } from "lucide-react";
 import { PublicRoute } from "@/components/auth/public-route";
+import { resetPassword } from "@/lib/api/auth";
+import { getApiErrorMessage } from "@/lib/api/client";
 
 function ResetPasswordPageContent() {
   const router = useRouter();
@@ -25,18 +27,23 @@ function ResetPasswordPageContent() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [missingToken, setMissingToken] = useState(false);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [token, setToken] = useState("");
 
   useEffect(() => {
     const tokenParam = searchParams.get("token");
-    if (!tokenParam) {
-      setError("Invalid or missing reset token");
-    } else {
-      setToken(tokenParam);
-    }
+
+    queueMicrotask(() => {
+      if (!tokenParam) {
+        setMissingToken(true);
+        toast.error("Invalid or missing reset token");
+      } else {
+        setToken(tokenParam);
+        setMissingToken(false);
+      }
+    });
   }, [searchParams]);
 
   const validatePassword = (pwd: string) => {
@@ -57,33 +64,35 @@ function ResetPasswordPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-
     const passwordError = validatePassword(password);
     if (passwordError) {
-      setError(passwordError);
+      toast.error(passwordError);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (!token) {
+      toast.error("Invalid or missing reset token");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      if (token) {
-        setSuccess(true);
-        setTimeout(() => {
-          router.push("/auth/login");
-        }, 2000);
-      }
+      await resetPassword(token, password);
+      toast.success("Password reset successfully");
+      setSuccess(true);
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 2000);
     } catch (err) {
-      setError("Failed to reset password. Please try again.");
+      toast.error(
+        getApiErrorMessage(err, "Failed to reset password. Please try again."),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -127,12 +136,6 @@ function ResetPasswordPageContent() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
             <div className="space-y-2">
               <Label htmlFor="password">New Password</Label>
               <div className="relative">
@@ -196,7 +199,7 @@ function ResetPasswordPageContent() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || !token}
+              disabled={isLoading || missingToken || !token}
             >
               {isLoading ? "Resetting..." : "Reset Password"}
             </Button>

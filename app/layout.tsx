@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Ethiopic } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const notoEthiopic = Noto_Sans_Ethiopic({
@@ -35,7 +36,10 @@ export default function RootLayout({
       className={`${notoEthiopic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col relative">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

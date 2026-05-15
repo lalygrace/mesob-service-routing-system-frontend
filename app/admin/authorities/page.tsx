@@ -26,15 +26,51 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { AuthorityForm } from "@/components/admin/authority-form";
-import { MOCK_AUTHORITIES, type Authority } from "@/lib/mock/authorities";
+import {
+  createAdminAuthority,
+  deleteAdminAuthority,
+  listAdminAuthorities,
+  updateAdminAuthority,
+  type Authority,
+} from "@/lib/api/authorities";
+import { getApiErrorMessage } from "@/lib/api/client";
+import { toast } from "sonner";
 
 export default function AuthoritiesPage() {
-  const [authorities, setAuthorities] = React.useState<Authority[]>(MOCK_AUTHORITIES);
+  const [authorities, setAuthorities] = React.useState<Authority[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Authority | null>(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    async function loadAuthorities() {
+      try {
+        const data = await listAdminAuthorities();
+        if (mounted) setAuthorities(data);
+      } catch (error) {
+        toast.error(getApiErrorMessage(error, "Failed to load authorities"));
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    }
+
+    loadAuthorities();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filtered = authorities.filter(
     (a) =>
@@ -42,25 +78,35 @@ export default function AuthoritiesPage() {
       a.abbreviation.toLowerCase().includes(search.toLowerCase()),
   );
 
-  function handleSave(data: Omit<Authority, "id" | "createdAt" | "serviceCount">) {
-    if (editing) {
-      setAuthorities((prev) =>
-        prev.map((a) => (a.id === editing.id ? { ...a, ...data } : a)),
-      );
-    } else {
-      const newAuth: Authority = {
-        ...data,
-        id: `auth-${Date.now()}`,
-        serviceCount: 0,
-        createdAt: new Date().toISOString().slice(0, 10),
-      };
-      setAuthorities((prev) => [...prev, newAuth]);
+  async function handleSave(
+    data: Omit<Authority, "id" | "createdAt" | "serviceCount">,
+  ) {
+    try {
+      if (editing) {
+        const updated = await updateAdminAuthority(editing.id, data);
+        setAuthorities((prev) =>
+          prev.map((a) => (a.id === editing.id ? updated : a)),
+        );
+        toast.success("Authority updated successfully");
+      } else {
+        const created = await createAdminAuthority(data);
+        setAuthorities((prev) => [created, ...prev]);
+        toast.success("Authority created successfully");
+      }
+      setEditing(null);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to save authority"));
     }
-    setEditing(null);
   }
 
-  function handleDelete(id: string) {
-    setAuthorities((prev) => prev.filter((a) => a.id !== id));
+  async function handleDelete(id: string) {
+    try {
+      await deleteAdminAuthority(id);
+      setAuthorities((prev) => prev.filter((a) => a.id !== id));
+      toast.success("Authority deleted successfully");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to delete authority"));
+    }
   }
 
   function openEdit(authority: Authority) {
@@ -113,14 +159,25 @@ export default function AuthoritiesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Authority</TableHead>
-                <TableHead className="hidden md:table-cell">Abbreviation</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Abbreviation
+                </TableHead>
                 <TableHead className="hidden lg:table-cell">Location</TableHead>
                 <TableHead className="text-center">Services</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-12 text-muted-foreground"
+                  >
+                    Loading authorities...
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -146,7 +203,8 @@ export default function AuthoritiesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                      {auth.floor}{auth.room ? ` • ${auth.room}` : ""}
+                      {auth.floor}
+                      {auth.room ? ` • ${auth.room}` : ""}
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="secondary" className="text-xs">
@@ -157,7 +215,11 @@ export default function AuthoritiesPage() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>

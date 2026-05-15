@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -11,7 +12,6 @@ import {
   Settings,
   ChevronUp,
   LogOut,
-  Shield,
   Users,
   Monitor,
   User,
@@ -41,6 +41,9 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { getCurrentUser, logout, type User as AuthUser } from "@/lib/auth";
+import { getApiErrorMessage } from "@/lib/api/client";
+import { toast } from "sonner";
 
 const NAV_ITEMS = [
   {
@@ -98,6 +101,39 @@ const ACCOUNT_ITEMS = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const [user, setUser] = React.useState<AuthUser | null>(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    async function loadUser() {
+      const currentUser = await getCurrentUser();
+      if (mounted) setUser(currentUser);
+    }
+
+    loadUser();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  async function handleSignOut() {
+    try {
+      await logout();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to sign out"));
+    }
+  }
+
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "SA";
 
   function isActive(item: (typeof NAV_ITEMS)[0]) {
     if (item.exact) return pathname === item.url;
@@ -218,13 +254,15 @@ export function AdminSidebar() {
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-xs font-semibold">
-                      SA
+                      {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">System Admin</span>
+                    <span className="truncate font-semibold">
+                      {user?.name ?? "System Admin"}
+                    </span>
                     <span className="truncate text-xs text-muted-foreground">
-                      admin@mesob.gov.et
+                      {user?.email ?? "admin@mesob.gov.et"}
                     </span>
                   </div>
                   <ChevronUp className="ml-auto size-4" />
@@ -257,11 +295,15 @@ export function AdminSidebar() {
                 <DropdownMenuItem className="gap-2">
                   <ThemeToggle />
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="gap-2 text-destructive">
-                  <Link href="/auth/login">
-                    <LogOut className="h-4 w-4" />
-                    Sign Out
-                  </Link>
+                <DropdownMenuItem
+                  className="gap-2 text-destructive"
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    handleSignOut();
+                  }}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

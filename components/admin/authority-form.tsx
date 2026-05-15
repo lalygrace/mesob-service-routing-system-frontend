@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import type { Authority } from "@/lib/mock/authorities";
+import type { Authority } from "@/lib/api/authorities";
 
 type AuthorityFormData = Omit<Authority, "id" | "createdAt" | "serviceCount">;
 
@@ -69,27 +69,29 @@ export function AuthorityForm({
   const [room, setRoom] = React.useState("");
 
   React.useEffect(() => {
-    if (authority) {
-      setName(authority.name);
-      setNameAm(authority.nameAm);
-      setNameOm(authority.nameOm);
-      setAbbreviation(authority.abbreviation);
-      setAbbreviationAm(authority.abbreviationAm);
-      setAbbreviationOm(authority.abbreviationOm);
-      setDescription(authority.description ?? "");
-      setFloor(authority.floor);
-      setRoom(authority.room ?? "");
-    } else {
-      setName("");
-      setNameAm("");
-      setNameOm("");
-      setAbbreviation("");
-      setAbbreviationAm("");
-      setAbbreviationOm("");
-      setDescription("");
-      setFloor("");
-      setRoom("");
-    }
+    queueMicrotask(() => {
+      if (authority) {
+        setName(authority.name);
+        setNameAm(authority.nameAm);
+        setNameOm(authority.nameOm);
+        setAbbreviation(authority.abbreviation);
+        setAbbreviationAm(authority.abbreviationAm);
+        setAbbreviationOm(authority.abbreviationOm);
+        setDescription(authority.description ?? "");
+        setFloor(authority.floor);
+        setRoom(authority.room ?? "");
+      } else {
+        setName("");
+        setNameAm("");
+        setNameOm("");
+        setAbbreviation("");
+        setAbbreviationAm("");
+        setAbbreviationOm("");
+        setDescription("");
+        setFloor("");
+        setRoom("");
+      }
+    });
   }, [authority, open]);
 
   function handleSubmit(e: React.FormEvent) {
@@ -179,11 +181,7 @@ export function AuthorityForm({
             </div>
 
             {/* ── Afaan Oromo ─────────────────────────────────── */}
-            <LanguageSectionHeader
-              flag="🇪🇹"
-              label="Afaan Oromo"
-              code="OM"
-            />
+            <LanguageSectionHeader flag="🇪🇹" label="Afaan Oromo" code="OM" />
 
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-2 space-y-2">

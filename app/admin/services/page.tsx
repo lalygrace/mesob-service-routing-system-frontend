@@ -27,23 +27,58 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ServiceForm } from "@/components/admin/service-form";
-import { MOCK_SERVICES } from "@/lib/mock/services";
-import { MOCK_AUTHORITIES } from "@/lib/mock/authorities";
 import type { Service } from "@/lib/service-navigator/types";
+import { listAdminAuthorities, type Authority } from "@/lib/api/authorities";
+import {
+  createAdminService,
+  deleteAdminService,
+  listAdminServices,
+  updateAdminService,
+} from "@/lib/api/services";
+import { getApiErrorMessage } from "@/lib/api/client";
+import { toast } from "sonner";
 
 export default function ServicesPage() {
-  const [services, setServices] = React.useState<Service[]>(MOCK_SERVICES);
+  const [services, setServices] = React.useState<Service[]>([]);
+  const [authorities, setAuthorities] = React.useState<Authority[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Service | null>(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    async function loadData() {
+      try {
+        const [serviceData, authorityData] = await Promise.all([
+          listAdminServices(),
+          listAdminAuthorities(),
+        ]);
+
+        if (!mounted) return;
+        setServices(serviceData);
+        setAuthorities(authorityData);
+      } catch (error) {
+        toast.error(getApiErrorMessage(error, "Failed to load services"));
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    }
+
+    loadData();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filtered = services.filter((s) => {
     return (
@@ -52,23 +87,33 @@ export default function ServicesPage() {
     );
   });
 
-  function handleSave(data: Omit<Service, "id">) {
-    if (editing) {
-      setServices((prev) =>
-        prev.map((s) => (s.id === editing.id ? { ...s, ...data } : s)),
-      );
-    } else {
-      const newService: Service = {
-        ...data,
-        id: `svc-${Date.now()}`,
-      };
-      setServices((prev) => [...prev, newService]);
+  async function handleSave(data: Omit<Service, "id">) {
+    try {
+      if (editing) {
+        const updated = await updateAdminService(editing.id, data);
+        setServices((prev) =>
+          prev.map((s) => (s.id === editing.id ? updated : s)),
+        );
+        toast.success("Service updated successfully");
+      } else {
+        const created = await createAdminService(data);
+        setServices((prev) => [created, ...prev]);
+        toast.success("Service created successfully");
+      }
+      setEditing(null);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to save service"));
     }
-    setEditing(null);
   }
 
-  function handleDelete(id: string) {
-    setServices((prev) => prev.filter((s) => s.id !== id));
+  async function handleDelete(id: string) {
+    try {
+      await deleteAdminService(id);
+      setServices((prev) => prev.filter((s) => s.id !== id));
+      toast.success("Service deleted successfully");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to delete service"));
+    }
   }
 
   function openEdit(service: Service) {
@@ -123,7 +168,9 @@ export default function ServicesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Service</TableHead>
-                <TableHead className="hidden md:table-cell">Authority</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Authority
+                </TableHead>
                 <TableHead className="hidden lg:table-cell">Location</TableHead>
                 <TableHead className="hidden lg:table-cell text-center">
                   Requirements
@@ -132,7 +179,16 @@ export default function ServicesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-12 text-muted-foreground"
+                  >
+                    Loading services...
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -166,7 +222,11 @@ export default function ServicesPage() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -200,7 +260,7 @@ export default function ServicesPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         service={editing}
-        authorities={MOCK_AUTHORITIES}
+        authorities={authorities}
         onSave={handleSave}
       />
     </div>

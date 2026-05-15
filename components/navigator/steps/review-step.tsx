@@ -127,7 +127,7 @@ export function ReviewStep({
   rating: number;
   onRatingChange: (next: number) => void;
   submitted: boolean;
-  onSubmit: () => void;
+  onSubmit: (rating: number) => void;
   onStartOver: () => void;
   sessionCount?: number;
   language?: string;
@@ -353,7 +353,7 @@ export function ReviewStep({
                       onHover={setHoverRating}
                       onClick={(v) => {
                         onRatingChange(v);
-                        onSubmit();
+                        onSubmit(v);
                       }}
                       ariaLabel={strings.feedbackForm.rating}
                       delay={i * 50}
