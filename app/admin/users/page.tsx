@@ -65,6 +65,7 @@ import {
   updateAdminUser,
 } from "@/lib/api/admin";
 import { getApiErrorMessage } from "@/lib/api/client";
+import { RequireSuperAdmin } from "@/components/auth/require-super-admin";
 
 interface Admin {
   id: string;
@@ -79,7 +80,7 @@ interface Admin {
   authorityId?: string | null;
 }
 
-export default function UsersPage() {
+function UsersPageContent() {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [authorities, setAuthorities] = useState<Authority[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -559,5 +560,13 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function UsersPage() {
+  return (
+    <RequireSuperAdmin>
+      <UsersPageContent />
+    </RequireSuperAdmin>
   );
 }

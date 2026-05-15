@@ -34,8 +34,9 @@ import {
 import { listSystemConfig, updateSystemConfig } from "@/lib/api/admin";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { toast } from "sonner";
+import { RequireSuperAdmin } from "@/components/auth/require-super-admin";
 
-export default function SettingsPage() {
+function SettingsPageContent() {
   const [systemName, setSystemName] = React.useState("Mesob Service Navigator");
   const [defaultLang, setDefaultLang] = React.useState("en");
   const [kioskMode, setKioskMode] = React.useState(true);
@@ -543,5 +544,13 @@ export default function SettingsPage() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <RequireSuperAdmin>
+      <SettingsPageContent />
+    </RequireSuperAdmin>
   );
 }

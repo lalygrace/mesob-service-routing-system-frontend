@@ -43,6 +43,7 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser, logout, type User as AuthUser } from "@/lib/auth";
 import { getApiErrorMessage } from "@/lib/api/client";
+import { getAnalyticsSummary, type AnalyticsSummary } from "@/lib/api/admin";
 import { toast } from "sonner";
 
 const NAV_ITEMS = [
@@ -56,13 +57,13 @@ const NAV_ITEMS = [
     title: "Authorities",
     url: "/admin/authorities",
     icon: Building2,
-    badge: "6",
+    badgeKey: "totalAuthorities" as const,
   },
   {
     title: "Services",
     url: "/admin/services",
     icon: Layers,
-    badge: "8",
+    badgeKey: "totalServices" as const,
   },
   {
     title: "Analytics",
@@ -73,6 +74,7 @@ const NAV_ITEMS = [
     title: "Settings",
     url: "/admin/settings",
     icon: Settings,
+    requireSuperAdmin: true, // Only super admins can access
   },
 ];
 
@@ -81,6 +83,7 @@ const ACCOUNT_ITEMS = [
     title: "Admin Users",
     url: "/admin/users",
     icon: Users,
+    requireSuperAdmin: true, // Only super admins can manage users
   },
   {
     title: "Sessions",
@@ -102,16 +105,27 @@ const ACCOUNT_ITEMS = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const [user, setUser] = React.useState<AuthUser | null>(null);
+  const [stats, setStats] = React.useState<AnalyticsSummary | null>(null);
 
   React.useEffect(() => {
     let mounted = true;
 
-    async function loadUser() {
-      const currentUser = await getCurrentUser();
-      if (mounted) setUser(currentUser);
+    async function loadData() {
+      try {
+        const [currentUser, summary] = await Promise.all([
+          getCurrentUser(),
+          getAnalyticsSummary(),
+        ]);
+        if (mounted) {
+          setUser(currentUser);
+          setStats(summary);
+        }
+      } catch (error) {
+        console.error("Failed to load sidebar data:", error);
+      }
     }
 
-    loadUser();
+    loadData();
 
     return () => {
       mounted = false;
@@ -139,6 +153,18 @@ export function AdminSidebar() {
     if (item.exact) return pathname === item.url;
     return pathname.startsWith(item.url);
   }
+
+  // Check if user is super admin
+  const isSuperAdmin = user?.role === "super_admin";
+
+  // Filter navigation items based on role
+  const visibleNavItems = NAV_ITEMS.filter(
+    (item) => !item.requireSuperAdmin || isSuperAdmin
+  );
+
+  const visibleAccountItems = ACCOUNT_ITEMS.filter(
+    (item) => !item.requireSuperAdmin || isSuperAdmin
+  );
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
@@ -169,28 +195,32 @@ export function AdminSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV_ITEMS.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item)}
-                    tooltip={item.title}
-                  >
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                  {item.badge && (
-                    <Badge
-                      variant="secondary"
-                      className="absolute right-2 top-1.5 h-5 min-w-5 justify-center text-[10px] group-data-[collapsible=icon]:hidden"
+              {visibleNavItems.map((item) => {
+                const badgeValue = item.badgeKey && stats ? stats[item.badgeKey] : null;
+                
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item as any)}
+                      tooltip={item.title}
                     >
-                      {item.badge}
-                    </Badge>
-                  )}
-                </SidebarMenuItem>
-              ))}
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                    {badgeValue !== null && badgeValue !== undefined && (
+                      <Badge
+                        variant="secondary"
+                        className="absolute right-2 top-1.5 h-5 min-w-5 justify-center text-[10px] group-data-[collapsible=icon]:hidden"
+                      >
+                        {badgeValue}
+                      </Badge>
+                    )}
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -201,11 +231,11 @@ export function AdminSidebar() {
           <SidebarGroupLabel>Account</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {ACCOUNT_ITEMS.map((item) => (
+              {visibleAccountItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    isActive={isActive(item)}
+                    isActive={isActive(item as any)}
                     tooltip={item.title}
                   >
                     <Link href={item.url}>

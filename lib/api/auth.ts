@@ -50,6 +50,13 @@ export function resetPassword(token: string, password: string) {
   });
 }
 
+export function acceptAdminInvitation(token: string, password: string) {
+  return apiRequest<{ success: boolean; message: string }>("/admin-invitation/accept", {
+    method: "POST",
+    body: { token, password },
+  });
+}
+
 export function getAdminMe() {
   return apiData<AdminMe>("/api/admin/me");
 }
@@ -69,5 +76,33 @@ export function changeAdminPassword(payload: {
   return apiRequest<{ success: boolean; message: string }>("/api/admin/change-password", {
     method: "POST",
     body: payload,
+  });
+}
+
+// Session Management
+export type Session = {
+  id: string;
+  userId: string;
+  expiresAt: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export function listSessions() {
+  return apiData<Session[]>("/api/auth/list-sessions");
+}
+
+export function revokeSession(sessionId: string) {
+  return apiRequest<{ success: boolean }>("/api/auth/revoke-session", {
+    method: "POST",
+    body: { token: sessionId }, // Better Auth expects 'token' not 'sessionId'
+  });
+}
+
+export function revokeOtherSessions() {
+  return apiRequest<{ success: boolean }>("/api/auth/revoke-other-sessions", {
+    method: "POST",
   });
 }
