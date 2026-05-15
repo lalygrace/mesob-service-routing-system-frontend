@@ -10,11 +10,18 @@ export type ServiceTopicId =
 export type Service = {
   id: string;
   title: string;
+  titleAm?: string;
+  titleOm?: string;
   authority: string;
   locationHint: string;
   feeHint: string;
   durationHint: string;
   requirements: string[];
+  requirementsAm?: string[];
+  requirementsOm?: string[];
+  workflowSteps?: string[];
+  workflowStepsAm?: string[];
+  workflowStepsOm?: string[];
 
   topicId: ServiceTopicId;
   keywords: Record<LanguageCode, string[]>;

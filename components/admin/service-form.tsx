@@ -58,6 +58,60 @@ function LanguageSectionHeader({
   );
 }
 
+function DynamicListInput({
+  items,
+  onChange,
+  placeholderPrefix = "Item",
+  addLabel = "Add Item"
+}: {
+  items: string[];
+  onChange: (items: string[]) => void;
+  placeholderPrefix?: string;
+  addLabel?: string;
+}) {
+  function add() {
+    onChange([...items, ""]);
+  }
+  function remove(index: number) {
+    onChange(items.filter((_, i) => i !== index));
+  }
+  function update(index: number, value: string) {
+    onChange(items.map((r, i) => (i === index ? value : r)));
+  }
+
+  return (
+    <div className="space-y-3">
+      {items.map((item, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <Badge variant="outline" className="shrink-0 text-xs font-mono w-6 justify-center">
+            {i + 1}
+          </Badge>
+          <Input
+            value={item}
+            onChange={(e) => update(i, e.target.value)}
+            placeholder={`${placeholderPrefix} ${i + 1}`}
+          />
+          {items.length > 1 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="shrink-0 h-8 w-8"
+              onClick={() => remove(i)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      ))}
+      <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={add}>
+        <Plus className="h-3.5 w-3.5" />
+        {addLabel}
+      </Button>
+    </div>
+  );
+}
+
 export function ServiceForm({
   open,
   onOpenChange,
@@ -75,7 +129,11 @@ export function ServiceForm({
   const [feeHint, setFeeHint] = React.useState("");
   const [durationHint, setDurationHint] = React.useState("");
   const [requirements, setRequirements] = React.useState<string[]>([""]);
+  const [requirementsAm, setRequirementsAm] = React.useState<string[]>([""]);
+  const [requirementsOm, setRequirementsOm] = React.useState<string[]>([""]);
   const [workflowSteps, setWorkflowSteps] = React.useState<string[]>([""]);
+  const [workflowStepsAm, setWorkflowStepsAm] = React.useState<string[]>([""]);
+  const [workflowStepsOm, setWorkflowStepsOm] = React.useState<string[]>([""]);
 
   // Auto-fill location when authority changes
   const selectedAuthority = React.useMemo(
@@ -97,8 +155,8 @@ export function ServiceForm({
     queueMicrotask(() => {
       if (service) {
         setTitle(service.title);
-        setTitleAm("");
-        setTitleOm("");
+        setTitleAm(service.titleAm || "");
+        setTitleOm(service.titleOm || "");
         // Try to find matching authority by name
         const matchedAuth = authorities.find(
           (a) => a.name === service.authority,
@@ -110,7 +168,11 @@ export function ServiceForm({
         setRequirements(
           service.requirements.length > 0 ? service.requirements : [""],
         );
-        setWorkflowSteps([""]);
+        setRequirementsAm(service.requirementsAm?.length ? service.requirementsAm : [""]);
+        setRequirementsOm(service.requirementsOm?.length ? service.requirementsOm : [""]);
+        setWorkflowSteps(service.workflowSteps?.length ? service.workflowSteps : [""]);
+        setWorkflowStepsAm(service.workflowStepsAm?.length ? service.workflowStepsAm : [""]);
+        setWorkflowStepsOm(service.workflowStepsOm?.length ? service.workflowStepsOm : [""]);
       } else {
         setTitle("");
         setTitleAm("");
@@ -120,34 +182,16 @@ export function ServiceForm({
         setFeeHint("");
         setDurationHint("");
         setRequirements([""]);
+        setRequirementsAm([""]);
+        setRequirementsOm([""]);
         setWorkflowSteps([""]);
+        setWorkflowStepsAm([""]);
+        setWorkflowStepsOm([""]);
       }
     });
   }, [service, open, authorities]);
 
-  function addRequirement() {
-    setRequirements((prev) => [...prev, ""]);
-  }
 
-  function removeRequirement(index: number) {
-    setRequirements((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function updateRequirement(index: number, value: string) {
-    setRequirements((prev) => prev.map((r, i) => (i === index ? value : r)));
-  }
-
-  function addStep() {
-    setWorkflowSteps((prev) => [...prev, ""]);
-  }
-
-  function removeStep(index: number) {
-    setWorkflowSteps((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function updateStep(index: number, value: string) {
-    setWorkflowSteps((prev) => prev.map((s, i) => (i === index ? value : s)));
-  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -164,12 +208,19 @@ export function ServiceForm({
     };
     onSave({
       title,
+      titleAm,
+      titleOm,
       authority: authorityName,
       topicId: "id", // Default — AI engine handles routing, not manual topicId
       locationHint,
       feeHint,
       durationHint,
       requirements: requirements.filter(Boolean),
+      requirementsAm: requirementsAm.filter(Boolean),
+      requirementsOm: requirementsOm.filter(Boolean),
+      workflowSteps: workflowSteps.filter(Boolean),
+      workflowStepsAm: workflowStepsAm.filter(Boolean),
+      workflowStepsOm: workflowStepsOm.filter(Boolean),
       keywords,
     });
     onOpenChange(false);
@@ -297,89 +348,71 @@ export function ServiceForm({
             </TabsContent>
 
             {/* ── Requirements Tab ────────────────────────────────── */}
-            <TabsContent value="requirements" className="space-y-3 mt-4">
+            <TabsContent value="requirements" className="space-y-4 mt-4">
               <p className="text-sm text-muted-foreground">
                 Documents and items the citizen must bring.
               </p>
-              {requirements.map((req, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className="shrink-0 text-xs font-mono w-6 justify-center"
-                  >
-                    {i + 1}
-                  </Badge>
-                  <Input
-                    value={req}
-                    onChange={(e) => updateRequirement(i, e.target.value)}
-                    placeholder={`Requirement ${i + 1}`}
-                  />
-                  {requirements.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0 h-8 w-8"
-                      onClick={() => removeRequirement(i)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={addRequirement}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Requirement
-              </Button>
+
+              {/* English */}
+              <LanguageSectionHeader flag="🇬🇧" label="English" code="EN" />
+              <DynamicListInput 
+                items={requirements} 
+                onChange={setRequirements} 
+                placeholderPrefix="Requirement"
+                addLabel="Add Requirement"
+              />
+
+              {/* Amharic */}
+              <LanguageSectionHeader flag="🇪🇹" label="Amharic" code="አማ" />
+              <DynamicListInput 
+                items={requirementsAm} 
+                onChange={setRequirementsAm} 
+                placeholderPrefix="መስፈርት"
+                addLabel="መስፈርት አክል"
+              />
+
+              {/* Afaan Oromo */}
+              <LanguageSectionHeader flag="🇪🇹" label="Afaan Oromo" code="OM" />
+              <DynamicListInput 
+                items={requirementsOm} 
+                onChange={setRequirementsOm} 
+                placeholderPrefix="Ulaagaa"
+                addLabel="Ulaagaa dabali"
+              />
             </TabsContent>
 
             {/* ── Workflow Tab ────────────────────────────────────── */}
-            <TabsContent value="workflow" className="space-y-3 mt-4">
+            <TabsContent value="workflow" className="space-y-4 mt-4">
               <p className="text-sm text-muted-foreground">
                 Step-by-step process the citizen follows.
               </p>
-              {workflowSteps.map((step, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Badge
-                    variant="secondary"
-                    className="shrink-0 text-xs font-mono w-6 justify-center"
-                  >
-                    {i + 1}
-                  </Badge>
-                  <Input
-                    value={step}
-                    onChange={(e) => updateStep(i, e.target.value)}
-                    placeholder={`Step ${i + 1}...`}
-                  />
-                  {workflowSteps.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0 h-8 w-8"
-                      onClick={() => removeStep(i)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={addStep}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Step
-              </Button>
+              
+              {/* English */}
+              <LanguageSectionHeader flag="🇬🇧" label="English" code="EN" />
+              <DynamicListInput 
+                items={workflowSteps} 
+                onChange={setWorkflowSteps} 
+                placeholderPrefix="Step"
+                addLabel="Add Step"
+              />
+
+              {/* Amharic */}
+              <LanguageSectionHeader flag="🇪🇹" label="Amharic" code="አማ" />
+              <DynamicListInput 
+                items={workflowStepsAm} 
+                onChange={setWorkflowStepsAm} 
+                placeholderPrefix="ደረጃ"
+                addLabel="ደረጃ አክል"
+              />
+
+              {/* Afaan Oromo */}
+              <LanguageSectionHeader flag="🇪🇹" label="Afaan Oromo" code="OM" />
+              <DynamicListInput 
+                items={workflowStepsOm} 
+                onChange={setWorkflowStepsOm} 
+                placeholderPrefix="Tarkaanfii"
+                addLabel="Tarkaanfii dabali"
+              />
             </TabsContent>
           </Tabs>
 
