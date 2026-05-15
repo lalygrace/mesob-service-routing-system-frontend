@@ -71,3 +71,31 @@ export function changeAdminPassword(payload: {
     body: payload,
   });
 }
+
+// Session Management
+export type Session = {
+  id: string;
+  userId: string;
+  expiresAt: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export function listSessions() {
+  return apiData<Session[]>("/api/auth/list-sessions");
+}
+
+export function revokeSession(sessionId: string) {
+  return apiRequest<{ success: boolean }>("/api/auth/revoke-session", {
+    method: "POST",
+    body: { token: sessionId }, // Better Auth expects 'token' not 'sessionId'
+  });
+}
+
+export function revokeOtherSessions() {
+  return apiRequest<{ success: boolean }>("/api/auth/revoke-other-sessions", {
+    method: "POST",
+  });
+}
