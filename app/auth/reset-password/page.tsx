@@ -17,7 +17,7 @@ import {
 import { toast } from "sonner";
 import { Eye, EyeOff, Lock, CheckCircle2 } from "lucide-react";
 import { PublicRoute } from "@/components/auth/public-route";
-import { resetPassword } from "@/lib/api/auth";
+import { resetPassword, acceptAdminInvitation } from "@/lib/api/auth";
 import { getApiErrorMessage } from "@/lib/api/client";
 
 function ResetPasswordPageContent() {
@@ -31,9 +31,11 @@ function ResetPasswordPageContent() {
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [token, setToken] = useState("");
+  const [flow, setFlow] = useState<string | null>(null);
 
   useEffect(() => {
     const tokenParam = searchParams.get("token");
+    const flowParam = searchParams.get("flow");
 
     queueMicrotask(() => {
       if (!tokenParam) {
@@ -41,14 +43,18 @@ function ResetPasswordPageContent() {
         toast.error("Invalid or missing reset token");
       } else {
         setToken(tokenParam);
+        setFlow(flowParam);
         setMissingToken(false);
       }
     });
   }, [searchParams]);
 
   const validatePassword = (pwd: string) => {
-    if (pwd.length < 8) {
-      return "Password must be at least 8 characters long";
+    // For admin invitations, use the backend's validation (min 10 characters)
+    const minLength = flow === "admin-invitation" || flow === "super-admin-setup" ? 10 : 8;
+    
+    if (pwd.length < minLength) {
+      return `Password must be at least ${minLength} characters long`;
     }
     if (!/[A-Z]/.test(pwd)) {
       return "Password must contain at least one uppercase letter";
@@ -83,15 +89,22 @@ function ResetPasswordPageContent() {
     setIsLoading(true);
 
     try {
-      await resetPassword(token, password);
-      toast.success("Password reset successfully");
+      // Check if this is an admin invitation or password reset
+      if (flow === "admin-invitation" || flow === "super-admin-setup") {
+        await acceptAdminInvitation(token, password);
+        toast.success("Password set successfully. You can now log in.");
+      } else {
+        await resetPassword(token, password);
+        toast.success("Password reset successfully");
+      }
+      
       setSuccess(true);
       setTimeout(() => {
         router.push("/auth/login");
       }, 2000);
     } catch (err) {
       toast.error(
-        getApiErrorMessage(err, "Failed to reset password. Please try again."),
+        getApiErrorMessage(err, "Failed to set password. Please try again."),
       );
     } finally {
       setIsLoading(false);
@@ -109,10 +122,12 @@ function ResetPasswordPageContent() {
               </div>
             </div>
             <CardTitle className="text-2xl text-center">
-              Password Reset Successful
+              {flow === "admin-invitation" || flow === "super-admin-setup"
+                ? "Password Set Successfully"
+                : "Password Reset Successful"}
             </CardTitle>
             <CardDescription className="text-center">
-              Your password has been successfully reset. Redirecting to login...
+              Your password has been successfully {flow === "admin-invitation" || flow === "super-admin-setup" ? "set" : "reset"}. Redirecting to login...
             </CardDescription>
           </CardHeader>
         </Card>
@@ -129,9 +144,15 @@ function ResetPasswordPageContent() {
               <Lock className="w-8 h-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Reset Password</CardTitle>
+          <CardTitle className="text-2xl text-center">
+            {flow === "admin-invitation" || flow === "super-admin-setup"
+              ? "Set Your Password"
+              : "Reset Password"}
+          </CardTitle>
           <CardDescription className="text-center">
-            Enter your new password below
+            {flow === "admin-invitation" || flow === "super-admin-setup"
+              ? "Create a password for your admin account"
+              : "Enter your new password below"}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -162,7 +183,7 @@ function ResetPasswordPageContent() {
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Must be at least 8 characters with uppercase, lowercase, and
+                Must be at least {flow === "admin-invitation" || flow === "super-admin-setup" ? "10" : "8"} characters with uppercase, lowercase, and
                 numbers
               </p>
             </div>
@@ -201,7 +222,11 @@ function ResetPasswordPageContent() {
               className="w-full"
               disabled={isLoading || missingToken || !token}
             >
-              {isLoading ? "Resetting..." : "Reset Password"}
+              {isLoading 
+                ? "Setting Password..." 
+                : flow === "admin-invitation" || flow === "super-admin-setup"
+                  ? "Set Password"
+                  : "Reset Password"}
             </Button>
             <Link href="/auth/login" className="w-full">
               <Button variant="ghost" className="w-full">

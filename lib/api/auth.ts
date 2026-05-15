@@ -50,6 +50,13 @@ export function resetPassword(token: string, password: string) {
   });
 }
 
+export function acceptAdminInvitation(token: string, password: string) {
+  return apiRequest<{ success: boolean; message: string }>("/admin-invitation/accept", {
+    method: "POST",
+    body: { token, password },
+  });
+}
+
 export function getAdminMe() {
   return apiData<AdminMe>("/api/admin/me");
 }

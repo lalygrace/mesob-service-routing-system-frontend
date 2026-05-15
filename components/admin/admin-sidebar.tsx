@@ -73,6 +73,7 @@ const NAV_ITEMS = [
     title: "Settings",
     url: "/admin/settings",
     icon: Settings,
+    requireSuperAdmin: true, // Only super admins can access
   },
 ];
 
@@ -81,6 +82,7 @@ const ACCOUNT_ITEMS = [
     title: "Admin Users",
     url: "/admin/users",
     icon: Users,
+    requireSuperAdmin: true, // Only super admins can manage users
   },
   {
     title: "Sessions",
@@ -139,6 +141,18 @@ export function AdminSidebar() {
     if (item.exact) return pathname === item.url;
     return pathname.startsWith(item.url);
   }
+
+  // Check if user is super admin
+  const isSuperAdmin = user?.role === "super_admin";
+
+  // Filter navigation items based on role
+  const visibleNavItems = NAV_ITEMS.filter(
+    (item) => !item.requireSuperAdmin || isSuperAdmin
+  );
+
+  const visibleAccountItems = ACCOUNT_ITEMS.filter(
+    (item) => !item.requireSuperAdmin || isSuperAdmin
+  );
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
