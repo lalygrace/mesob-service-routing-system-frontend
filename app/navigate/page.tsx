@@ -3,20 +3,17 @@
 /**
  * NavigatePage — Citizen AI Navigation Flow
  *
- * Step flow:
- *   language → intake → (voice | case | browse) → assistant → results → review
- *
  * Three input paths:
- *   1. Voice  — MediaRecorder → backend STT → addis.ai → AI match
- *   2. Text   — typed input → backend NLP → addis.ai → AI match
+ *   1. Voice  — MediaRecorder → backend STT → addis.ai NLP → match
+ *   2. Text   — typed input → backend NLP → addis.ai → match
  *   3. Browse — list authorities → list services → direct result (no AI)
  *
- * TTS is triggered (via useTts hook) after:
- *   - Clarification questions from the AI
- *   - Success summaries from the AI
- *
- * Per the proposal: TTS failures must never break the citizen flow.
- * Per the proposal: The browse path bypasses AI entirely.
+ * Features wired here:
+ *   - Rich service detail (authority, location, fee, steps, checklist)
+ *   - TTS playback after AI clarification and success responses
+ *   - "Not what I need" escape hatch on the result page
+ *   - addis.ai unavailability detection → Browse by Authority fallback prompt
+ *   - Kiosk idle timeout (reads kiosk_idle_timeout_seconds from SystemConfig)
  */
 
 import * as React from "react";
@@ -40,10 +37,12 @@ import { AuthorityBrowse } from "@/components/navigator/steps/authority-browse";
 import { ResultsStep } from "@/components/navigator/steps/results-step";
 import { ReviewStep } from "@/components/navigator/steps/review-step";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Building2 } from "lucide-react";
 import { getStrings } from "@/lib/service-navigator/strings";
 import { useTts } from "@/lib/hooks/use-tts";
+import { useIdleTimeout } from "@/lib/hooks/use-idle-timeout";
 import type { Decision, LanguageCode, Service } from "@/lib/service-navigator/types";
+import type { RichServiceDetail } from "@/lib/api/citizen";
 import {
   completeCitizenSession,
   createCitizenInteraction,
@@ -52,7 +51,7 @@ import {
   submitCitizenFeedback,
 } from "@/lib/api/citizen";
 import { listPublicServices } from "@/lib/api/services";
-import { getApiErrorMessage } from "@/lib/api/client";
+import { getApiErrorMessage, ApiError } from "@/lib/api/client";
 import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -82,7 +81,67 @@ function getStepDefs(strings: ReturnType<typeof getStrings>) {
   ];
 }
 
-// ─── Main content (wrapped in Suspense for useSearchParams) ──────────────────
+/**
+ * Detects whether an error is an addis.ai service unavailability.
+ * Network failures, 5xx, and 429 from the AI endpoint all qualify.
+ */
+function isAiUnavailable(err: unknown): boolean {
+  if (err instanceof ApiError) {
+    return err.status === 503 || err.status === 502 || err.status === 429;
+  }
+  // Network-level failure (fetch threw)
+  if (err instanceof TypeError && (err.message.includes("fetch") || err.message.includes("network"))) {
+    return true;
+  }
+  return false;
+}
+
+// ─── AI Unavailable Banner ────────────────────────────────────────────────────
+
+function AiUnavailableBanner({
+  strings,
+  onBrowse,
+  onRetry,
+}: {
+  strings: ReturnType<typeof getStrings>;
+  onBrowse: () => void;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 space-y-3">
+        <p className="text-sm font-semibold text-foreground">
+          AI assistant is temporarily unavailable
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The AI service is not responding right now. You can still find your
+          service by browsing the authority list directly — no AI needed.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Button
+          onClick={onBrowse}
+          size="lg"
+          className="rounded-xl h-12 gap-2"
+        >
+          <Building2 className="h-4 w-4" />
+          Browse by Authority
+        </Button>
+        <Button
+          variant="outline"
+          onClick={onRetry}
+          size="lg"
+          className="rounded-xl h-12"
+        >
+          {strings.actions.tryAgain}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main content ─────────────────────────────────────────────────────────────
 
 function NavigateContent() {
   const searchParams = useSearchParams();
@@ -98,57 +157,63 @@ function NavigateContent() {
   const [step, setStep] = React.useState<StepId>("language");
   const [intakeMethod, setIntakeMethod] = React.useState<IntakeMethod | null>(null);
 
-  // ── Service catalog (used by AI path) ───────────────────────────────────────
+  // ── Service catalog (AI path) ────────────────────────────────────────────────
   const [services, setServices] = React.useState<Service[]>([]);
   const [isLoadingServices, setIsLoadingServices] = React.useState(false);
 
-  // ── Session tracking ────────────────────────────────────────────────────────
+  // ── Session tracking ─────────────────────────────────────────────────────────
   const [citizenSessionId, setCitizenSessionId] = React.useState<string | null>(null);
   const [sessionCount, setSessionCount] = React.useState(0);
 
-  // ── Input state ─────────────────────────────────────────────────────────────
+  // ── Input state ──────────────────────────────────────────────────────────────
   const [caseText, setCaseText] = React.useState("");
 
-  // ── AI response state ───────────────────────────────────────────────────────
+  // ── AI response state ────────────────────────────────────────────────────────
   const [isAiLoading, setIsAiLoading] = React.useState(false);
   const [assistantError, setAssistantError] = React.useState<AssistantError | null>(null);
+  const [aiUnavailable, setAiUnavailable] = React.useState(false);
   const [aiQuestion, setAiQuestion] = React.useState<string | null>(null);
   const [aiOptions, setAiOptions] = React.useState<AiClarifyOption[] | null>(null);
-  /** Kept for local-engine fallback clarification */
   const [decision, setDecision] = React.useState<Decision | null>(null);
 
   // ── Result state ─────────────────────────────────────────────────────────────
+  // `selectedService` is the flat catalog entry (always available)
+  // `richService` is the structured detail from selectCitizenService (AI path)
   const [selectedService, setSelectedService] = React.useState<Service | null>(null);
+  const [richService, setRichService] = React.useState<RichServiceDetail | null>(null);
   const [checkedRequirements, setCheckedRequirements] = React.useState<Record<string, boolean>>({});
   const [rating, setRating] = React.useState(0);
   const [feedbackSubmitted, setFeedbackSubmitted] = React.useState(false);
 
-  // ── TTS hook ─────────────────────────────────────────────────────────────────
+  // ── TTS ──────────────────────────────────────────────────────────────────────
   const tts = useTts(language);
 
   const strings = getStrings(language);
   const isFullscreen = useFullscreenStatus();
 
-  // ── Load service catalog when language changes ───────────────────────────────
+  // ── Idle timeout — disabled on language/review steps ─────────────────────────
+  useIdleTimeout({
+    enabled: step !== "language" && step !== "review",
+    onTimeout: () => {
+      resetFlow();
+      toast.info("Session reset due to inactivity.");
+    },
+  });
+
+  // ── Load service catalog ─────────────────────────────────────────────────────
   React.useEffect(() => {
     let mounted = true;
     setIsLoadingServices(true);
 
     listPublicServices(language)
-      .then((data) => {
-        if (mounted) setServices(data);
-      })
+      .then((data) => { if (mounted) setServices(data); })
       .catch((err) => {
         toast.error(getApiErrorMessage(err, "Failed to load service catalog"));
         if (mounted) setServices([]);
       })
-      .finally(() => {
-        if (mounted) setIsLoadingServices(false);
-      });
+      .finally(() => { if (mounted) setIsLoadingServices(false); });
 
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [language]);
 
   // ── Step indicator index ─────────────────────────────────────────────────────
@@ -160,10 +225,8 @@ function NavigateContent() {
     return 0;
   }, [step]);
 
-  // ── Navigation helpers ───────────────────────────────────────────────────────
-  function goTo(next: StepId) {
-    setStep(next);
-  }
+  // ── Navigation ───────────────────────────────────────────────────────────────
+  function goTo(next: StepId) { setStep(next); }
 
   function goToInput() {
     if (intakeMethod === "voice") goTo("voice");
@@ -176,11 +239,9 @@ function NavigateContent() {
     if (citizenSessionId) return citizenSessionId;
 
     const inputMode =
-      intakeMethod === "voice"
-        ? "voice"
-        : intakeMethod === "browse"
-          ? "category_select"
-          : "text";
+      intakeMethod === "voice" ? "voice"
+      : intakeMethod === "browse" ? "category_select"
+      : "text";
 
     const session = await createCitizenSession({
       lang: language,
@@ -193,23 +254,22 @@ function NavigateContent() {
     return session.id;
   }
 
-  async function recordServiceSelection(
-    service: Service,
-    sessionId: string | null,
-  ) {
-    if (!sessionId) return;
+  async function recordServiceSelection(serviceId: string, sessionId: string | null) {
+    if (!sessionId) return null;
     try {
-      await selectCitizenService(sessionId, service.id);
+      const result = await selectCitizenService(sessionId, serviceId);
+      return result.service ?? null;
     } catch {
-      // Non-critical — don't surface to citizen
+      return null;
     }
   }
 
-  // ── AI input submission (voice + text paths) ─────────────────────────────────
+  // ── AI submission (voice + text paths) ──────────────────────────────────────
   async function submitCase(text: string) {
     const cleaned = text.trim();
     setCaseText(cleaned);
     setAssistantError(null);
+    setAiUnavailable(false);
     setAiQuestion(null);
     setAiOptions(null);
     setDecision(null);
@@ -236,17 +296,9 @@ function NavigateContent() {
       setIsAiLoading(false);
 
       if (result.systemAction === "ASK_CLARIFICATION") {
-        // AI needs more info — show clarification question
         setAiQuestion(result.message);
-        // The backend doesn't return structured option buttons for clarification
-        // in the current API contract — the citizen types a follow-up answer.
-        // We show the question and a "type your answer" prompt.
         setAiOptions(null);
-
-        // Speak the clarification question if voice mode is active
-        if (intakeMethod === "voice" && result.message) {
-          tts.speak(result.message);
-        }
+        if (intakeMethod === "voice" && result.message) tts.speak(result.message);
         return;
       }
 
@@ -258,30 +310,27 @@ function NavigateContent() {
         return;
       }
 
-      // Success — find the top match in the local service catalog
+      // Success — fetch rich detail via selectCitizenService
       const topMatch = result.matches[0];
-      const service = findServiceById(services, topMatch.serviceId);
+      const flatService = findServiceById(services, topMatch.serviceId);
 
-      if (!service) {
-        setAssistantError({
-          title: strings.assistant.failedTitle,
-          message: strings.assistant.failedDesc,
-        });
-        return;
-      }
-
-      setSelectedService(service);
+      const rich = await recordServiceSelection(topMatch.serviceId, sessionId);
+      setRichService(rich);
+      setSelectedService(flatService);
       setCheckedRequirements({});
-      await recordServiceSelection(service, sessionId);
 
-      // Speak the success summary if voice mode is active
-      if (intakeMethod === "voice" && result.message) {
-        tts.speak(result.message);
-      }
+      if (intakeMethod === "voice" && result.message) tts.speak(result.message);
 
       goTo("results");
     } catch (err) {
       setIsAiLoading(false);
+
+      if (isAiUnavailable(err)) {
+        // AI is down — show the fallback banner
+        setAiUnavailable(true);
+        return;
+      }
+
       setAssistantError({
         title: strings.assistant.failedTitle,
         message: getApiErrorMessage(err, strings.assistant.failedDesc),
@@ -289,12 +338,13 @@ function NavigateContent() {
     }
   }
 
-  // ── Clarification follow-up (citizen answers the AI question) ────────────────
+  // ── Clarification follow-up ──────────────────────────────────────────────────
   async function submitClarification(answer: string) {
     const cleaned = answer.trim();
     if (!cleaned || !citizenSessionId) return;
 
     setAssistantError(null);
+    setAiUnavailable(false);
     setAiQuestion(null);
     setAiOptions(null);
     setIsAiLoading(true);
@@ -309,9 +359,7 @@ function NavigateContent() {
 
       if (result.systemAction === "ASK_CLARIFICATION") {
         setAiQuestion(result.message);
-        if (intakeMethod === "voice" && result.message) {
-          tts.speak(result.message);
-        }
+        if (intakeMethod === "voice" && result.message) tts.speak(result.message);
         return;
       }
 
@@ -324,27 +372,19 @@ function NavigateContent() {
       }
 
       const topMatch = result.matches[0];
-      const service = findServiceById(services, topMatch.serviceId);
+      const flatService = findServiceById(services, topMatch.serviceId);
+      const rich = await recordServiceSelection(topMatch.serviceId, citizenSessionId);
 
-      if (!service) {
-        setAssistantError({
-          title: strings.assistant.failedTitle,
-          message: strings.assistant.failedDesc,
-        });
-        return;
-      }
-
-      setSelectedService(service);
+      setRichService(rich);
+      setSelectedService(flatService);
       setCheckedRequirements({});
-      await recordServiceSelection(service, citizenSessionId);
 
-      if (intakeMethod === "voice" && result.message) {
-        tts.speak(result.message);
-      }
+      if (intakeMethod === "voice" && result.message) tts.speak(result.message);
 
       goTo("results");
     } catch (err) {
       setIsAiLoading(false);
+      if (isAiUnavailable(err)) { setAiUnavailable(true); return; }
       setAssistantError({
         title: strings.assistant.failedTitle,
         message: getApiErrorMessage(err, strings.assistant.failedDesc),
@@ -352,15 +392,15 @@ function NavigateContent() {
     }
   }
 
-  // ── Browse path — direct service selection (no AI) ───────────────────────────
+  // ── Browse path (no AI) ──────────────────────────────────────────────────────
   async function handleBrowseServiceSelected(service: Service) {
     setSelectedService(service);
+    setRichService(null); // browse path uses flat service only
     setCheckedRequirements({});
 
-    // Create a session for analytics tracking (category_select mode)
     try {
       const sessionId = await ensureCitizenSession();
-      await recordServiceSelection(service, sessionId);
+      await recordServiceSelection(service.id, sessionId);
     } catch {
       // Non-critical
     }
@@ -368,10 +408,9 @@ function NavigateContent() {
     goTo("results");
   }
 
-  // ── Feedback & session completion ────────────────────────────────────────────
+  // ── Feedback & completion ────────────────────────────────────────────────────
   async function submitFeedback(nextRating: number) {
     setFeedbackSubmitted(true);
-
     if (!citizenSessionId) return;
 
     try {
@@ -395,9 +434,11 @@ function NavigateContent() {
     setCaseText("");
     setDecision(null);
     setAssistantError(null);
+    setAiUnavailable(false);
     setAiQuestion(null);
     setAiOptions(null);
     setSelectedService(null);
+    setRichService(null);
     setCitizenSessionId(null);
     setCheckedRequirements({});
     setRating(0);
@@ -409,26 +450,17 @@ function NavigateContent() {
   function handleBack() {
     tts.stop();
     switch (step) {
-      case "intake":
-        goTo("language");
-        break;
+      case "intake": goTo("language"); break;
       case "voice":
       case "case":
-      case "browse":
-        goTo("intake");
-        break;
-      case "assistant":
-        goToInput();
-        break;
+      case "browse": goTo("intake"); break;
+      case "assistant": goToInput(); break;
       case "results":
         if (intakeMethod === "browse") goTo("browse");
         else goToInput();
         break;
-      case "review":
-        goTo("results");
-        break;
-      default:
-        break;
+      case "review": goTo("results"); break;
+      default: break;
     }
   }
 
@@ -450,10 +482,7 @@ function NavigateContent() {
           {/* Step indicator */}
           <div className="border-b border-white/10 dark:border-white/5 bg-background/20 backdrop-blur-md py-4 px-6 shrink-0">
             <div className="mx-auto max-w-4xl">
-              <StepIndicator
-                steps={getStepDefs(strings)}
-                currentIndex={mainStepIndex}
-              />
+              <StepIndicator steps={getStepDefs(strings)} currentIndex={mainStepIndex} />
             </div>
           </div>
 
@@ -462,27 +491,24 @@ function NavigateContent() {
             <div className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-8 sm:py-10">
               <div className="w-full">
 
-                {/* ── Step 0: Language selection ── */}
                 {step === "language" && (
                   <LanguageStep
                     strings={strings}
                     language={language}
-                    onLanguageChange={(nextLanguage) => {
-                      setLanguage(nextLanguage);
+                    onLanguageChange={(lang) => {
+                      setLanguage(lang);
                       setCitizenSessionId(null);
                       goTo("intake");
                     }}
                   />
                 )}
 
-                {/* Service catalog loading notice */}
-                {isLoadingServices && step !== "language" && step !== "intake" && (
+                {isLoadingServices && !["language", "intake"].includes(step) && (
                   <div className="mb-4 rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
                     Loading service catalog…
                   </div>
                 )}
 
-                {/* ── Step 1: Intake method selection ── */}
                 {step === "intake" && (
                   <IntakeStep
                     strings={strings}
@@ -491,9 +517,11 @@ function NavigateContent() {
                       setCaseText("");
                       setDecision(null);
                       setAssistantError(null);
+                      setAiUnavailable(false);
                       setAiQuestion(null);
                       setAiOptions(null);
                       setSelectedService(null);
+                      setRichService(null);
                       if (method === "voice") goTo("voice");
                       else if (method === "browse") goTo("browse");
                       else goTo("case");
@@ -501,7 +529,6 @@ function NavigateContent() {
                   />
                 )}
 
-                {/* ── Voice input ── */}
                 {step === "voice" && (
                   <VoiceInput
                     language={language}
@@ -509,28 +536,20 @@ function NavigateContent() {
                     value={caseText}
                     onChange={setCaseText}
                     onSubmit={() => submitCase(caseText)}
-                    onSwitchToTyping={() => {
-                      setIntakeMethod("type");
-                      goTo("case");
-                    }}
+                    onSwitchToTyping={() => { setIntakeMethod("type"); goTo("case"); }}
                   />
                 )}
 
-                {/* ── Text input ── */}
                 {step === "case" && (
                   <TextInput
                     strings={strings}
                     value={caseText}
                     onChange={setCaseText}
                     onSubmit={() => submitCase(caseText)}
-                    onSwitchToVoice={() => {
-                      setIntakeMethod("voice");
-                      goTo("voice");
-                    }}
+                    onSwitchToVoice={() => { setIntakeMethod("voice"); goTo("voice"); }}
                   />
                 )}
 
-                {/* ── Browse by authority (no AI) ── */}
                 {step === "browse" && (
                   <AuthorityBrowse
                     language={language}
@@ -539,53 +558,71 @@ function NavigateContent() {
                   />
                 )}
 
-                {/* ── AI assistant / clarification / error ── */}
                 {step === "assistant" && (
-                  <AssistantStepWithClarify
-                    strings={strings}
-                    caseText={caseText}
-                    decision={decision}
-                    assistantError={assistantError}
-                    isAiLoading={isAiLoading}
-                    aiQuestion={aiQuestion}
-                    aiOptions={aiOptions}
-                    intakeMethod={intakeMethod}
-                    onPickClarification={async (serviceIds) => {
-                      const service = findServiceById(services, serviceIds[0] ?? "");
-                      if (!service) return;
-                      setSelectedService(service);
-                      setCheckedRequirements({});
-                      await recordServiceSelection(service, citizenSessionId);
-                      goTo("results");
-                    }}
-                    onPickAiOption={(value) => submitClarification(value)}
-                    onRetry={() => {
-                      setAssistantError(null);
-                      setAiQuestion(null);
-                      setAiOptions(null);
-                      goToInput();
-                    }}
-                    onStartOver={resetFlow}
-                    onSwitchToTyping={
-                      intakeMethod === "voice"
-                        ? () => {
-                            setAssistantError(null);
-                            setAiQuestion(null);
-                            setAiOptions(null);
-                            setIntakeMethod("type");
-                            goTo("case");
-                          }
-                        : undefined
-                    }
-                    onClarificationSubmit={submitClarification}
-                  />
+                  <>
+                    {/* Item 4 — AI unavailable fallback */}
+                    {aiUnavailable ? (
+                      <AiUnavailableBanner
+                        strings={strings}
+                        onBrowse={() => {
+                          setAiUnavailable(false);
+                          setIntakeMethod("browse");
+                          goTo("browse");
+                        }}
+                        onRetry={() => {
+                          setAiUnavailable(false);
+                          goToInput();
+                        }}
+                      />
+                    ) : (
+                      <AssistantStepWithClarify
+                        strings={strings}
+                        caseText={caseText}
+                        decision={decision}
+                        assistantError={assistantError}
+                        isAiLoading={isAiLoading}
+                        aiQuestion={aiQuestion}
+                        aiOptions={aiOptions}
+                        intakeMethod={intakeMethod}
+                        onPickClarification={async (serviceIds) => {
+                          const service = findServiceById(services, serviceIds[0] ?? "");
+                          if (!service) return;
+                          const rich = await recordServiceSelection(service.id, citizenSessionId);
+                          setRichService(rich);
+                          setSelectedService(service);
+                          setCheckedRequirements({});
+                          goTo("results");
+                        }}
+                        onPickAiOption={(value) => submitClarification(value)}
+                        onRetry={() => {
+                          setAssistantError(null);
+                          setAiQuestion(null);
+                          setAiOptions(null);
+                          goToInput();
+                        }}
+                        onStartOver={resetFlow}
+                        onSwitchToTyping={
+                          intakeMethod === "voice"
+                            ? () => {
+                                setAssistantError(null);
+                                setAiQuestion(null);
+                                setAiOptions(null);
+                                setIntakeMethod("type");
+                                goTo("case");
+                              }
+                            : undefined
+                        }
+                        onClarificationSubmit={submitClarification}
+                      />
+                    )}
+                  </>
                 )}
 
-                {/* ── Results: document checklist ── */}
                 {step === "results" && (
                   <ResultsStep
                     strings={strings}
                     service={selectedService}
+                    richService={richService}
                     checked={checkedRequirements}
                     onCheckedChange={setCheckedRequirements}
                     onContinue={() => {
@@ -593,10 +630,21 @@ function NavigateContent() {
                       setFeedbackSubmitted(false);
                       goTo("review");
                     }}
+                    // Item 3 — "Not what I need" sends citizen back to intake
+                    onNotMyService={() => {
+                      setSelectedService(null);
+                      setRichService(null);
+                      setCheckedRequirements({});
+                      setDecision(null);
+                      setAssistantError(null);
+                      setAiQuestion(null);
+                      setAiOptions(null);
+                      setCaseText("");
+                      goTo("intake");
+                    }}
                   />
                 )}
 
-                {/* ── Review: service summary + star rating ── */}
                 {step === "review" && (
                   <ReviewStep
                     strings={strings}
@@ -615,7 +663,6 @@ function NavigateContent() {
               </div>
             </div>
 
-            {/* Back button bar */}
             {showBack && (
               <div className="border-t border-white/10 dark:border-white/5 bg-background/40 backdrop-blur-md px-6 py-4">
                 <div className="mx-auto max-w-4xl">
@@ -639,9 +686,7 @@ function NavigateContent() {
 }
 
 // ─── AssistantStepWithClarify ─────────────────────────────────────────────────
-//
-// Thin wrapper that adds an inline text input for clarification follow-up
-// when the AI asks a question but provides no structured option buttons.
+// Thin wrapper that adds an inline text input for open clarification questions.
 
 function AssistantStepWithClarify({
   strings,
@@ -676,10 +721,7 @@ function AssistantStepWithClarify({
 }) {
   const [clarifyText, setClarifyText] = React.useState("");
 
-  // When the AI question changes, reset the clarify input
-  React.useEffect(() => {
-    setClarifyText("");
-  }, [aiQuestion]);
+  React.useEffect(() => { setClarifyText(""); }, [aiQuestion]);
 
   const showClarifyInput =
     !isAiLoading && !assistantError && aiQuestion && (!aiOptions || aiOptions.length === 0);
@@ -701,7 +743,6 @@ function AssistantStepWithClarify({
         onSwitchToTyping={onSwitchToTyping}
       />
 
-      {/* Inline clarification text input when AI asks an open question */}
       {showClarifyInput && (
         <div className="space-y-3">
           <textarea
