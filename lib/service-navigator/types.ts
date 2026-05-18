@@ -15,7 +15,11 @@ export type Service = {
   organization: string;
   locationHint: string;
   feeHint: string;
+  feeHintAm?: string;
+  feeHintOm?: string;
   durationHint: string;
+  durationHintAm?: string;
+  durationHintOm?: string;
   requirements: string[];
   requirementsAm?: string[];
   requirementsOm?: string[];

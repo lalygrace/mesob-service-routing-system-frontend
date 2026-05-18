@@ -8,6 +8,7 @@ import {
   Pencil,
   Trash2,
   Layers,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ import {
   deleteAdminService,
   listAdminServices,
   updateAdminService,
+  syncServicesFromCms,
 } from "@/lib/api/services";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { toast } from "sonner";
@@ -52,6 +54,7 @@ export default function ServicesPage() {
   const [search, setSearch] = React.useState("");
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Service | null>(null);
+  const [isSyncing, setIsSyncing] = React.useState(false);
 
   React.useEffect(() => {
     let mounted = true;
@@ -126,6 +129,32 @@ export default function ServicesPage() {
     setFormOpen(true);
   }
 
+  async function handleSyncFromCms() {
+    setIsSyncing(true);
+    try {
+      const result = await syncServicesFromCms();
+      
+      // Reload services after sync
+      const serviceData = await listAdminServices();
+      setServices(serviceData);
+      
+      const message = `Sync complete: ${result.created} created, ${result.updated} updated, ${result.skipped} skipped`;
+      
+      if (result.errors.length > 0) {
+        toast.warning(message, {
+          description: `${result.errors.length} errors occurred. Check console for details.`,
+        });
+        console.error("Sync errors:", result.errors);
+      } else {
+        toast.success(message);
+      }
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to sync services from CMS"));
+    } finally {
+      setIsSyncing(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -136,10 +165,21 @@ export default function ServicesPage() {
             Manage the services offered to citizens at the Mesob Center
           </p>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Service
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleSyncFromCms}
+            variant="outline"
+            className="gap-2"
+            disabled={isSyncing}
+          >
+            <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+            {isSyncing ? "Syncing..." : "Sync from Mesob Center"}
+          </Button>
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Service
+          </Button>
+        </div>
       </div>
 
       {/* Table */}

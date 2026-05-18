@@ -32,3 +32,14 @@ export function deleteAdminService(serviceId: string) {
     method: "DELETE",
   });
 }
+
+export function syncServicesFromCms() {
+  return apiData<{
+    created: number;
+    updated: number;
+    skipped: number;
+    errors: string[];
+  }>("/api/admin/services/sync-from-cms", {
+    method: "POST",
+  });
+}

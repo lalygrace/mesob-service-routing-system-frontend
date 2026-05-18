@@ -127,7 +127,11 @@ export function ServiceForm({
   const [authorityId, setAuthorityId] = React.useState("");
   const [locationHint, setLocationHint] = React.useState("");
   const [feeHint, setFeeHint] = React.useState("");
+  const [feeHintAm, setFeeHintAm] = React.useState("");
+  const [feeHintOm, setFeeHintOm] = React.useState("");
   const [durationHint, setDurationHint] = React.useState("");
+  const [durationHintAm, setDurationHintAm] = React.useState("");
+  const [durationHintOm, setDurationHintOm] = React.useState("");
   const [requirements, setRequirements] = React.useState<string[]>([""]);
   const [requirementsAm, setRequirementsAm] = React.useState<string[]>([""]);
   const [requirementsOm, setRequirementsOm] = React.useState<string[]>([""]);
@@ -164,7 +168,11 @@ export function ServiceForm({
         setAuthorityId(matchedAuth?.id ?? "");
         setLocationHint(service.locationHint);
         setFeeHint(service.feeHint);
+        setFeeHintAm(service.feeHintAm || "");
+        setFeeHintOm(service.feeHintOm || "");
         setDurationHint(service.durationHint);
+        setDurationHintAm(service.durationHintAm || "");
+        setDurationHintOm(service.durationHintOm || "");
         setRequirements(
           service.requirements.length > 0 ? service.requirements : [""],
         );
@@ -180,7 +188,11 @@ export function ServiceForm({
         setAuthorityId("");
         setLocationHint("");
         setFeeHint("");
+        setFeeHintAm("");
+        setFeeHintOm("");
         setDurationHint("");
+        setDurationHintAm("");
+        setDurationHintOm("");
         setRequirements([""]);
         setRequirementsAm([""]);
         setRequirementsOm([""]);
@@ -214,7 +226,11 @@ export function ServiceForm({
       topicId: "id", // Default — AI engine handles routing, not manual topicId
       locationHint,
       feeHint,
+      feeHintAm,
+      feeHintOm,
       durationHint,
+      durationHintAm,
+      durationHintOm,
       requirements: requirements.filter(Boolean),
       requirementsAm: requirementsAm.filter(Boolean),
       requirementsOm: requirementsOm.filter(Boolean),
@@ -281,14 +297,13 @@ export function ServiceForm({
               <LanguageSectionHeader flag="🇪🇹" label="Afaan Oromo" code="OM" />
               <div className="space-y-2">
                 <Label htmlFor="svc-title-om">
-                  Service Title in Afaan Oromo
+                  Service Title in Afaan Oromo (Optional)
                 </Label>
                 <Input
                   id="svc-title-om"
                   value={titleOm}
                   onChange={(e) => setTitleOm(e.target.value)}
                   placeholder="e.g. Eenyummaa bade bakka buusuu"
-                  required
                 />
               </div>
 
@@ -296,10 +311,10 @@ export function ServiceForm({
 
               {/* Authority & Location */}
               <div className="space-y-2">
-                <Label>Authority</Label>
+                <Label>Organization</Label>
                 <Select value={authorityId} onValueChange={setAuthorityId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select authority" />
+                    <SelectValue placeholder="Select organization" />
                   </SelectTrigger>
                   <SelectContent>
                     {authorities.map((a) => (
@@ -318,30 +333,95 @@ export function ServiceForm({
                   value={locationHint}
                   readOnly
                   className="bg-muted/50 text-muted-foreground cursor-not-allowed"
-                  placeholder="Auto-filled from authority"
+                  placeholder="Auto-filled from organization"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Automatically set from the selected authority location
+                  Automatically set from the selected organization location
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <Separator />
+
+              {/* Fee - Multilingual */}
+              <div className="space-y-4">
+                <Label>Service Fee</Label>
+                
+                {/* English */}
                 <div className="space-y-2">
-                  <Label htmlFor="svc-fee">Fee</Label>
+                  <LanguageSectionHeader flag="🇬🇧" label="English" code="EN" />
                   <Input
                     id="svc-fee"
                     value={feeHint}
                     onChange={(e) => setFeeHint(e.target.value)}
                     placeholder="e.g. 200 ETB"
+                    required
                   />
                 </div>
+
+                {/* Amharic */}
                 <div className="space-y-2">
-                  <Label htmlFor="svc-duration">Processing Time</Label>
+                  <LanguageSectionHeader flag="🇪🇹" label="Amharic" code="አማ" />
+                  <Input
+                    id="svc-fee-am"
+                    value={feeHintAm}
+                    onChange={(e) => setFeeHintAm(e.target.value)}
+                    placeholder="e.g. 200 ብር"
+                    required
+                    dir="auto"
+                  />
+                </div>
+
+                {/* Afaan Oromo */}
+                <div className="space-y-2">
+                  <LanguageSectionHeader flag="🇪🇹" label="Afaan Oromo (Optional)" code="OM" />
+                  <Input
+                    id="svc-fee-om"
+                    value={feeHintOm}
+                    onChange={(e) => setFeeHintOm(e.target.value)}
+                    placeholder="e.g. 200 qarshii"
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Processing Time - Multilingual */}
+              <div className="space-y-4">
+                <Label>Processing Time</Label>
+                
+                {/* English */}
+                <div className="space-y-2">
+                  <LanguageSectionHeader flag="🇬🇧" label="English" code="EN" />
                   <Input
                     id="svc-duration"
                     value={durationHint}
                     onChange={(e) => setDurationHint(e.target.value)}
                     placeholder="e.g. Same day"
+                    required
+                  />
+                </div>
+
+                {/* Amharic */}
+                <div className="space-y-2">
+                  <LanguageSectionHeader flag="🇪🇹" label="Amharic" code="አማ" />
+                  <Input
+                    id="svc-duration-am"
+                    value={durationHintAm}
+                    onChange={(e) => setDurationHintAm(e.target.value)}
+                    placeholder="e.g. በተመሳሳይ ቀን"
+                    required
+                    dir="auto"
+                  />
+                </div>
+
+                {/* Afaan Oromo */}
+                <div className="space-y-2">
+                  <LanguageSectionHeader flag="🇪🇹" label="Afaan Oromo (Optional)" code="OM" />
+                  <Input
+                    id="svc-duration-om"
+                    value={durationHintOm}
+                    onChange={(e) => setDurationHintOm(e.target.value)}
+                    placeholder="e.g. Guyyaa walfakkaataa"
                   />
                 </div>
               </div>

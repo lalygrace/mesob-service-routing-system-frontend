@@ -33,7 +33,7 @@ import {
   type AssistantError,
   type AiClarifyOption,
 } from "@/components/navigator/steps/assistant-step";
-import { AuthorityBrowse } from "@/components/navigator/steps/authority-browse";
+import { AuthorityBrowse } from "@/components/navigator/steps/organization-browse";
 import { ResultsStep } from "@/components/navigator/steps/results-step";
 import { ReviewStep } from "@/components/navigator/steps/review-step";
 import { Button } from "@/components/ui/button";
