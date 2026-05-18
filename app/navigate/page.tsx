@@ -33,7 +33,7 @@ import {
   type AssistantError,
   type AiClarifyOption,
 } from "@/components/navigator/steps/assistant-step";
-import { AuthorityBrowse } from "@/components/navigator/steps/organization-browse";
+import { OrganizationBrowse } from "@/components/navigator/steps/organization-browse";
 import { ResultsStep } from "@/components/navigator/steps/results-step";
 import { ReviewStep } from "@/components/navigator/steps/review-step";
 import { Button } from "@/components/ui/button";
@@ -587,7 +587,7 @@ function NavigateContent() {
                 )}
 
                 {step === "browse" && (
-                  <AuthorityBrowse
+                  <OrganizationBrowse
                     language={language}
                     strings={strings}
                     onServiceSelected={handleBrowseServiceSelected}
