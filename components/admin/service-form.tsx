@@ -24,7 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { Service, LanguageCode } from "@/lib/service-navigator/types";
-import type { Authority } from "@/lib/api/authorities";
+import type { Authority } from "@/lib/api/organizations";
 
 type ServiceFormProps = {
   open: boolean;

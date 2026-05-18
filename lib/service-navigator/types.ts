@@ -12,7 +12,7 @@ export type Service = {
   title: string;
   titleAm?: string;
   titleOm?: string;
-  authority: string;
+  organization: string;
   locationHint: string;
   feeHint: string;
   durationHint: string;

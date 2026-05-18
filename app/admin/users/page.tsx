@@ -57,7 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { listAdminAuthorities, type Authority } from "@/lib/api/authorities";
+import { listAdminAuthorities, type Authority } from "@/lib/api/organizations";
 import {
   createAdminUser,
   deleteAdminUser,

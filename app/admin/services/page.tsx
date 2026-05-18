@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/card";
 import { ServiceForm } from "@/components/admin/service-form";
 import type { Service } from "@/lib/service-navigator/types";
-import { listAdminAuthorities, type Authority } from "@/lib/api/authorities";
+import { listAdminAuthorities, type Authority } from "@/lib/api/organizations";
 import {
   createAdminService,
   deleteAdminService,

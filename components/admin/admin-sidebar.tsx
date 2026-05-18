@@ -54,10 +54,10 @@ const NAV_ITEMS = [
     exact: true,
   },
   {
-    title: "Authorities",
-    url: "/admin/authorities",
+    title: "Organizations",
+    url: "/admin/organizations",
     icon: Building2,
-    badgeKey: "totalAuthorities" as const,
+    badgeKey: "totalOrganizations" as const,
   },
   {
     title: "Services",
