@@ -77,7 +77,7 @@ export function IntakeStep({
             ))}
         </div>
 
-        {/* Bottom row: browse by authority — full width */}
+        {/* Bottom row: browse by organization — full width */}
         <Card
           role="button"
           tabIndex={0}

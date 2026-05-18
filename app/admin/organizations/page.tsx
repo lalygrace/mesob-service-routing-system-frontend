@@ -76,7 +76,10 @@ export default function OrganizationsPage() {
   );
 
   async function handleSave(
-    data: Omit<Organization, "id" | "createdAt" | "serviceCount" | "syncedFromCms">,
+    data: Omit<
+      Organization,
+      "id" | "createdAt" | "serviceCount" | "syncedFromCms"
+    >,
   ) {
     try {
       if (editing) {
@@ -149,7 +152,9 @@ export default function OrganizationsPage() {
             className="gap-2"
             disabled={isSyncing}
           >
-            <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
+            />
             Sync from Mesob Center
           </Button>
           <Button onClick={openCreate} className="gap-2">
@@ -234,8 +239,7 @@ export default function OrganizationsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                      {org.floor}
-                      {org.room ? ` • ${org.room}` : ""}
+                      {[org.floor, org.room].filter(Boolean).join(" • ")}
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="secondary" className="text-xs">

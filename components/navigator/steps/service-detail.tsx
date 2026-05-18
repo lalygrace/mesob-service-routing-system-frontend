@@ -76,15 +76,15 @@ export function ServiceDetail({
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {service.title}
         </h1>
-        <p className="text-muted-foreground">{service.authority}</p>
+        <p className="text-muted-foreground">{service.organization}</p>
       </div>
 
       {/* Info grid */}
       <div className="grid gap-3 sm:grid-cols-2">
         <InfoCard
           icon={Building2}
-          label={strings.detail.authority}
-          value={service.authority}
+          label={strings.detail.organization}
+          value={service.organization}
         />
         <InfoCard
           icon={MapPin}

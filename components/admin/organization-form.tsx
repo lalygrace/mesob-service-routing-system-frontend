@@ -17,7 +17,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { Organization } from "@/lib/api/organizations";
 
-type OrganizationFormData = Omit<Organization, "id" | "createdAt" | "serviceCount" | "syncedFromCms">;
+type OrganizationFormData = Omit<
+  Organization,
+  "id" | "createdAt" | "serviceCount" | "syncedFromCms"
+>;
 
 type OrganizationFormProps = {
   open: boolean;
@@ -134,13 +137,13 @@ export function OrganizationForm({
       name,
       abbreviation,
       description: description || undefined,
-      floor,
+      floor: floor || undefined,
       room: room || undefined,
 
       nameAm,
       abbreviationAm,
       descriptionAm: descriptionAm || undefined,
-      floorAm,
+      floorAm: floorAm || undefined,
       roomAm: roomAm || undefined,
 
       nameOm: nameOm || undefined,
@@ -180,7 +183,7 @@ export function OrganizationForm({
                   id="org-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. National ID Authority"
+                  placeholder="e.g. National ID Organization"
                   required
                 />
               </div>
@@ -214,13 +217,17 @@ export function OrganizationForm({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="org-floor">Floor *</Label>
+                <Label htmlFor="org-floor">
+                  Floor{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (Optional)
+                  </span>
+                </Label>
                 <Input
                   id="org-floor"
                   value={floor}
                   onChange={(e) => setFloor(e.target.value)}
                   placeholder="e.g. Floor 1"
-                  required
                 />
               </div>
               <div className="space-y-2">
@@ -244,7 +251,9 @@ export function OrganizationForm({
 
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-2 space-y-2">
-                <Label htmlFor="org-name-am">Organization Name in Amharic *</Label>
+                <Label htmlFor="org-name-am">
+                  Organization Name in Amharic *
+                </Label>
                 <Input
                   id="org-name-am"
                   value={nameAm}
@@ -286,13 +295,17 @@ export function OrganizationForm({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="org-floor-am">Floor *</Label>
+                <Label htmlFor="org-floor-am">
+                  Floor{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (Optional)
+                  </span>
+                </Label>
                 <Input
                   id="org-floor-am"
                   value={floorAm}
                   onChange={(e) => setFloorAm(e.target.value)}
                   placeholder="e.g. ፎቅ 1"
-                  required
                   dir="auto"
                 />
               </div>

@@ -81,7 +81,7 @@ export type Strings = {
   };
   detail: {
     heading: string;
-    authority: string;
+    organization: string;
     location: string;
     fee: string;
     processingTime: string;
@@ -246,7 +246,7 @@ const EN: Strings = {
   },
   detail: {
     heading: "Service Information",
-    authority: "Authority",
+    organization: "Organization",
     location: "Location",
     fee: "Fee",
     processingTime: "Processing Time",
@@ -398,7 +398,7 @@ const AM: Strings = {
   },
   detail: {
     heading: "የአገልግሎት መረጃ",
-    authority: "ባለስልጣን",
+    organization: "ድርጅት",
     location: "አድራሻ",
     fee: "ክፍያ",
     processingTime: "የማስኬድ ጊዜ",
@@ -566,7 +566,7 @@ const OM: Strings = {
   },
   detail: {
     heading: "Odeeffannoo Tajaajilaa",
-    authority: "Abbaa Taayitaa",
+    organization: "Dhaabbata",
     location: "Bakka",
     fee: "Kaffaltii",
     processingTime: "Yeroo Raawwii",

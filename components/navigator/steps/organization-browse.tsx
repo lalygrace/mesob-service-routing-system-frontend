@@ -24,9 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  listPublicAuthorities,
-  listServicesByAuthority,
-  type PublicAuthority,
+  listPublicOrganizations,
+  listServicesByOrganization,
+  type PublicOrganization,
 } from "@/lib/api/navigator";
 import type { LanguageCode, Service } from "@/lib/service-navigator/types";
 import type { Strings } from "@/lib/service-navigator/strings";
@@ -67,8 +67,8 @@ function OrganizationList({
   organizations,
   onSelect,
 }: {
-  organizations: PublicAuthority[];
-  onSelect: (organization: PublicAuthority) => void;
+  organizations: PublicOrganization[];
+  onSelect: (organization: PublicOrganization) => void;
 }) {
   const [query, setQuery] = React.useState("");
 
@@ -144,7 +144,7 @@ function ServiceList({
   onSelect,
   onBack,
 }: {
-  organization: PublicAuthority;
+  organization: PublicOrganization;
   services: Service[];
   onSelect: (service: Service) => void;
   onBack: () => void;
@@ -195,9 +195,7 @@ function ServiceList({
                   {service.title}
                 </p>
                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                  {service.locationHint && (
-                    <span>{service.locationHint}</span>
-                  )}
+                  {service.locationHint && <span>{service.locationHint}</span>}
                   {service.feeHint && <span>{service.feeHint}</span>}
                   {service.durationHint && <span>{service.durationHint}</span>}
                 </div>
@@ -225,9 +223,11 @@ export function OrganizationBrowse({
   onServiceSelected: (service: Service) => void;
 }) {
   const [view, setView] = React.useState<BrowseView>("organizations");
-  const [organizations, setOrganizations] = React.useState<PublicAuthority[]>([]);
+  const [organizations, setOrganizations] = React.useState<
+    PublicOrganization[]
+  >([]);
   const [selectedOrganization, setSelectedOrganization] =
-    React.useState<PublicAuthority | null>(null);
+    React.useState<PublicOrganization | null>(null);
   const [services, setServices] = React.useState<Service[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -238,12 +238,13 @@ export function OrganizationBrowse({
     setLoading(true);
     setError(null);
 
-    listPublicAuthorities(language)
+    listPublicOrganizations(language)
       .then((data) => {
         if (mounted) setOrganizations(data);
       })
       .catch(() => {
-        if (mounted) setError("Failed to load organizations. Please try again.");
+        if (mounted)
+          setError("Failed to load organizations. Please try again.");
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -254,14 +255,14 @@ export function OrganizationBrowse({
     };
   }, [language]);
 
-  async function handleOrganizationSelect(organization: PublicAuthority) {
+  async function handleOrganizationSelect(organization: PublicOrganization) {
     setSelectedOrganization(organization);
     setView("services");
     setLoading(true);
     setError(null);
 
     try {
-      const data = await listServicesByAuthority(organization.id, language);
+      const data = await listServicesByOrganization(organization.id, language);
       setServices(data);
     } catch {
       setError("Failed to load services. Please try again.");
@@ -281,9 +282,11 @@ export function OrganizationBrowse({
     if (view === "organizations") {
       setError(null);
       setLoading(true);
-      listPublicAuthorities(language)
+      listPublicOrganizations(language)
         .then(setOrganizations)
-        .catch(() => setError("Failed to load organizations. Please try again."))
+        .catch(() =>
+          setError("Failed to load organizations. Please try again."),
+        )
         .finally(() => setLoading(false));
     } else if (selectedOrganization) {
       handleOrganizationSelect(selectedOrganization);
