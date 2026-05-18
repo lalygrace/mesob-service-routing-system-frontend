@@ -1,6 +1,45 @@
 import { apiData } from "./client";
 import type { LanguageCode, Service } from "@/lib/service-navigator/types";
 
+// ─── Rich service detail (returned by POST /api/citizen/sessions/:id/select) ──
+
+export type RichRequirement = {
+  id: string;
+  type: string;
+  isRequired: boolean;
+  sortOrder: number;
+  label: string;
+  hint: string | null;
+};
+
+export type RichStep = {
+  id: string;
+  stepNumber: number;
+  isOptional: boolean;
+  title: string;
+  detail: string | null;
+};
+
+export type RichServiceDetail = {
+  id: string;
+  code: string;
+  name: string;
+  shortDesc: string | null;
+  fullDesc: string | null;
+  location: { floor: string | null; room: string | null; counter: string | null };
+  processingTimeDays: number | null;
+  feeAmount: number | null;
+  feeDescription: string | null;
+  authority: {
+    id: string;
+    code: string;
+    name: string;
+    description: string | null;
+  };
+  requirements: RichRequirement[];
+  steps: RichStep[];
+};
+
 export type CitizenInputMode = "voice" | "realtime_voice" | "text" | "category_select";
 
 export type CitizenMatch = {
@@ -55,13 +94,22 @@ export function clarifyCitizenSession(sessionId: string, userInput: string) {
 }
 
 export function selectCitizenService(sessionId: string, serviceId: string) {
-  return apiData<{ sessionId: string; serviceId: string; service: unknown }>(
+  return apiData<{ sessionId: string; serviceId: string; service: RichServiceDetail }>(
     `/api/citizen/sessions/${sessionId}/select`,
     {
       method: "POST",
       body: { serviceId },
     },
   );
+}
+
+/**
+ * Fetch full service detail for the browse-by-authority path.
+ * The browse path doesn't go through selectCitizenService, so we call
+ * the public endpoint directly to get the same rich shape.
+ */
+export function getPublicServiceDetail(serviceId: string, language: LanguageCode) {
+  return apiData<Service>(`/api/public/services/${serviceId}?lang=${language}`);
 }
 
 export function completeCitizenSession(sessionId: string, wasSuccessful: boolean) {

@@ -1,6 +1,22 @@
 "use client";
 
-import { AlertTriangle, Bot, HelpCircle, RotateCcw } from "lucide-react";
+/**
+ * AssistantStep
+ *
+ * Handles three AI response states:
+ *  1. Error / failed — show friendly error + retry options
+ *  2. Clarification — show AI question + option buttons (from backend or local)
+ *  3. Loading — show spinner while AI is processing
+ *
+ * The clarification question and options can come from two sources:
+ *  - `decision` (local Decision type, used as fallback)
+ *  - `aiQuestion` + `aiOptions` (from the backend AI response)
+ *
+ * Per the proposal: clarification options are always shown as large tappable
+ * buttons, never as a dropdown or list.
+ */
+
+import { AlertTriangle, Bot, HelpCircle, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Decision } from "@/lib/service-navigator/types";
 import type { Strings } from "@/lib/service-navigator/strings";
@@ -10,12 +26,21 @@ export type AssistantError = {
   message: string;
 };
 
+export type AiClarifyOption = {
+  label: string;
+  value: string;
+};
+
 export function AssistantStep({
   strings,
   userText,
   decision,
   error,
+  isLoading,
+  aiQuestion,
+  aiOptions,
   onPickClarification,
+  onPickAiOption,
   onRetry,
   onStartOver,
   onSwitchToTyping,
@@ -24,15 +49,28 @@ export function AssistantStep({
   userText: string;
   decision: Decision | null;
   error?: AssistantError | null;
+  /** True while waiting for the AI response */
+  isLoading?: boolean;
+  /** Clarification question text returned by the backend AI */
+  aiQuestion?: string | null;
+  /** Clarification option buttons returned by the backend AI */
+  aiOptions?: AiClarifyOption[] | null;
   onPickClarification: (serviceIds: string[]) => void;
+  /** Called when the citizen picks one of the AI-generated option buttons */
+  onPickAiOption?: (value: string) => void;
   onRetry: () => void;
   onStartOver: () => void;
   onSwitchToTyping?: () => void;
 }) {
-  const hasClarify = decision?.mode === "clarify" && Boolean(decision.clarify);
+  // Prefer backend AI clarification over local Decision clarification
+  const hasAiClarify =
+    Boolean(aiQuestion) && aiOptions && aiOptions.length > 0;
+  const hasLocalClarify =
+    decision?.mode === "clarify" && Boolean(decision.clarify);
 
   return (
     <div className="space-y-6">
+      {/* What the citizen said */}
       <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           {strings.results.youSaid}
@@ -42,33 +80,59 @@ export function AssistantStep({
         </p>
       </div>
 
+      {/* State icon + heading */}
       <div className="text-center space-y-2">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted text-foreground">
-          {error ? (
+          {isLoading ? (
+            <Loader2 className="h-7 w-7 animate-spin" />
+          ) : error ? (
             <AlertTriangle className="h-7 w-7" />
-          ) : hasClarify ? (
+          ) : hasAiClarify || hasLocalClarify ? (
             <HelpCircle className="h-7 w-7" />
           ) : (
             <Bot className="h-7 w-7" />
           )}
         </div>
+
         <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-          {error
-            ? error.title
-            : hasClarify
-              ? decision!.clarify!.question
-              : strings.assistant.heading}
+          {isLoading
+            ? "Analyzing your request…"
+            : error
+              ? error.title
+              : hasAiClarify
+                ? aiQuestion!
+                : hasLocalClarify
+                  ? decision!.clarify!.question
+                  : strings.assistant.heading}
         </h1>
+
         <p className="text-muted-foreground">
-          {error
-            ? error.message
-            : hasClarify
-              ? strings.assistant.pickOne
-              : strings.assistant.subheading}
+          {isLoading
+            ? "Please wait a moment."
+            : error
+              ? error.message
+              : hasAiClarify || hasLocalClarify
+                ? strings.assistant.pickOne
+                : strings.assistant.subheading}
         </p>
       </div>
 
-      {hasClarify ? (
+      {/* Option buttons */}
+      {!isLoading && !error && hasAiClarify && aiOptions && onPickAiOption && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {aiOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => onPickAiOption(option.value)}
+              className="rounded-xl border border-border bg-card p-5 text-left font-semibold text-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!isLoading && !error && !hasAiClarify && hasLocalClarify && (
         <div className="grid gap-3 sm:grid-cols-2">
           {decision!.clarify!.options.map((option) => (
             <button
@@ -80,7 +144,10 @@ export function AssistantStep({
             </button>
           ))}
         </div>
-      ) : (
+      )}
+
+      {/* Error / no-match action buttons */}
+      {!isLoading && (error || (!hasAiClarify && !hasLocalClarify)) && (
         <div className="grid gap-3 sm:grid-cols-3">
           <Button onClick={onRetry} size="lg" className="rounded-xl h-12 gap-2">
             <RotateCcw className="h-4 w-4" />
