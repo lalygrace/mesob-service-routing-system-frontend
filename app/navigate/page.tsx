@@ -72,6 +72,39 @@ function findServiceById(services: Service[], id: string): Service | null {
   return services.find((s) => s.id === id) ?? null;
 }
 
+/**
+ * Converts a RichServiceDetail into the flat Service shape that ReviewStep
+ * expects. Used when the AI matched a service that isn't in the local catalog
+ * (e.g. catalog hasn't loaded yet, or service was added after page load).
+ */
+function richServiceToFlat(rich: RichServiceDetail): Service {
+  const locationParts = [
+    rich.location.floor,
+    rich.location.room,
+    rich.location.counter,
+  ].filter(Boolean);
+
+  return {
+    id: rich.id,
+    title: rich.name,
+    authority: rich.authority.name,
+    locationHint: locationParts.join(" · "),
+    feeHint: rich.feeDescription ?? (rich.feeAmount != null ? `${rich.feeAmount} ETB` : ""),
+    durationHint:
+      rich.processingTimeDays != null
+        ? rich.processingTimeDays <= 0
+          ? "Same day"
+          : rich.processingTimeDays === 1
+            ? "1 day"
+            : `${rich.processingTimeDays} days`
+        : "",
+    requirements: rich.requirements.map((r) => r.label),
+    workflowSteps: rich.steps.map((s) => s.title),
+    topicId: "id",
+    keywords: { am: [], en: [], om: [] },
+  };
+}
+
 function getStepDefs(strings: ReturnType<typeof getStrings>) {
   return [
     { id: "language", label: strings.landing.selectLanguage },
@@ -316,6 +349,8 @@ function NavigateContent() {
 
       const rich = await recordServiceSelection(topMatch.serviceId, sessionId);
       setRichService(rich);
+      // flatService may be null if the catalog hasn't loaded yet — that's fine,
+      // ResultsStep will use richService instead
       setSelectedService(flatService);
       setCheckedRequirements({});
 
@@ -376,6 +411,7 @@ function NavigateContent() {
       const rich = await recordServiceSelection(topMatch.serviceId, citizenSessionId);
 
       setRichService(rich);
+      // flatService may be null if catalog hasn't loaded — richService covers it
       setSelectedService(flatService);
       setCheckedRequirements({});
 
@@ -648,7 +684,7 @@ function NavigateContent() {
                 {step === "review" && (
                   <ReviewStep
                     strings={strings}
-                    service={selectedService}
+                    service={selectedService ?? (richService ? richServiceToFlat(richService) : null)}
                     checked={checkedRequirements}
                     rating={rating}
                     onRatingChange={setRating}
