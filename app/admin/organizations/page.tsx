@@ -8,6 +8,7 @@ import {
   Pencil,
   Trash2,
   Building2,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,84 +34,99 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AuthorityForm } from "@/components/admin/authority-form";
+import { OrganizationForm } from "@/components/admin/organization-form";
 import {
-  createAdminAuthority,
-  deleteAdminAuthority,
-  listAdminAuthorities,
-  updateAdminAuthority,
-  type Authority,
-} from "@/lib/api/authorities";
+  createAdminOrganization,
+  deleteAdminOrganization,
+  listAdminOrganizations,
+  updateAdminOrganization,
+  syncOrganizationsFromCms,
+  type Organization,
+} from "@/lib/api/organizations";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { toast } from "sonner";
 
-export default function AuthoritiesPage() {
-  const [authorities, setAuthorities] = React.useState<Authority[]>([]);
+export default function OrganizationsPage() {
+  const [organizations, setOrganizations] = React.useState<Organization[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isSyncing, setIsSyncing] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [formOpen, setFormOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<Authority | null>(null);
+  const [editing, setEditing] = React.useState<Organization | null>(null);
 
   React.useEffect(() => {
-    let mounted = true;
-
-    async function loadAuthorities() {
-      try {
-        const data = await listAdminAuthorities();
-        if (mounted) setAuthorities(data);
-      } catch (error) {
-        toast.error(getApiErrorMessage(error, "Failed to load authorities"));
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    }
-
-    loadAuthorities();
-
-    return () => {
-      mounted = false;
-    };
+    loadOrganizations();
   }, []);
 
-  const filtered = authorities.filter(
-    (a) =>
-      a.name.toLowerCase().includes(search.toLowerCase()) ||
-      a.abbreviation.toLowerCase().includes(search.toLowerCase()),
+  async function loadOrganizations() {
+    try {
+      const data = await listAdminOrganizations();
+      setOrganizations(data);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to load organizations"));
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const filtered = organizations.filter(
+    (o) =>
+      o.name.toLowerCase().includes(search.toLowerCase()) ||
+      o.abbreviation.toLowerCase().includes(search.toLowerCase()),
   );
 
   async function handleSave(
-    data: Omit<Authority, "id" | "createdAt" | "serviceCount">,
+    data: Omit<
+      Organization,
+      "id" | "createdAt" | "serviceCount" | "syncedFromCms"
+    >,
   ) {
     try {
       if (editing) {
-        const updated = await updateAdminAuthority(editing.id, data);
-        setAuthorities((prev) =>
-          prev.map((a) => (a.id === editing.id ? updated : a)),
+        const updated = await updateAdminOrganization(editing.id, data);
+        setOrganizations((prev) =>
+          prev.map((o) => (o.id === editing.id ? updated : o)),
         );
-        toast.success("Authority updated successfully");
+        toast.success("Organization updated successfully");
       } else {
-        const created = await createAdminAuthority(data);
-        setAuthorities((prev) => [created, ...prev]);
-        toast.success("Authority created successfully");
+        const created = await createAdminOrganization(data);
+        setOrganizations((prev) => [created, ...prev]);
+        toast.success("Organization created successfully");
       }
       setEditing(null);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to save authority"));
+      toast.error(getApiErrorMessage(error, "Failed to save organization"));
     }
   }
 
   async function handleDelete(id: string) {
     try {
-      await deleteAdminAuthority(id);
-      setAuthorities((prev) => prev.filter((a) => a.id !== id));
-      toast.success("Authority deleted successfully");
+      await deleteAdminOrganization(id);
+      setOrganizations((prev) => prev.filter((o) => o.id !== id));
+      toast.success("Organization deleted successfully");
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to delete authority"));
+      toast.error(getApiErrorMessage(error, "Failed to delete organization"));
     }
   }
 
-  function openEdit(authority: Authority) {
-    setEditing(authority);
+  async function handleSyncFromCms() {
+    setIsSyncing(true);
+    try {
+      const result = await syncOrganizationsFromCms();
+      toast.success(
+        `Sync completed: ${result.created} created, ${result.updated} updated${result.errors > 0 ? `, ${result.errors} errors` : ""}`,
+      );
+      // Reload organizations after sync
+      await loadOrganizations();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to sync from CMS"));
+    } finally {
+      setIsSyncing(false);
+    }
+  }
+
+  function openEdit(organization: Organization) {
+    setEditing(organization);
     setFormOpen(true);
   }
 
@@ -124,15 +140,28 @@ export default function AuthoritiesPage() {
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Authorities</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Organizations</h1>
           <p className="text-muted-foreground">
-            Manage government authorities registered in the Mesob Center
+            Manage government organizations registered in the Mesob Center
           </p>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Authority
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleSyncFromCms}
+            variant="outline"
+            className="gap-2"
+            disabled={isSyncing}
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
+            />
+            Sync from Mesob Center
+          </Button>
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Organization
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
@@ -140,13 +169,13 @@ export default function AuthoritiesPage() {
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle className="text-base">All Authorities</CardTitle>
-              <CardDescription>{authorities.length} total</CardDescription>
+              <CardTitle className="text-base">All Organizations</CardTitle>
+              <CardDescription>{organizations.length} total</CardDescription>
             </div>
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search authorities..."
+                placeholder="Search organizations..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-8"
@@ -158,7 +187,7 @@ export default function AuthoritiesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Authority</TableHead>
+                <TableHead>Organization</TableHead>
                 <TableHead className="hidden md:table-cell">
                   Abbreviation
                 </TableHead>
@@ -174,7 +203,7 @@ export default function AuthoritiesPage() {
                     colSpan={5}
                     className="text-center py-12 text-muted-foreground"
                   >
-                    Loading authorities...
+                    Loading organizations...
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
@@ -182,33 +211,39 @@ export default function AuthoritiesPage() {
                   <TableCell colSpan={5} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Building2 className="h-8 w-8" />
-                      <p>No authorities found</p>
+                      <p>No organizations found</p>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((auth) => (
-                  <TableRow key={auth.id}>
+                filtered.map((org) => (
+                  <TableRow key={org.id}>
                     <TableCell>
-                      <div>
-                        <p className="font-medium">{auth.name}</p>
-                        <p className="text-xs text-muted-foreground truncate max-w-[250px]">
-                          {auth.description}
-                        </p>
+                      <div className="flex items-center gap-2">
+                        <div>
+                          <p className="font-medium">{org.name}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-[250px]">
+                            {org.description}
+                          </p>
+                        </div>
+                        {org.syncedFromCms && (
+                          <Badge variant="secondary" className="text-xs">
+                            CMS
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       <Badge variant="outline" className="font-mono text-xs">
-                        {auth.abbreviation}
+                        {org.abbreviation}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                      {auth.floor}
-                      {auth.room ? ` • ${auth.room}` : ""}
+                      {[org.floor, org.room].filter(Boolean).join(" • ")}
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="secondary" className="text-xs">
-                        {auth.serviceCount}
+                        {org.serviceCount}
                       </Badge>
                     </TableCell>
 
@@ -226,14 +261,14 @@ export default function AuthoritiesPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             className="gap-2"
-                            onClick={() => openEdit(auth)}
+                            onClick={() => openEdit(org)}
                           >
                             <Pencil className="h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="gap-2 text-destructive focus:text-destructive"
-                            onClick={() => handleDelete(auth.id)}
+                            onClick={() => handleDelete(org.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                             Delete
@@ -249,10 +284,10 @@ export default function AuthoritiesPage() {
         </CardContent>
       </Card>
 
-      <AuthorityForm
+      <OrganizationForm
         open={formOpen}
         onOpenChange={setFormOpen}
-        authority={editing}
+        organization={editing}
         onSave={handleSave}
       />
     </div>

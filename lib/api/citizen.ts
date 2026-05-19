@@ -30,7 +30,7 @@ export type RichServiceDetail = {
   processingTimeDays: number | null;
   feeAmount: number | null;
   feeDescription: string | null;
-  authority: {
+  organization: {
     id: string;
     code: string;
     name: string;
@@ -48,7 +48,7 @@ export type CitizenMatch = {
   serviceId: string;
   serviceCode: string;
   serviceName: string;
-  authority: { id: string; code: string };
+  organization: { id: string; code: string };
 };
 
 export type CitizenInteractionResult = {
@@ -104,7 +104,7 @@ export function selectCitizenService(sessionId: string, serviceId: string) {
 }
 
 /**
- * Fetch full service detail for the browse-by-authority path.
+ * Fetch full service detail for the browse-by-organization path.
  * The browse path doesn't go through selectCitizenService, so we call
  * the public endpoint directly to get the same rich shape.
  */

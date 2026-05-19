@@ -57,7 +57,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { listAdminAuthorities, type Authority } from "@/lib/api/authorities";
+import {
+  listAdminOrganizations,
+  type Organization,
+} from "@/lib/api/organizations";
 import {
   createAdminUser,
   deleteAdminUser,
@@ -77,12 +80,12 @@ interface Admin {
   status: "active" | "inactive";
   createdAt: string;
   lastLogin?: string;
-  authorityId?: string | null;
+  organizationId?: string | null;
 }
 
 function UsersPageContent() {
   const [admins, setAdmins] = useState<Admin[]>([]);
-  const [authorities, setAuthorities] = useState<Authority[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -92,17 +95,17 @@ function UsersPageContent() {
     name: "",
     email: "",
     role: "ADMIN",
-    authorityId: "",
+    organizationId: "",
   });
 
   async function loadData() {
     try {
-      const [usersData, authoritiesData] = await Promise.all([
+      const [usersData, organizationData] = await Promise.all([
         listAdminUsers(),
-        listAdminAuthorities(),
+        listAdminOrganizations(),
       ]);
       setAdmins(usersData);
-      setAuthorities(authoritiesData);
+      setOrganizations(organizationData);
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to load admin users"));
     } finally {
@@ -123,8 +126,8 @@ function UsersPageContent() {
       return;
     }
 
-    if (!formData.authorityId) {
-      toast.error("Please select an authority for this admin");
+    if (!formData.organizationId) {
+      toast.error("Please select an organization for this admin");
       return;
     }
 
@@ -133,10 +136,10 @@ function UsersPageContent() {
         name: formData.name,
         email: formData.email,
         role: formData.role,
-        authorityId: formData.authorityId,
+        organizationId: formData.organizationId,
       });
       toast.success("Admin invitation created successfully");
-      setFormData({ name: "", email: "", role: "ADMIN", authorityId: "" });
+      setFormData({ name: "", email: "", role: "ADMIN", organizationId: "" });
       setIsAddDialogOpen(false);
       await loadData();
     } catch (error) {
@@ -152,7 +155,7 @@ function UsersPageContent() {
       await updateAdminUser(selectedAdmin.id, {
         name: formData.name,
         role: formData.role,
-        authorityId: formData.authorityId || null,
+        organizationId: formData.organizationId || null,
       });
       toast.success("Admin updated successfully");
       setIsEditDialogOpen(false);
@@ -198,7 +201,7 @@ function UsersPageContent() {
         admin.systemRole && admin.systemRole !== "SUPER_ADMIN"
           ? admin.systemRole
           : "ADMIN",
-      authorityId: admin.authorityId ?? "",
+      organizationId: admin.organizationId ?? "",
     });
     setIsEditDialogOpen(true);
   };
@@ -294,20 +297,23 @@ function UsersPageContent() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Authority</Label>
+                    <Label>Organization</Label>
                     <Select
-                      value={formData.authorityId}
-                      onValueChange={(authorityId) =>
-                        setFormData({ ...formData, authorityId })
+                      value={formData.organizationId}
+                      onValueChange={(organizationId) =>
+                        setFormData({ ...formData, organizationId })
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select authority" />
+                        <SelectValue placeholder="Select organization" />
                       </SelectTrigger>
                       <SelectContent>
-                        {authorities.map((authority) => (
-                          <SelectItem key={authority.id} value={authority.id}>
-                            {authority.name}
+                        {organizations.map((organization) => (
+                          <SelectItem
+                            key={organization.id}
+                            value={organization.id}
+                          >
+                            {organization.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -525,20 +531,23 @@ function UsersPageContent() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Authority</Label>
+                  <Label>Organization</Label>
                   <Select
-                    value={formData.authorityId}
-                    onValueChange={(authorityId) =>
-                      setFormData({ ...formData, authorityId })
+                    value={formData.organizationId}
+                    onValueChange={(organizationId) =>
+                      setFormData({ ...formData, organizationId })
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select authority" />
+                      <SelectValue placeholder="Select organization" />
                     </SelectTrigger>
                     <SelectContent>
-                      {authorities.map((authority) => (
-                        <SelectItem key={authority.id} value={authority.id}>
-                          {authority.name}
+                      {organizations.map((organization) => (
+                        <SelectItem
+                          key={organization.id}
+                          value={organization.id}
+                        >
+                          {organization.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

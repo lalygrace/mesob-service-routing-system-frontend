@@ -8,6 +8,7 @@ import {
   Pencil,
   Trash2,
   Layers,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,37 +36,42 @@ import {
 } from "@/components/ui/card";
 import { ServiceForm } from "@/components/admin/service-form";
 import type { Service } from "@/lib/service-navigator/types";
-import { listAdminAuthorities, type Authority } from "@/lib/api/authorities";
+import {
+  listAdminOrganizations,
+  type Organization,
+} from "@/lib/api/organizations";
 import {
   createAdminService,
   deleteAdminService,
   listAdminServices,
   updateAdminService,
+  syncServicesFromCms,
 } from "@/lib/api/services";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { toast } from "sonner";
 
 export default function ServicesPage() {
   const [services, setServices] = React.useState<Service[]>([]);
-  const [authorities, setAuthorities] = React.useState<Authority[]>([]);
+  const [organizations, setOrganizations] = React.useState<Organization[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Service | null>(null);
+  const [isSyncing, setIsSyncing] = React.useState(false);
 
   React.useEffect(() => {
     let mounted = true;
 
     async function loadData() {
       try {
-        const [serviceData, authorityData] = await Promise.all([
+        const [serviceData, organizationData] = await Promise.all([
           listAdminServices(),
-          listAdminAuthorities(),
+          listAdminOrganizations(),
         ]);
 
         if (!mounted) return;
         setServices(serviceData);
-        setAuthorities(authorityData);
+        setOrganizations(organizationData);
       } catch (error) {
         toast.error(getApiErrorMessage(error, "Failed to load services"));
       } finally {
@@ -83,7 +89,7 @@ export default function ServicesPage() {
   const filtered = services.filter((s) => {
     return (
       s.title.toLowerCase().includes(search.toLowerCase()) ||
-      s.authority.toLowerCase().includes(search.toLowerCase())
+      s.organization.toLowerCase().includes(search.toLowerCase())
     );
   });
 
@@ -126,6 +132,34 @@ export default function ServicesPage() {
     setFormOpen(true);
   }
 
+  async function handleSyncFromCms() {
+    setIsSyncing(true);
+    try {
+      const result = await syncServicesFromCms();
+
+      // Reload services after sync
+      const serviceData = await listAdminServices();
+      setServices(serviceData);
+
+      const message = `Sync complete: ${result.created} created, ${result.updated} updated, ${result.skipped} skipped`;
+
+      if (result.errors.length > 0) {
+        toast.warning(message, {
+          description: `${result.errors.length} errors occurred. Check console for details.`,
+        });
+        console.error("Sync errors:", result.errors);
+      } else {
+        toast.success(message);
+      }
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(error, "Failed to sync services from CMS"),
+      );
+    } finally {
+      setIsSyncing(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -136,10 +170,23 @@ export default function ServicesPage() {
             Manage the services offered to citizens at the Mesob Center
           </p>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Service
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleSyncFromCms}
+            variant="outline"
+            className="gap-2"
+            disabled={isSyncing}
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
+            />
+            {isSyncing ? "Syncing..." : "Sync from Mesob Center"}
+          </Button>
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Service
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
@@ -169,7 +216,7 @@ export default function ServicesPage() {
               <TableRow>
                 <TableHead>Service</TableHead>
                 <TableHead className="hidden md:table-cell">
-                  Authority
+                  Organization
                 </TableHead>
                 <TableHead className="hidden lg:table-cell">Location</TableHead>
                 <TableHead className="hidden lg:table-cell text-center">
@@ -209,7 +256,7 @@ export default function ServicesPage() {
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                      {svc.authority}
+                      {svc.organization}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                       {svc.locationHint}
@@ -260,7 +307,7 @@ export default function ServicesPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         service={editing}
-        authorities={authorities}
+        organizations={organizations}
         onSave={handleSave}
       />
     </div>

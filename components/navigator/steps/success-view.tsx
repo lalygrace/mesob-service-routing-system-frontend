@@ -58,7 +58,7 @@ export function SuccessView({
         <p className="text-2xl font-bold text-foreground">
           {service.locationHint}
         </p>
-        <p className="mt-1 text-muted-foreground">{service.authority}</p>
+        <p className="mt-1 text-muted-foreground">{service.organization}</p>
 
         {!isFullyReady && (
           <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3 text-sm text-muted-foreground">

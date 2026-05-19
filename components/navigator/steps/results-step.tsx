@@ -4,7 +4,7 @@
  * ResultsStep — Service detail + interactive document checklist
  *
  * Shows the full matched service information:
- *   - Authority name, floor/room/counter
+ *   - Organization name, floor/room/counter
  *   - Fee and processing time
  *   - Workflow steps (ordered)
  *   - Interactive document checklist with progress ring
@@ -40,19 +40,24 @@ import type { Strings } from "@/lib/service-navigator/strings";
 type NormalisedService = {
   id: string;
   name: string;
-  authorityName: string;
+  organizationName: string;
   locationHint: string;
   feeHint: string;
   durationHint: string;
   requirements: Array<{ key: string; label: string; isRequired: boolean }>;
-  steps: Array<{ number: number; title: string; detail: string | null; isOptional: boolean }>;
+  steps: Array<{
+    number: number;
+    title: string;
+    detail: string | null;
+    isOptional: boolean;
+  }>;
 };
 
 function normaliseFlat(s: Service): NormalisedService {
   return {
     id: s.id,
     name: s.title,
-    authorityName: s.authority,
+    organizationName: s.organization,
     locationHint: s.locationHint,
     feeHint: s.feeHint,
     durationHint: s.durationHint,
@@ -77,8 +82,7 @@ function normaliseRich(s: RichServiceDetail): NormalisedService {
   const locationHint = parts.join(" · ") || "";
 
   const feeHint =
-    s.feeDescription ??
-    (s.feeAmount != null ? `${s.feeAmount} ETB` : "");
+    s.feeDescription ?? (s.feeAmount != null ? `${s.feeAmount} ETB` : "");
 
   const durationHint =
     s.processingTimeDays != null
@@ -92,7 +96,7 @@ function normaliseRich(s: RichServiceDetail): NormalisedService {
   return {
     id: s.id,
     name: s.name,
-    authorityName: s.authority.name,
+    organizationName: s.organization.name,
     locationHint,
     feeHint,
     durationHint,
@@ -241,7 +245,9 @@ function ChecklistCard({
         >
           {label}
           {!isRequired && (
-            <span className="ml-2 text-xs text-muted-foreground">(optional)</span>
+            <span className="ml-2 text-xs text-muted-foreground">
+              (optional)
+            </span>
           )}
         </p>
         <p
@@ -268,11 +274,7 @@ function ChecklistCard({
   );
 }
 
-function WorkflowSteps({
-  steps,
-}: {
-  steps: NormalisedService["steps"];
-}) {
+function WorkflowSteps({ steps }: { steps: NormalisedService["steps"] }) {
   if (steps.length === 0) return null;
 
   return (
@@ -367,7 +369,6 @@ export function ResultsStep({
 
   return (
     <div className="space-y-5">
-
       {/* ── Service header card ── */}
       <div className="rounded-3xl border border-white/20 bg-card/40 backdrop-blur-md p-5 sm:p-6 shadow-xl">
         <div className="space-y-1">
@@ -378,7 +379,7 @@ export function ResultsStep({
             {normalised.name}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {normalised.authorityName}
+            {normalised.organizationName}
           </p>
         </div>
 
@@ -386,8 +387,8 @@ export function ResultsStep({
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <InfoTile
             icon={Building2}
-            label={strings.detail.authority}
-            value={normalised.authorityName}
+            label={strings.detail.organization}
+            value={normalised.organizationName}
           />
           {normalised.locationHint && (
             <InfoTile

@@ -11,7 +11,7 @@ export interface User {
   email: string;
   role: "super_admin" | "admin" | "moderator";
   rawRole?: AuthUser["role"];
-  authorityId?: string | null;
+  organizationId?: string | null;
   phone?: string | null;
   location?: string | null;
 }
@@ -32,7 +32,7 @@ export function toUser(user: AuthUser | null | undefined): User | null {
     email: user.email,
     role: normalizeRole(user.role),
     rawRole: user.role,
-    authorityId: user.authorityId,
+    organizationId: user.organizationId,
     phone: user.phone,
     location: user.location,
   };

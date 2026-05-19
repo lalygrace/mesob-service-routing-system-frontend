@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * AuthorityBrowse
+ * OrganizationBrowse
  *
- * The "Browse by Authority" path — no AI involved.
- * Flow: list all authorities → citizen taps one → list that authority's
+ * The "Browse by Organization" path — no AI involved.
+ * Flow: list all organizations → citizen taps one → list that organization's
  * services → citizen taps a service → navigate directly to result page.
  *
  * This path is completely independent of addis.ai. It always works even
@@ -24,9 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  listPublicAuthorities,
-  listServicesByAuthority,
-  type PublicAuthority,
+  listPublicOrganizations,
+  listServicesByOrganization,
+  type PublicOrganization,
 } from "@/lib/api/navigator";
 import type { LanguageCode, Service } from "@/lib/service-navigator/types";
 import type { Strings } from "@/lib/service-navigator/strings";
@@ -61,27 +61,27 @@ function ErrorCard({
   );
 }
 
-// ─── Authority list view ──────────────────────────────────────────────────────
+// ─── Organization list view ──────────────────────────────────────────────────────
 
-function AuthorityList({
-  authorities,
+function OrganizationList({
+  organizations,
   onSelect,
 }: {
-  authorities: PublicAuthority[];
-  onSelect: (authority: PublicAuthority) => void;
+  organizations: PublicOrganization[];
+  onSelect: (organization: PublicOrganization) => void;
 }) {
   const [query, setQuery] = React.useState("");
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return authorities;
-    return authorities.filter(
+    if (!q) return organizations;
+    return organizations.filter(
       (a) =>
         a.name.toLowerCase().includes(q) ||
         a.code.toLowerCase().includes(q) ||
         (a.description ?? "").toLowerCase().includes(q),
     );
-  }, [authorities, query]);
+  }, [organizations, query]);
 
   return (
     <div className="space-y-4">
@@ -91,7 +91,7 @@ function AuthorityList({
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search authorities…"
+          placeholder="Search organizations…"
           className="pl-9 rounded-xl"
           autoFocus
         />
@@ -99,14 +99,14 @@ function AuthorityList({
 
       {filtered.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          No authorities match your search.
+          No organizations match your search.
         </p>
       ) : (
         <div className="space-y-2">
-          {filtered.map((authority) => (
+          {filtered.map((organization) => (
             <button
-              key={authority.id}
-              onClick={() => onSelect(authority)}
+              key={organization.id}
+              onClick={() => onSelect(organization)}
               className="group flex w-full items-center gap-4 rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm p-4 text-left transition-all hover:border-primary/30 hover:bg-card/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {/* Icon */}
@@ -117,12 +117,12 @@ function AuthorityList({
               {/* Text */}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-foreground">
-                  {authority.name}
+                  {organization.name}
                 </p>
-                {authority.floor && (
+                {organization.floor && (
                   <p className="text-xs text-muted-foreground">
-                    Floor {authority.floor}
-                    {authority.wing ? ` · ${authority.wing}` : ""}
+                    Floor {organization.floor}
+                    {organization.wing ? ` · ${organization.wing}` : ""}
                   </p>
                 )}
               </div>
@@ -139,35 +139,35 @@ function AuthorityList({
 // ─── Service list view ────────────────────────────────────────────────────────
 
 function ServiceList({
-  authority,
+  organization,
   services,
   onSelect,
   onBack,
 }: {
-  authority: PublicAuthority;
+  organization: PublicOrganization;
   services: Service[];
   onSelect: (service: Service) => void;
   onBack: () => void;
 }) {
   return (
     <div className="space-y-4">
-      {/* Authority header */}
+      {/* Organization header */}
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
           size="icon"
           onClick={onBack}
           className="shrink-0 rounded-xl"
-          aria-label="Back to authorities"
+          aria-label="Back to organizations"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Authority
+            Organization
           </p>
           <h2 className="truncate text-base font-bold text-foreground">
-            {authority.name}
+            {organization.name}
           </h2>
         </div>
       </div>
@@ -179,7 +179,7 @@ function ServiceList({
             No services available
           </p>
           <p className="text-xs text-muted-foreground">
-            This authority has no published services yet.
+            This organization has no published services yet.
           </p>
         </div>
       ) : (
@@ -195,9 +195,7 @@ function ServiceList({
                   {service.title}
                 </p>
                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                  {service.locationHint && (
-                    <span>{service.locationHint}</span>
-                  )}
+                  {service.locationHint && <span>{service.locationHint}</span>}
                   {service.feeHint && <span>{service.feeHint}</span>}
                   {service.durationHint && <span>{service.durationHint}</span>}
                 </div>
@@ -213,9 +211,9 @@ function ServiceList({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-type BrowseView = "authorities" | "services";
+type BrowseView = "organizations" | "services";
 
-export function AuthorityBrowse({
+export function OrganizationBrowse({
   language,
   strings,
   onServiceSelected,
@@ -224,26 +222,29 @@ export function AuthorityBrowse({
   strings: Strings;
   onServiceSelected: (service: Service) => void;
 }) {
-  const [view, setView] = React.useState<BrowseView>("authorities");
-  const [authorities, setAuthorities] = React.useState<PublicAuthority[]>([]);
-  const [selectedAuthority, setSelectedAuthority] =
-    React.useState<PublicAuthority | null>(null);
+  const [view, setView] = React.useState<BrowseView>("organizations");
+  const [organizations, setOrganizations] = React.useState<
+    PublicOrganization[]
+  >([]);
+  const [selectedOrganization, setSelectedOrganization] =
+    React.useState<PublicOrganization | null>(null);
   const [services, setServices] = React.useState<Service[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Load authorities on mount
+  // Load organizations on mount
   React.useEffect(() => {
     let mounted = true;
     setLoading(true);
     setError(null);
 
-    listPublicAuthorities(language)
+    listPublicOrganizations(language)
       .then((data) => {
-        if (mounted) setAuthorities(data);
+        if (mounted) setOrganizations(data);
       })
       .catch(() => {
-        if (mounted) setError("Failed to load authorities. Please try again.");
+        if (mounted)
+          setError("Failed to load organizations. Please try again.");
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -254,14 +255,14 @@ export function AuthorityBrowse({
     };
   }, [language]);
 
-  async function handleAuthoritySelect(authority: PublicAuthority) {
-    setSelectedAuthority(authority);
+  async function handleOrganizationSelect(organization: PublicOrganization) {
+    setSelectedOrganization(organization);
     setView("services");
     setLoading(true);
     setError(null);
 
     try {
-      const data = await listServicesByAuthority(authority.id, language);
+      const data = await listServicesByOrganization(organization.id, language);
       setServices(data);
     } catch {
       setError("Failed to load services. Please try again.");
@@ -271,22 +272,24 @@ export function AuthorityBrowse({
   }
 
   function handleBack() {
-    setView("authorities");
-    setSelectedAuthority(null);
+    setView("organizations");
+    setSelectedOrganization(null);
     setServices([]);
     setError(null);
   }
 
   function handleRetry() {
-    if (view === "authorities") {
+    if (view === "organizations") {
       setError(null);
       setLoading(true);
-      listPublicAuthorities(language)
-        .then(setAuthorities)
-        .catch(() => setError("Failed to load authorities. Please try again."))
+      listPublicOrganizations(language)
+        .then(setOrganizations)
+        .catch(() =>
+          setError("Failed to load organizations. Please try again."),
+        )
         .finally(() => setLoading(false));
-    } else if (selectedAuthority) {
-      handleAuthoritySelect(selectedAuthority);
+    } else if (selectedOrganization) {
+      handleOrganizationSelect(selectedOrganization);
     }
   }
 
@@ -298,7 +301,7 @@ export function AuthorityBrowse({
           {strings.categories.heading}
         </h1>
         <p className="text-muted-foreground">
-          {view === "authorities"
+          {view === "organizations"
             ? strings.categories.subheading
             : "Select a service to see full details."}
         </p>
@@ -309,14 +312,14 @@ export function AuthorityBrowse({
         <LoadingSkeleton />
       ) : error ? (
         <ErrorCard message={error} onRetry={handleRetry} />
-      ) : view === "authorities" ? (
-        <AuthorityList
-          authorities={authorities}
-          onSelect={handleAuthoritySelect}
+      ) : view === "organizations" ? (
+        <OrganizationList
+          organizations={organizations}
+          onSelect={handleOrganizationSelect}
         />
-      ) : selectedAuthority ? (
+      ) : selectedOrganization ? (
         <ServiceList
-          authority={selectedAuthority}
+          organization={selectedOrganization}
           services={services}
           onSelect={onServiceSelected}
           onBack={handleBack}

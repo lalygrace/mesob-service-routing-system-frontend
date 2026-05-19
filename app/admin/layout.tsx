@@ -8,7 +8,7 @@ import { AuthGuard } from "@/components/auth/auth-guard";
 export const metadata: Metadata = {
   title: "Admin Dashboard — Mesob Service Routing System",
   description:
-    "Manage authorities, services, intent mappings, and monitor analytics for the Mesob Center navigation kiosk.",
+    "Manage organizations, services, intent mappings, and monitor analytics for the Mesob Center navigation kiosk.",
 };
 
 export default function AdminLayout({

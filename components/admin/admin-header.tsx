@@ -15,7 +15,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const ROUTE_LABELS: Record<string, string> = {
   admin: "Dashboard",
-  authorities: "Authorities",
+  organizations: "Organizations",
   services: "Services",
   intents: "Intent Mapping",
   analytics: "Analytics",

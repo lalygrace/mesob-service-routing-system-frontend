@@ -5,35 +5,35 @@
  * Covers:
  *  - STT  (audio → text via backend → addis.ai)
  *  - TTS  (text → base64 WAV via backend → addis.ai, with DB cache)
- *  - Public authority list (for Browse-by-Authority path)
- *  - Services by authority (Browse-by-Authority path — no AI involved)
+ *  - Public organization list (for Browse-by-Organization path)
+ *  - Services by organization (Browse-by-Organization path — no AI involved)
  */
 
 import { apiData, getApiBaseUrl } from "./client";
 import type { LanguageCode, Service } from "@/lib/service-navigator/types";
 
-// ─── Public Authority (Browse path) ──────────────────────────────────────────
+// ─── Public Organization (Browse path) ──────────────────────────────────────────
 
-export type PublicAuthority = {
+export type PublicOrganization = {
   id: string;
   code: string;
   floor: string | null;
-  wing: string | null;
+  room: string | null;
   logoUrl: string | null;
   name: string;
   description: string | null;
 };
 
-export function listPublicAuthorities(language: LanguageCode) {
-  return apiData<PublicAuthority[]>(`/api/public/authorities?lang=${language}`);
+export function listPublicOrganizations(language: LanguageCode) {
+  return apiData<PublicOrganization[]>(`/api/public/organizations?lang=${language}`);
 }
 
-export function listServicesByAuthority(
-  authorityId: string,
+export function listServicesByOrganization(
+  organizationId: string,
   language: LanguageCode,
 ) {
   return apiData<Service[]>(
-    `/api/public/authorities/${authorityId}/services?lang=${language}`,
+    `/api/public/organizations/${organizationId}/services?lang=${language}`,
   );
 }
 

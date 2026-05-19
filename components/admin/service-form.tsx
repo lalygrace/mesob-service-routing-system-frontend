@@ -24,13 +24,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { Service, LanguageCode } from "@/lib/service-navigator/types";
-import type { Authority } from "@/lib/api/authorities";
+import type { Organization } from "@/lib/api/organizations";
 
 type ServiceFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   service?: Service | null;
-  authorities: Authority[];
+  organizations: Organization[];
   onSave: (data: Omit<Service, "id">) => void;
 };
 
@@ -62,7 +62,7 @@ function DynamicListInput({
   items,
   onChange,
   placeholderPrefix = "Item",
-  addLabel = "Add Item"
+  addLabel = "Add Item",
 }: {
   items: string[];
   onChange: (items: string[]) => void;
@@ -83,7 +83,10 @@ function DynamicListInput({
     <div className="space-y-3">
       {items.map((item, i) => (
         <div key={i} className="flex items-center gap-2">
-          <Badge variant="outline" className="shrink-0 text-xs font-mono w-6 justify-center">
+          <Badge
+            variant="outline"
+            className="shrink-0 text-xs font-mono w-6 justify-center"
+          >
             {i + 1}
           </Badge>
           <Input
@@ -104,7 +107,13 @@ function DynamicListInput({
           )}
         </div>
       ))}
-      <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={add}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="gap-1.5"
+        onClick={add}
+      >
         <Plus className="h-3.5 w-3.5" />
         {addLabel}
       </Button>
@@ -116,7 +125,7 @@ export function ServiceForm({
   open,
   onOpenChange,
   service,
-  authorities,
+  organizations,
   onSave,
 }: ServiceFormProps) {
   const isEdit = !!service;
@@ -124,10 +133,14 @@ export function ServiceForm({
   const [title, setTitle] = React.useState("");
   const [titleAm, setTitleAm] = React.useState("");
   const [titleOm, setTitleOm] = React.useState("");
-  const [authorityId, setAuthorityId] = React.useState("");
+  const [organizationId, setOrganizationId] = React.useState("");
   const [locationHint, setLocationHint] = React.useState("");
   const [feeHint, setFeeHint] = React.useState("");
+  const [feeHintAm, setFeeHintAm] = React.useState("");
+  const [feeHintOm, setFeeHintOm] = React.useState("");
   const [durationHint, setDurationHint] = React.useState("");
+  const [durationHintAm, setDurationHintAm] = React.useState("");
+  const [durationHintOm, setDurationHintOm] = React.useState("");
   const [requirements, setRequirements] = React.useState<string[]>([""]);
   const [requirementsAm, setRequirementsAm] = React.useState<string[]>([""]);
   const [requirementsOm, setRequirementsOm] = React.useState<string[]>([""]);
@@ -135,21 +148,21 @@ export function ServiceForm({
   const [workflowStepsAm, setWorkflowStepsAm] = React.useState<string[]>([""]);
   const [workflowStepsOm, setWorkflowStepsOm] = React.useState<string[]>([""]);
 
-  // Auto-fill location when authority changes
-  const selectedAuthority = React.useMemo(
-    () => authorities.find((a) => a.id === authorityId),
-    [authorityId, authorities],
+  // Auto-fill location when organization changes
+  const selectedOrganization = React.useMemo(
+    () => organizations.find((org) => org.id === organizationId),
+    [organizationId, organizations],
   );
 
   React.useEffect(() => {
-    if (!selectedAuthority) return;
+    if (!selectedOrganization) return;
 
-    const loc = selectedAuthority.room
-      ? `${selectedAuthority.floor} • ${selectedAuthority.room}`
-      : selectedAuthority.floor;
+    const loc = [selectedOrganization.floor, selectedOrganization.room]
+      .filter(Boolean)
+      .join(" • ");
 
     queueMicrotask(() => setLocationHint(loc));
-  }, [selectedAuthority]);
+  }, [selectedOrganization]);
 
   React.useEffect(() => {
     queueMicrotask(() => {
@@ -157,30 +170,48 @@ export function ServiceForm({
         setTitle(service.title);
         setTitleAm(service.titleAm || "");
         setTitleOm(service.titleOm || "");
-        // Try to find matching authority by name
-        const matchedAuth = authorities.find(
-          (a) => a.name === service.authority,
+        // Try to find matching organization by name
+        const matchedOrg = organizations.find(
+          (org) => org.name === service.organization,
         );
-        setAuthorityId(matchedAuth?.id ?? "");
+        setOrganizationId(matchedOrg?.id ?? "");
         setLocationHint(service.locationHint);
         setFeeHint(service.feeHint);
+        setFeeHintAm(service.feeHintAm || "");
+        setFeeHintOm(service.feeHintOm || "");
         setDurationHint(service.durationHint);
+        setDurationHintAm(service.durationHintAm || "");
+        setDurationHintOm(service.durationHintOm || "");
         setRequirements(
           service.requirements.length > 0 ? service.requirements : [""],
         );
-        setRequirementsAm(service.requirementsAm?.length ? service.requirementsAm : [""]);
-        setRequirementsOm(service.requirementsOm?.length ? service.requirementsOm : [""]);
-        setWorkflowSteps(service.workflowSteps?.length ? service.workflowSteps : [""]);
-        setWorkflowStepsAm(service.workflowStepsAm?.length ? service.workflowStepsAm : [""]);
-        setWorkflowStepsOm(service.workflowStepsOm?.length ? service.workflowStepsOm : [""]);
+        setRequirementsAm(
+          service.requirementsAm?.length ? service.requirementsAm : [""],
+        );
+        setRequirementsOm(
+          service.requirementsOm?.length ? service.requirementsOm : [""],
+        );
+        setWorkflowSteps(
+          service.workflowSteps?.length ? service.workflowSteps : [""],
+        );
+        setWorkflowStepsAm(
+          service.workflowStepsAm?.length ? service.workflowStepsAm : [""],
+        );
+        setWorkflowStepsOm(
+          service.workflowStepsOm?.length ? service.workflowStepsOm : [""],
+        );
       } else {
         setTitle("");
         setTitleAm("");
         setTitleOm("");
-        setAuthorityId("");
+        setOrganizationId("");
         setLocationHint("");
         setFeeHint("");
+        setFeeHintAm("");
+        setFeeHintOm("");
         setDurationHint("");
+        setDurationHintAm("");
+        setDurationHintOm("");
         setRequirements([""]);
         setRequirementsAm([""]);
         setRequirementsOm([""]);
@@ -189,13 +220,11 @@ export function ServiceForm({
         setWorkflowStepsOm([""]);
       }
     });
-  }, [service, open, authorities]);
-
-
+  }, [service, open, organizations]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const authorityName = selectedAuthority?.name ?? "";
+    const organizationName = selectedOrganization?.name ?? "";
     // Build keywords from title words as a baseline
     const titleWords = title
       .toLowerCase()
@@ -210,11 +239,15 @@ export function ServiceForm({
       title,
       titleAm,
       titleOm,
-      authority: authorityName,
+      organization: organizationName,
       topicId: "id", // Default — AI engine handles routing, not manual topicId
       locationHint,
       feeHint,
+      feeHintAm,
+      feeHintOm,
       durationHint,
+      durationHintAm,
+      durationHintOm,
       requirements: requirements.filter(Boolean),
       requirementsAm: requirementsAm.filter(Boolean),
       requirementsOm: requirementsOm.filter(Boolean),
@@ -281,30 +314,32 @@ export function ServiceForm({
               <LanguageSectionHeader flag="🇪🇹" label="Afaan Oromo" code="OM" />
               <div className="space-y-2">
                 <Label htmlFor="svc-title-om">
-                  Service Title in Afaan Oromo
+                  Service Title in Afaan Oromo (Optional)
                 </Label>
                 <Input
                   id="svc-title-om"
                   value={titleOm}
                   onChange={(e) => setTitleOm(e.target.value)}
                   placeholder="e.g. Eenyummaa bade bakka buusuu"
-                  required
                 />
               </div>
 
               <Separator />
 
-              {/* Authority & Location */}
+              {/* Organization & Location */}
               <div className="space-y-2">
-                <Label>Authority</Label>
-                <Select value={authorityId} onValueChange={setAuthorityId}>
+                <Label>Organization</Label>
+                <Select
+                  value={organizationId}
+                  onValueChange={setOrganizationId}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select authority" />
+                    <SelectValue placeholder="Select organization" />
                   </SelectTrigger>
                   <SelectContent>
-                    {authorities.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>
-                        {a.name}
+                    {organizations.map((org) => (
+                      <SelectItem key={org.id} value={org.id}>
+                        {org.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -318,30 +353,103 @@ export function ServiceForm({
                   value={locationHint}
                   readOnly
                   className="bg-muted/50 text-muted-foreground cursor-not-allowed"
-                  placeholder="Auto-filled from authority"
+                  placeholder="Auto-filled from organization"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Automatically set from the selected authority location
+                  Automatically set from the selected organization location
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <Separator />
+
+              {/* Fee - Multilingual */}
+              <div className="space-y-4">
+                <Label>Service Fee</Label>
+
+                {/* English */}
                 <div className="space-y-2">
-                  <Label htmlFor="svc-fee">Fee</Label>
+                  <LanguageSectionHeader flag="🇬🇧" label="English" code="EN" />
                   <Input
                     id="svc-fee"
                     value={feeHint}
                     onChange={(e) => setFeeHint(e.target.value)}
                     placeholder="e.g. 200 ETB"
+                    required
                   />
                 </div>
+
+                {/* Amharic */}
                 <div className="space-y-2">
-                  <Label htmlFor="svc-duration">Processing Time</Label>
+                  <LanguageSectionHeader flag="🇪🇹" label="Amharic" code="አማ" />
+                  <Input
+                    id="svc-fee-am"
+                    value={feeHintAm}
+                    onChange={(e) => setFeeHintAm(e.target.value)}
+                    placeholder="e.g. 200 ብር"
+                    required
+                    dir="auto"
+                  />
+                </div>
+
+                {/* Afaan Oromo */}
+                <div className="space-y-2">
+                  <LanguageSectionHeader
+                    flag="🇪🇹"
+                    label="Afaan Oromo (Optional)"
+                    code="OM"
+                  />
+                  <Input
+                    id="svc-fee-om"
+                    value={feeHintOm}
+                    onChange={(e) => setFeeHintOm(e.target.value)}
+                    placeholder="e.g. 200 qarshii"
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Processing Time - Multilingual */}
+              <div className="space-y-4">
+                <Label>Processing Time</Label>
+
+                {/* English */}
+                <div className="space-y-2">
+                  <LanguageSectionHeader flag="🇬🇧" label="English" code="EN" />
                   <Input
                     id="svc-duration"
                     value={durationHint}
                     onChange={(e) => setDurationHint(e.target.value)}
                     placeholder="e.g. Same day"
+                    required
+                  />
+                </div>
+
+                {/* Amharic */}
+                <div className="space-y-2">
+                  <LanguageSectionHeader flag="🇪🇹" label="Amharic" code="አማ" />
+                  <Input
+                    id="svc-duration-am"
+                    value={durationHintAm}
+                    onChange={(e) => setDurationHintAm(e.target.value)}
+                    placeholder="e.g. በተመሳሳይ ቀን"
+                    required
+                    dir="auto"
+                  />
+                </div>
+
+                {/* Afaan Oromo */}
+                <div className="space-y-2">
+                  <LanguageSectionHeader
+                    flag="🇪🇹"
+                    label="Afaan Oromo (Optional)"
+                    code="OM"
+                  />
+                  <Input
+                    id="svc-duration-om"
+                    value={durationHintOm}
+                    onChange={(e) => setDurationHintOm(e.target.value)}
+                    placeholder="e.g. Guyyaa walfakkaataa"
                   />
                 </div>
               </div>
@@ -355,27 +463,31 @@ export function ServiceForm({
 
               {/* English */}
               <LanguageSectionHeader flag="🇬🇧" label="English" code="EN" />
-              <DynamicListInput 
-                items={requirements} 
-                onChange={setRequirements} 
+              <DynamicListInput
+                items={requirements}
+                onChange={setRequirements}
                 placeholderPrefix="Requirement"
                 addLabel="Add Requirement"
               />
 
               {/* Amharic */}
               <LanguageSectionHeader flag="🇪🇹" label="Amharic" code="አማ" />
-              <DynamicListInput 
-                items={requirementsAm} 
-                onChange={setRequirementsAm} 
+              <DynamicListInput
+                items={requirementsAm}
+                onChange={setRequirementsAm}
                 placeholderPrefix="መስፈርት"
                 addLabel="መስፈርት አክል"
               />
 
               {/* Afaan Oromo */}
-              <LanguageSectionHeader flag="🇪🇹" label="Afaan Oromo" code="OM" />
-              <DynamicListInput 
-                items={requirementsOm} 
-                onChange={setRequirementsOm} 
+              <LanguageSectionHeader
+                flag="🇪🇹"
+                label="Afaan Oromo (Optional)"
+                code="OM"
+              />
+              <DynamicListInput
+                items={requirementsOm}
+                onChange={setRequirementsOm}
                 placeholderPrefix="Ulaagaa"
                 addLabel="Ulaagaa dabali"
               />
@@ -386,30 +498,34 @@ export function ServiceForm({
               <p className="text-sm text-muted-foreground">
                 Step-by-step process the citizen follows.
               </p>
-              
+
               {/* English */}
               <LanguageSectionHeader flag="🇬🇧" label="English" code="EN" />
-              <DynamicListInput 
-                items={workflowSteps} 
-                onChange={setWorkflowSteps} 
+              <DynamicListInput
+                items={workflowSteps}
+                onChange={setWorkflowSteps}
                 placeholderPrefix="Step"
                 addLabel="Add Step"
               />
 
               {/* Amharic */}
               <LanguageSectionHeader flag="🇪🇹" label="Amharic" code="አማ" />
-              <DynamicListInput 
-                items={workflowStepsAm} 
-                onChange={setWorkflowStepsAm} 
+              <DynamicListInput
+                items={workflowStepsAm}
+                onChange={setWorkflowStepsAm}
                 placeholderPrefix="ደረጃ"
                 addLabel="ደረጃ አክል"
               />
 
               {/* Afaan Oromo */}
-              <LanguageSectionHeader flag="🇪🇹" label="Afaan Oromo" code="OM" />
-              <DynamicListInput 
-                items={workflowStepsOm} 
-                onChange={setWorkflowStepsOm} 
+              <LanguageSectionHeader
+                flag="🇪🇹"
+                label="Afaan Oromo (Optional)"
+                code="OM"
+              />
+              <DynamicListInput
+                items={workflowStepsOm}
+                onChange={setWorkflowStepsOm}
                 placeholderPrefix="Tarkaanfii"
                 addLabel="Tarkaanfii dabali"
               />

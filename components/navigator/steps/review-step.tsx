@@ -231,7 +231,7 @@ export function ReviewStep({
                   {service.title}
                 </h1>
                 <p className="max-w-2xl text-sm text-muted-foreground">
-                  {service.authority}
+                  {service.organization}
                 </p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-background/50 backdrop-blur-sm px-5 py-4 shadow-sm">
@@ -248,8 +248,8 @@ export function ReviewStep({
           <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-4">
             <DetailTile
               icon={Building2}
-              label={strings.detail.authority}
-              value={service.authority}
+              label={strings.detail.organization}
+              value={service.organization}
             />
             <DetailTile
               icon={MapPin}

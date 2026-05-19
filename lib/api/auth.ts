@@ -1,6 +1,12 @@
 import { apiData, apiRequest } from "./client";
 
-export type AdminRole = "SUPER_ADMIN" | "ADMIN" | "EDITOR" | "VIEWER" | "super_admin" | "admin";
+export type AdminRole =
+  | "SUPER_ADMIN"
+  | "ADMIN"
+  | "EDITOR"
+  | "VIEWER"
+  | "super_admin"
+  | "admin";
 
 export type AuthUser = {
   id: string;
@@ -9,7 +15,7 @@ export type AuthUser = {
   emailVerified?: boolean;
   image?: string | null;
   role?: AdminRole | AdminRole[] | null;
-  authorityId?: string | null;
+  organizationId?: string | null;
   isActive?: boolean | null;
   phone?: string | null;
   location?: string | null;
@@ -51,17 +57,22 @@ export function resetPassword(token: string, password: string) {
 }
 
 export function acceptAdminInvitation(token: string, password: string) {
-  return apiRequest<{ success: boolean; message: string }>("/admin-invitation/accept", {
-    method: "POST",
-    body: { token, password },
-  });
+  return apiRequest<{ success: boolean; message: string }>(
+    "/admin-invitation/accept",
+    {
+      method: "POST",
+      body: { token, password },
+    },
+  );
 }
 
 export function getAdminMe() {
   return apiData<AdminMe>("/api/admin/me");
 }
 
-export function updateAdminMe(payload: Pick<AuthUser, "name" | "phone" | "location" | "image">) {
+export function updateAdminMe(
+  payload: Pick<AuthUser, "name" | "phone" | "location" | "image">,
+) {
   return apiData<AuthUser>("/api/admin/me", {
     method: "PATCH",
     body: payload,
@@ -73,10 +84,13 @@ export function changeAdminPassword(payload: {
   newPassword: string;
   confirmPassword: string;
 }) {
-  return apiRequest<{ success: boolean; message: string }>("/api/admin/change-password", {
-    method: "POST",
-    body: payload,
-  });
+  return apiRequest<{ success: boolean; message: string }>(
+    "/api/admin/change-password",
+    {
+      method: "POST",
+      body: payload,
+    },
+  );
 }
 
 // Session Management

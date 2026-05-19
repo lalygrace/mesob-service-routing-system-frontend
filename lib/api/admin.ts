@@ -1,6 +1,12 @@
 import { apiData, apiRequest } from "./client";
 
-export type AdminUserRole = "SUPER_ADMIN" | "ADMIN" | "EDITOR" | "VIEWER" | "super_admin" | "admin";
+export type AdminUserRole =
+  | "SUPER_ADMIN"
+  | "ADMIN"
+  | "EDITOR"
+  | "VIEWER"
+  | "super_admin"
+  | "admin";
 
 export type AdminUser = {
   id: string;
@@ -12,11 +18,11 @@ export type AdminUser = {
   status: "active" | "inactive";
   createdAt: string;
   lastLogin?: string;
-  authorityId?: string | null;
+  organizationId?: string | null;
 };
 
 export type AnalyticsSummary = {
-  totalAuthorities: number;
+  totalOrganizations: number;
   totalServices: number;
   totalAdmins: number;
   activeAdmins: number;
@@ -58,19 +64,27 @@ export function listAdminUsers() {
   return apiData<AdminUser[]>("/api/admin/users");
 }
 
-export function createAdminUser(payload: { name: string; email: string; role?: string; authorityId?: string | null }) {
+export function createAdminUser(payload: {
+  name: string;
+  email: string;
+  role?: string;
+  organizationId?: string | null;
+}) {
   return apiData<unknown>("/api/admin/users", {
     method: "POST",
     body: payload,
   });
 }
 
-export function updateAdminUser(userId: string, payload: {
-  name?: string;
-  role?: string;
-  authorityId?: string | null;
-  isActive?: boolean;
-}) {
+export function updateAdminUser(
+  userId: string,
+  payload: {
+    name?: string;
+    role?: string;
+    organizationId?: string | null;
+    isActive?: boolean;
+  },
+) {
   return apiData<unknown>(`/api/admin/users/${userId}`, {
     method: "PATCH",
     body: payload,
@@ -96,7 +110,9 @@ export function listAnalyticsSnapshots(params: {
   if (params.from) search.set("from", params.from);
   if (params.to) search.set("to", params.to);
 
-  return apiData<AnalyticsSnapshot[]>(`/api/admin/analytics/snapshots?${search.toString()}`);
+  return apiData<AnalyticsSnapshot[]>(
+    `/api/admin/analytics/snapshots?${search.toString()}`,
+  );
 }
 
 export type SystemConfig = {
@@ -112,9 +128,15 @@ export function listSystemConfig() {
   return apiData<SystemConfig[]>("/api/admin/system-config");
 }
 
-export function updateSystemConfig(key: string, payload: { value: string; description?: string | null }) {
-  return apiData<SystemConfig>(`/api/admin/system-config/${encodeURIComponent(key)}`, {
-    method: "PUT",
-    body: payload,
-  });
+export function updateSystemConfig(
+  key: string,
+  payload: { value: string; description?: string | null },
+) {
+  return apiData<SystemConfig>(
+    `/api/admin/system-config/${encodeURIComponent(key)}`,
+    {
+      method: "PUT",
+      body: payload,
+    },
+  );
 }

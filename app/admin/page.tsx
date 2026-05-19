@@ -141,8 +141,8 @@ export default function AdminDashboardPage() {
           trendLabel="live data"
         />
         <StatCard
-          title="Authorities"
-          value={isLoading ? "..." : (summary?.totalAuthorities ?? 0)}
+          title="Organizations"
+          value={isLoading ? "..." : (summary?.totalOrganizations ?? 0)}
           icon={Building2}
           trendLabel="live data"
         />
