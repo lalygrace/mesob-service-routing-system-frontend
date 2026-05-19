@@ -12,6 +12,7 @@ export type Service = {
   title: string;
   titleAm?: string;
   titleOm?: string;
+  organizationId?: string;
   organization: string;
   locationHint: string;
   feeHint: string;
@@ -20,6 +21,9 @@ export type Service = {
   durationHint: string;
   durationHintAm?: string;
   durationHintOm?: string;
+  notice?: string | null;
+  syncedFromCms?: boolean;
+  isActive?: boolean;
   requirements: string[];
   requirementsAm?: string[];
   requirementsOm?: string[];
