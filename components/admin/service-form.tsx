@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -31,7 +32,9 @@ type ServiceFormProps = {
   onOpenChange: (open: boolean) => void;
   service?: Service | null;
   organizations: Organization[];
-  onSave: (data: Omit<Service, "id">) => void;
+  onSave: (data: Omit<Service, "id">) => Promise<boolean>;
+  organizationReadOnly?: boolean;
+  lockedOrganizationId?: string;
 };
 
 function LanguageSectionHeader({
@@ -127,6 +130,8 @@ export function ServiceForm({
   service,
   organizations,
   onSave,
+  organizationReadOnly = false,
+  lockedOrganizationId,
 }: ServiceFormProps) {
   const isEdit = !!service;
 
@@ -141,6 +146,7 @@ export function ServiceForm({
   const [durationHint, setDurationHint] = React.useState("");
   const [durationHintAm, setDurationHintAm] = React.useState("");
   const [durationHintOm, setDurationHintOm] = React.useState("");
+  const [notice, setNotice] = React.useState("");
   const [requirements, setRequirements] = React.useState<string[]>([""]);
   const [requirementsAm, setRequirementsAm] = React.useState<string[]>([""]);
   const [requirementsOm, setRequirementsOm] = React.useState<string[]>([""]);
@@ -170,11 +176,18 @@ export function ServiceForm({
         setTitle(service.title);
         setTitleAm(service.titleAm || "");
         setTitleOm(service.titleOm || "");
-        // Try to find matching organization by name
         const matchedOrg = organizations.find(
-          (org) => org.name === service.organization,
+          (org) => org.id === service.organizationId,
         );
-        setOrganizationId(matchedOrg?.id ?? "");
+        const fallbackOrg =
+          matchedOrg ??
+          organizations.find((org) => org.name === service.organization);
+        setOrganizationId(
+          lockedOrganizationId ??
+            service.organizationId ??
+            fallbackOrg?.id ??
+            "",
+        );
         setLocationHint(service.locationHint);
         setFeeHint(service.feeHint);
         setFeeHintAm(service.feeHintAm || "");
@@ -182,6 +195,7 @@ export function ServiceForm({
         setDurationHint(service.durationHint);
         setDurationHintAm(service.durationHintAm || "");
         setDurationHintOm(service.durationHintOm || "");
+        setNotice(service.notice ?? "");
         setRequirements(
           service.requirements.length > 0 ? service.requirements : [""],
         );
@@ -212,19 +226,22 @@ export function ServiceForm({
         setDurationHint("");
         setDurationHintAm("");
         setDurationHintOm("");
+        setNotice("");
         setRequirements([""]);
         setRequirementsAm([""]);
         setRequirementsOm([""]);
         setWorkflowSteps([""]);
         setWorkflowStepsAm([""]);
         setWorkflowStepsOm([""]);
+        if (lockedOrganizationId) setOrganizationId(lockedOrganizationId);
       }
     });
-  }, [service, open, organizations]);
+  }, [service, open, organizations, lockedOrganizationId]);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const organizationName = selectedOrganization?.name ?? "";
+    const organizationName =
+      selectedOrganization?.name ?? service?.organization ?? "";
     // Build keywords from title words as a baseline
     const titleWords = title
       .toLowerCase()
@@ -235,7 +252,7 @@ export function ServiceForm({
       am: titleAm ? titleAm.split(/\s+/).filter(Boolean) : titleWords,
       om: titleOm ? titleOm.split(/\s+/).filter(Boolean) : titleWords,
     };
-    onSave({
+    const didSave = await onSave({
       title,
       titleAm,
       titleOm,
@@ -248,6 +265,7 @@ export function ServiceForm({
       durationHint,
       durationHintAm,
       durationHintOm,
+      notice: notice.trim() || null,
       requirements: requirements.filter(Boolean),
       requirementsAm: requirementsAm.filter(Boolean),
       requirementsOm: requirementsOm.filter(Boolean),
@@ -256,7 +274,7 @@ export function ServiceForm({
       workflowStepsOm: workflowStepsOm.filter(Boolean),
       keywords,
     });
-    onOpenChange(false);
+    if (didSave) onOpenChange(false);
   }
 
   return (
@@ -329,21 +347,29 @@ export function ServiceForm({
               {/* Organization & Location */}
               <div className="space-y-2">
                 <Label>Organization</Label>
-                <Select
-                  value={organizationId}
-                  onValueChange={setOrganizationId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select organization" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {organizations.map((org) => (
-                      <SelectItem key={org.id} value={org.id}>
-                        {org.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {organizationReadOnly ? (
+                  <Input
+                    value={selectedOrganization?.name ?? ""}
+                    readOnly
+                    className="bg-muted/50 text-muted-foreground cursor-not-allowed"
+                  />
+                ) : (
+                  <Select
+                    value={organizationId}
+                    onValueChange={setOrganizationId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select organization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizations.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -452,6 +478,25 @@ export function ServiceForm({
                     placeholder="e.g. Guyyaa walfakkaataa"
                   />
                 </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <Label htmlFor="svc-notice">
+                  Notice
+                  <span className="text-muted-foreground font-normal">
+                    {" "}
+                    (Optional)
+                  </span>
+                </Label>
+                <Textarea
+                  id="svc-notice"
+                  value={notice}
+                  onChange={(e) => setNotice(e.target.value)}
+                  placeholder="Optional — e.g. This service is temporarily unavailable at this center."
+                  rows={3}
+                />
               </div>
             </TabsContent>
 
