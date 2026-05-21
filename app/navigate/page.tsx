@@ -364,7 +364,7 @@ function NavigateContent() {
 
       if (result.systemAction === "ASK_CLARIFICATION") {
         setAiQuestion(result.message);
-        setAiOptions(null);
+        setAiOptions(result.options || null);
         if (intakeMethod === "voice" && result.message && (language === "am" || language === "om")) {
           ttsPlayback.playText(result.message, language);
         }
@@ -432,6 +432,7 @@ function NavigateContent() {
 
       if (result.systemAction === "ASK_CLARIFICATION") {
         setAiQuestion(result.message);
+        setAiOptions(result.options || null);
         if (intakeMethod === "voice" && result.message && (language === "am" || language === "om")) {
           ttsPlayback.playText(result.message, language);
         }
