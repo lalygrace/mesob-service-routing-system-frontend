@@ -42,7 +42,7 @@ import { ReviewStep } from "@/components/navigator/steps/review-step";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Building2 } from "lucide-react";
 import { getStrings } from "@/lib/service-navigator/strings";
-import { useTts } from "@/lib/hooks/use-tts";
+import { useTtsPlayback } from "@/lib/hooks/use-tts-playback";
 import { useIdleTimeout } from "@/lib/hooks/use-idle-timeout";
 import type {
   Decision,
@@ -239,7 +239,7 @@ function NavigateContent() {
   const [feedbackSubmitted, setFeedbackSubmitted] = React.useState(false);
 
   // ── TTS ──────────────────────────────────────────────────────────────────────
-  const tts = useTts(language);
+  const ttsPlayback = useTtsPlayback();
 
   const strings = getStrings(language);
   const isFullscreen = useFullscreenStatus();
@@ -365,8 +365,9 @@ function NavigateContent() {
       if (result.systemAction === "ASK_CLARIFICATION") {
         setAiQuestion(result.message);
         setAiOptions(null);
-        if (intakeMethod === "voice" && result.message)
-          tts.speak(result.message);
+        if (intakeMethod === "voice" && result.message && (language === "am" || language === "om")) {
+          ttsPlayback.playText(result.message, language);
+        }
         return;
       }
 
@@ -389,7 +390,9 @@ function NavigateContent() {
       setSelectedService(flatService);
       setCheckedRequirements({});
 
-      if (intakeMethod === "voice" && result.message) tts.speak(result.message);
+      if (intakeMethod === "voice" && result.message && (language === "am" || language === "om")) {
+        ttsPlayback.playText(result.message, language);
+      }
 
       goTo("results");
     } catch (err) {
@@ -429,8 +432,9 @@ function NavigateContent() {
 
       if (result.systemAction === "ASK_CLARIFICATION") {
         setAiQuestion(result.message);
-        if (intakeMethod === "voice" && result.message)
-          tts.speak(result.message);
+        if (intakeMethod === "voice" && result.message && (language === "am" || language === "om")) {
+          ttsPlayback.playText(result.message, language);
+        }
         return;
       }
 
@@ -454,7 +458,9 @@ function NavigateContent() {
       setSelectedService(flatService);
       setCheckedRequirements({});
 
-      if (intakeMethod === "voice" && result.message) tts.speak(result.message);
+      if (intakeMethod === "voice" && result.message && (language === "am" || language === "om")) {
+        ttsPlayback.playText(result.message, language);
+      }
 
       goTo("results");
     } catch (err) {
@@ -505,7 +511,7 @@ function NavigateContent() {
 
   // ── Full session reset ────────────────────────────────────────────────────────
   function resetFlow() {
-    tts.stop();
+    ttsPlayback.stop();
     setSessionCount((c) => c + 1);
     setStep("language");
     setIntakeMethod(null);
@@ -526,7 +532,7 @@ function NavigateContent() {
 
   // ── Back navigation ───────────────────────────────────────────────────────────
   function handleBack() {
-    tts.stop();
+    ttsPlayback.stop();
     switch (step) {
       case "intake":
         goTo("language");

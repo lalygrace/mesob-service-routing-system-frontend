@@ -122,7 +122,6 @@ function OrganizationList({
                 {organization.floor && (
                   <p className="text-xs text-muted-foreground">
                     Floor {organization.floor}
-                    {organization.wing ? ` · ${organization.wing}` : ""}
                   </p>
                 )}
               </div>

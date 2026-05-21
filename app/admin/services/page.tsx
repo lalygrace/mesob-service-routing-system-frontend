@@ -93,7 +93,7 @@ export default function ServicesPage() {
     );
   });
 
-  async function handleSave(data: Omit<Service, "id">) {
+  async function handleSave(data: Omit<Service, "id">): Promise<boolean> {
     try {
       if (editing) {
         const updated = await updateAdminService(editing.id, data);
@@ -107,8 +107,10 @@ export default function ServicesPage() {
         toast.success("Service created successfully");
       }
       setEditing(null);
+      return true;
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to save service"));
+      return false;
     }
   }
 
