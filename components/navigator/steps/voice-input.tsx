@@ -350,19 +350,33 @@ export function VoiceInput({
               <p className="text-sm text-muted-foreground">Processing audio...</p>
             </div>
           ) : (
-            <div className="w-full overflow-hidden relative">
+            <div className="w-full h-[100px] flex items-center justify-center relative">
               <style dangerouslySetInnerHTML={{
                 __html: `
-                  /* Hide react-voice-visualizer error messages */
-                  .voice-visualizer > div:last-child {
-                    display: none !important;
+                  /* Voice visualizer container styling */
+                  .voice-visualizer-wrapper {
+                    width: 100%;
+                    height: 100px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                   }
-                  .voice-visualizer p[style*="color"] {
+                  .voice-visualizer-wrapper > div {
+                    width: 100% !important;
+                    height: 100px !important;
+                  }
+                  .voice-visualizer-wrapper canvas {
+                    width: 100% !important;
+                    height: 100px !important;
+                    display: block !important;
+                  }
+                  /* Hide error messages but keep canvas visible */
+                  .voice-visualizer-wrapper p[style*="color: rgb(239, 68, 68)"] {
                     display: none !important;
                   }
                 `
               }} />
-              <div className="voice-visualizer">
+              <div className="voice-visualizer-wrapper">
                 <VoiceVisualizer
                   controls={recorderControls}
                   height={100}

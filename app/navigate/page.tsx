@@ -591,7 +591,56 @@ function NavigateContent() {
       )}
 
       <main className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative z-10">
-        <div className="w-full max-w-5xl h-[85vh] min-h-[600px] max-h-[900px] rounded-3xl overflow-hidden flex flex-col">
+        {/* Navigation Buttons Container - Outside main card */}
+        <div className="w-full max-w-7xl flex items-center justify-between mb-4 px-4">
+          {/* Large Back Button - Left Side */}
+          {showBack && (
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={handleBack}
+              className="group relative overflow-hidden rounded-2xl h-20 w-20 p-0 bg-white/90 dark:bg-background/90 backdrop-blur-md hover:bg-white dark:hover:bg-background hover:scale-110 transition-all duration-300 active:scale-95 shadow-xl border-2 border-primary/20 hover:border-primary"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-10 w-10 text-primary group-hover:-translate-x-1 transition-transform duration-300"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </Button>
+          )}
+          {!showBack && <div className="h-20 w-20" />}
+
+          {/* Large Start Over Button - Right Side */}
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={resetFlow}
+            className="group relative overflow-hidden rounded-2xl h-20 w-20 p-0 bg-white/90 dark:bg-background/90 backdrop-blur-md hover:bg-white dark:hover:bg-background hover:scale-110 transition-all duration-300 active:scale-95 shadow-xl border-2 border-amber-500/20 hover:border-amber-500"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-10 w-10 text-amber-500 group-hover:rotate-180 transition-transform duration-500"
+            >
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+          </Button>
+        </div>
+
+        <div className="w-full max-w-5xl h-[85vh] min-h-[600px] max-h-[900px] rounded-3xl overflow-hidden flex flex-col shadow-2xl">
           {/* Step indicator */}
           <div className="border-b border-white/10 dark:border-white/5 bg-background/20 backdrop-blur-md py-4 px-6 shrink-0">
             <div className="mx-auto max-w-4xl">
