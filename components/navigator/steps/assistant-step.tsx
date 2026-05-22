@@ -120,9 +120,9 @@ export function AssistantStep({
       {/* Option buttons */}
       {!isLoading && !error && hasAiClarify && aiOptions && onPickAiOption && (
         <div className="grid gap-3 sm:grid-cols-2">
-          {aiOptions.map((option) => (
+          {aiOptions.map((option, index) => (
             <button
-              key={option.value}
+              key={`${option.value}-${index}`}
               onClick={() => onPickAiOption(option.value)}
               className="rounded-xl border border-border bg-card p-5 text-left font-semibold text-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
