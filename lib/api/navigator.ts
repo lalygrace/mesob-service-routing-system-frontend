@@ -66,11 +66,27 @@ export async function transcribeAudio(
 ): Promise<SttResult> {
   const prismaLang = languageToPrisma(language);
 
+  console.log('=== Frontend: Preparing STT Request ===');
+  console.log('Audio blob size:', audioBlob.size);
+  console.log('Audio blob type:', audioBlob.type);
+  console.log('Language:', language, '→', prismaLang);
+
   const formData = new FormData();
   formData.append("audio", audioBlob, `recording.${blobExtension(audioBlob)}`);
   formData.append("fileName", `recording.${blobExtension(audioBlob)}`);
   formData.append("mimeType", audioBlob.type || "audio/webm");
   formData.append("language", prismaLang);
+
+  console.log('FormData fields:');
+  for (const [key, value] of formData.entries()) {
+    if (value instanceof Blob) {
+      console.log(`  ${key}: Blob(${value.size} bytes, ${value.type})`);
+    } else {
+      console.log(`  ${key}: ${value}`);
+    }
+  }
+
+  console.log('Sending request to:', `${getApiBaseUrl()}/api/stt/transcribe`);
 
   const response = await fetch(`${getApiBaseUrl()}/api/stt/transcribe`, {
     method: "POST",
@@ -78,12 +94,19 @@ export async function transcribeAudio(
     credentials: "include",
   });
 
+  console.log('Response status:', response.status);
+
   if (!response.ok) {
     const text = await response.text().catch(() => "");
+    console.error('STT Error response:', text);
     throw new Error(`STT failed (${response.status}): ${text}`);
   }
 
-  return response.json() as Promise<SttResult>;
+  const result = await response.json() as SttResult;
+  console.log('STT Success:', result);
+  console.log('=====================================');
+
+  return result;
 }
 
 // ─── TTS — Text-to-Speech ─────────────────────────────────────────────────────

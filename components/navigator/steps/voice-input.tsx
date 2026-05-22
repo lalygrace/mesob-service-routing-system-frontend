@@ -9,14 +9,18 @@
  * The browser's Web Speech API is intentionally NOT used here — it has very
  * poor support for Amharic and Afaan Oromo. All transcription goes through
  * the addis.ai STT model which is purpose-built for Ethiopian languages.
+ *
+ * Uses react-voice-visualizer for professional audio visualization only.
+ * Recording is handled by our own MediaRecorder implementation.
  */
 
 import * as React from "react";
-import { Mic, MicOff, RotateCcw, Timer, Loader2 } from "lucide-react";
+import { RotateCcw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { transcribeAudio } from "@/lib/api/navigator";
 import type { LanguageCode } from "@/lib/service-navigator/types";
 import type { Strings } from "@/lib/service-navigator/strings";
+import { useVoiceVisualizer, VoiceVisualizer } from "react-voice-visualizer";
 
 // Maximum recording duration enforced by addis.ai STT (60 s hard limit)
 const MAX_RECORD_MS = 58_000;
@@ -45,17 +49,26 @@ export function VoiceInput({
   onSubmit: () => void;
   onSwitchToTyping: () => void;
 }) {
-  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
-  const chunksRef = React.useRef<Blob[]>([]);
-  const intervalRef = React.useRef<number | null>(null);
-  const startedAtRef = React.useRef<number | null>(null);
-  const autoStopRef = React.useRef<number | null>(null);
-
   const [recordingState, setRecordingState] =
     React.useState<RecordingState>("idle");
-  const [elapsedMs, setElapsedMs] = React.useState(0);
   const [error, setError] = React.useState<string | null>(null);
   const [mediaSupported, setMediaSupported] = React.useState(true);
+  const [recordingTime, setRecordingTime] = React.useState(0);
+  
+  // Our own MediaRecorder for actual recording
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const audioChunksRef = React.useRef<Blob[]>([]);
+  const recordingTimerRef = React.useRef<number | null>(null);
+  const autoStopRef = React.useRef<number | null>(null);
+
+  // Voice visualizer for display only
+  const recorderControls = useVoiceVisualizer();
+  const {
+    error: visualizerError,
+    startRecording: startVisualizer,
+    stopRecording: stopVisualizer,
+    clearCanvas,
+  } = recorderControls;
 
   // Check MediaRecorder support on mount
   React.useEffect(() => {
@@ -68,123 +81,206 @@ export function VoiceInput({
     }
   }, []);
 
+  // Handle visualizer errors
+  React.useEffect(() => {
+    if (visualizerError) {
+      console.error("Voice visualizer error:", visualizerError);
+    }
+  }, [visualizerError]);
+
   // Cleanup on unmount
   React.useEffect(() => {
     return () => {
-      stopTimer();
+      if (recordingTimerRef.current) window.clearInterval(recordingTimerRef.current);
       if (autoStopRef.current) window.clearTimeout(autoStopRef.current);
-      if (
-        mediaRecorderRef.current &&
-        mediaRecorderRef.current.state !== "inactive"
-      ) {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
         mediaRecorderRef.current.stop();
       }
     };
   }, []);
 
-  function stopTimer() {
-    if (intervalRef.current) {
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }
-
-  function startTimer() {
-    stopTimer();
-    startedAtRef.current = Date.now();
-    setElapsedMs(0);
-    intervalRef.current = window.setInterval(() => {
-      if (!startedAtRef.current) return;
-      setElapsedMs(Date.now() - startedAtRef.current);
-    }, 250);
-  }
-
-  async function startRecording() {
+  async function handleStartRecording() {
     setError(null);
-    chunksRef.current = [];
-
-    let stream: MediaStream;
+    audioChunksRef.current = [];
+    setRecordingTime(0);
+    
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
-      setError(strings.voice.notSupportedDesc);
-      setRecordingState("error");
-      return;
-    }
-
-    // Pick the best supported MIME type
-    const mimeType = [
-      "audio/webm;codecs=opus",
-      "audio/webm",
-      "audio/mp4",
-      "audio/ogg;codecs=opus",
-    ].find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
-
-    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
-    mediaRecorderRef.current = recorder;
-
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data);
-    };
-
-    recorder.onstop = async () => {
-      // Stop all tracks to release the microphone
-      stream.getTracks().forEach((t) => t.stop());
-      stopTimer();
-
-      const blob = new Blob(chunksRef.current, {
-        type: mimeType || "audio/webm",
+      console.log("Requesting microphone access...");
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          channelCount: 1, // Mono
+          sampleRate: 16000, // 16kHz as recommended by AddisAI
+          echoCancellation: true,
+          noiseSuppression: true,
+        } 
       });
 
-      if (blob.size < 100) {
-        // Nothing was recorded
-        setRecordingState("idle");
-        return;
+      console.log("Microphone access granted");
+
+      // Determine the best MIME type
+      const mimeTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/wav',
+      ];
+      
+      let selectedMimeType = '';
+      for (const mimeType of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          selectedMimeType = mimeType;
+          console.log("Selected MIME type:", mimeType);
+          break;
+        }
       }
 
-      setRecordingState("transcribing");
+      // Create MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: selectedMimeType || undefined,
+      });
 
-      try {
-        const result = await transcribeAudio(blob, language);
-        const transcript = result.transcription?.trim() ?? "";
-        onChange(transcript);
-        setRecordingState("done");
-      } catch {
+      mediaRecorderRef.current = mediaRecorder;
+
+      // Collect audio data
+      mediaRecorder.ondataavailable = (event) => {
+        console.log("Data available:", event.data.size, "bytes");
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      // Handle recording stop
+      mediaRecorder.onstop = async () => {
+        console.log("MediaRecorder stopped");
+        console.log("Total chunks:", audioChunksRef.current.length);
+        
+        // Stop the stream
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Clear timers
+        if (recordingTimerRef.current) {
+          window.clearInterval(recordingTimerRef.current);
+          recordingTimerRef.current = null;
+        }
+        if (autoStopRef.current) {
+          window.clearTimeout(autoStopRef.current);
+          autoStopRef.current = null;
+        }
+
+        // Create blob from chunks
+        if (audioChunksRef.current.length > 0) {
+          const audioBlob = new Blob(audioChunksRef.current, { 
+            type: mediaRecorder.mimeType || 'audio/webm' 
+          });
+          console.log("Created audio blob:", {
+            size: audioBlob.size,
+            type: audioBlob.type,
+          });
+          
+          if (audioBlob.size > 100) {
+            await processRecording(audioBlob);
+          } else {
+            console.warn("Audio blob too small, no audio recorded");
+            setRecordingState("idle");
+            setError("No audio was recorded. Please try again.");
+          }
+        } else {
+          console.warn("No audio chunks collected");
+          setRecordingState("idle");
+          setError("No audio was recorded. Please try again.");
+        }
+      };
+
+      mediaRecorder.onerror = (event) => {
+        console.error("MediaRecorder error:", event);
         setError(strings.voice.notSupportedDesc);
         setRecordingState("error");
+      };
+
+      // Start recording
+      mediaRecorder.start(100); // Collect data every 100ms
+      console.log("MediaRecorder started");
+      
+      setRecordingState("recording");
+
+      // Start visualizer for display
+      try {
+        await startVisualizer();
+      } catch (err) {
+        console.warn("Visualizer failed to start, continuing without it:", err);
       }
-    };
 
-    recorder.start(250); // collect chunks every 250 ms
-    setRecordingState("recording");
-    startTimer();
+      // Start recording timer
+      const startTime = Date.now();
+      recordingTimerRef.current = window.setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        setRecordingTime(elapsed);
+        
+        // Auto-stop at max duration
+        if (elapsed >= MAX_RECORD_MS) {
+          handleStopRecording();
+        }
+      }, 100);
 
-    // Auto-stop at the addis.ai STT hard limit
-    autoStopRef.current = window.setTimeout(() => {
-      stopRecording();
-    }, MAX_RECORD_MS);
+      // Set auto-stop timeout as backup
+      autoStopRef.current = window.setTimeout(() => {
+        handleStopRecording();
+      }, MAX_RECORD_MS);
+
+    } catch (err) {
+      console.error("Failed to start recording:", err);
+      setError(strings.voice.notSupportedDesc);
+      setRecordingState("error");
+    }
   }
 
-  function stopRecording() {
-    if (autoStopRef.current) {
-      window.clearTimeout(autoStopRef.current);
-      autoStopRef.current = null;
+  function handleStopRecording() {
+    console.log("Stopping recording...");
+    
+    // Stop visualizer
+    try {
+      stopVisualizer();
+    } catch (err) {
+      console.warn("Failed to stop visualizer:", err);
     }
-    stopTimer();
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !== "inactive"
-    ) {
+
+    // Stop MediaRecorder
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
     }
   }
 
+  async function processRecording(blob: Blob) {
+    console.log("Processing recording blob:", {
+      size: blob.size,
+      type: blob.type,
+    });
+
+    setRecordingState("transcribing");
+
+    try {
+      const result = await transcribeAudio(blob, language);
+      
+      console.log("Transcription result:", result);
+      
+      const transcript = result.transcription?.trim() ?? "";
+      onChange(transcript);
+      setRecordingState("done");
+    } catch (err) {
+      console.error("Transcription error:", err);
+      setError(err instanceof Error ? err.message : strings.voice.notSupportedDesc);
+      setRecordingState("error");
+    }
+  }
+
   function reset() {
-    stopRecording();
+    handleStopRecording();
+    clearCanvas();
     setError(null);
     onChange("");
-    setElapsedMs(0);
     setRecordingState("idle");
+    setRecordingTime(0);
+    audioChunksRef.current = [];
   }
 
   const isRecording = recordingState === "recording";
@@ -200,7 +296,6 @@ export function VoiceInput({
           </h1>
         </div>
         <div className="rounded-xl border border-white/20 bg-card/40 backdrop-blur-md p-6 text-center space-y-3 shadow-xl">
-          <MicOff className="mx-auto h-10 w-10 text-muted-foreground" />
           <p className="font-semibold text-foreground">
             {strings.voice.notSupported}
           </p>
@@ -229,58 +324,114 @@ export function VoiceInput({
         <p className="text-muted-foreground">{strings.voice.editHint}</p>
       </div>
 
-      {/* Recording card */}
-      <div className="rounded-xl border border-white/20 bg-card/40 backdrop-blur-md p-5 shadow-xl">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">
-              {isTranscribing
-                ? "Transcribing…"
-                : isRecording
-                  ? strings.voice.listening
-                  : isDone
-                    ? strings.voice.whatWeHeard
-                    : strings.voice.holdToSpeak}
-            </p>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Timer className="h-4 w-4" />
-              <span>{formatMs(elapsedMs)}</span>
-            </div>
+      {/* Voice Visualizer Card */}
+      <div className="rounded-xl border border-white/20 bg-card/40 backdrop-blur-md p-6 shadow-xl space-y-4">
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-foreground text-center">
+            {isTranscribing
+              ? "Transcribing…"
+              : isRecording
+                ? strings.voice.listening
+                : isDone
+                  ? strings.voice.whatWeHeard
+                  : strings.voice.holdToSpeak}
+          </p>
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <span>{formatMs(recordingTime)}</span>
+            <span>/ {formatMs(MAX_RECORD_MS)}</span>
           </div>
-
-          {/* Mic button — hold to record, release to stop */}
-          <button
-            onPointerDown={(e) => {
-              e.currentTarget.setPointerCapture(e.pointerId);
-              if (!isRecording && !isTranscribing) startRecording();
-            }}
-            onPointerUp={() => {
-              if (isRecording) stopRecording();
-            }}
-            onPointerCancel={() => {
-              if (isRecording) stopRecording();
-            }}
-            disabled={isTranscribing}
-            className={[
-              "flex h-14 w-14 items-center justify-center rounded-full border border-white/20 backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              isRecording
-                ? "bg-primary text-primary-foreground animate-pulse"
-                : isTranscribing
-                  ? "bg-muted text-muted-foreground cursor-not-allowed"
-                  : "bg-background/50 text-foreground hover:bg-muted/40",
-            ].join(" ")}
-            aria-label={strings.voice.holdToSpeak}
-          >
-            {isTranscribing ? (
-              <Loader2 className="h-7 w-7 animate-spin" />
-            ) : (
-              <Mic className="h-7 w-7" />
-            )}
-          </button>
         </div>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          {isRecording ? strings.voice.release : strings.voice.holdToSpeak}
+        {/* Voice Visualizer */}
+        <div className="relative min-h-[120px] flex items-center justify-center rounded-lg bg-background/30 p-4">
+          {isTranscribing ? (
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Processing audio...</p>
+            </div>
+          ) : (
+            <div className="w-full overflow-hidden relative">
+              <style dangerouslySetInnerHTML={{
+                __html: `
+                  /* Hide react-voice-visualizer error messages */
+                  .voice-visualizer > div:last-child {
+                    display: none !important;
+                  }
+                  .voice-visualizer p[style*="color"] {
+                    display: none !important;
+                  }
+                `
+              }} />
+              <div className="voice-visualizer">
+                <VoiceVisualizer
+                  controls={recorderControls}
+                  height={100}
+                  width="100%"
+                  backgroundColor="transparent"
+                  mainBarColor="#3b82f6"
+                  secondaryBarColor="#60a5fa"
+                  barWidth={3}
+                  gap={2}
+                  rounded={3}
+                  isControlPanelShown={false}
+                  isDownloadAudioButtonShown={false}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Control Buttons */}
+        <div className="flex items-center justify-center gap-3">
+          {!isRecording && !isTranscribing && (
+            <Button
+              onClick={handleStartRecording}
+              size="lg"
+              className="rounded-full h-16 w-16 p-0"
+              disabled={isTranscribing}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-8 w-8"
+              >
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" x2="12" y1="19" y2="22" />
+              </svg>
+            </Button>
+          )}
+          
+          {isRecording && (
+            <Button
+              onClick={handleStopRecording}
+              size="lg"
+              variant="destructive"
+              className="rounded-full h-16 w-16 p-0 animate-pulse"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-8 w-8"
+              >
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+            </Button>
+          )}
+        </div>
+
+        <p className="text-center text-xs text-muted-foreground">
+          {isRecording
+            ? "Click the button to stop recording"
+            : isTranscribing
+              ? "Please wait while we process your audio"
+              : "Click the microphone to start recording"}
         </p>
       </div>
 

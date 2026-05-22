@@ -56,6 +56,7 @@ export type CitizenInteractionResult = {
   turnNumber: number;
   systemAction: "ASK_CLARIFICATION" | "SHOW_OPTIONS" | "SHOW_FINAL_SUMMARY" | string;
   message: string;
+  ttsText?: string | null; // TTS text from Gemini for voice playback (am/om only)
   matches: CitizenMatch[];
   options?: Array<{ label: string; value: string }>;
 };

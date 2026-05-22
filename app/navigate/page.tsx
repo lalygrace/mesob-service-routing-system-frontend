@@ -365,8 +365,9 @@ function NavigateContent() {
       if (result.systemAction === "ASK_CLARIFICATION") {
         setAiQuestion(result.message);
         setAiOptions(result.options || null);
-        if (intakeMethod === "voice" && result.message && (language === "am" || language === "om")) {
-          ttsPlayback.playText(result.message, language);
+        // Use ttsText from Gemini if available (voice mode only, am/om only)
+        if (intakeMethod === "voice" && result.ttsText && (language === "am" || language === "om")) {
+          ttsPlayback.playText(result.ttsText, language);
         }
         return;
       }
@@ -390,8 +391,9 @@ function NavigateContent() {
       setSelectedService(flatService);
       setCheckedRequirements({});
 
-      if (intakeMethod === "voice" && result.message && (language === "am" || language === "om")) {
-        ttsPlayback.playText(result.message, language);
+      // Use ttsText from Gemini if available (voice mode only, am/om only)
+      if (intakeMethod === "voice" && result.ttsText && (language === "am" || language === "om")) {
+        ttsPlayback.playText(result.ttsText, language);
       }
 
       goTo("results");
@@ -433,8 +435,9 @@ function NavigateContent() {
       if (result.systemAction === "ASK_CLARIFICATION") {
         setAiQuestion(result.message);
         setAiOptions(result.options || null);
-        if (intakeMethod === "voice" && result.message && (language === "am" || language === "om")) {
-          ttsPlayback.playText(result.message, language);
+        // Use ttsText from Gemini if available (voice mode only, am/om only)
+        if (intakeMethod === "voice" && result.ttsText && (language === "am" || language === "om")) {
+          ttsPlayback.playText(result.ttsText, language);
         }
         return;
       }
@@ -459,8 +462,9 @@ function NavigateContent() {
       setSelectedService(flatService);
       setCheckedRequirements({});
 
-      if (intakeMethod === "voice" && result.message && (language === "am" || language === "om")) {
-        ttsPlayback.playText(result.message, language);
+      // Use ttsText from Gemini if available (voice mode only, am/om only)
+      if (intakeMethod === "voice" && result.ttsText && (language === "am" || language === "om")) {
+        ttsPlayback.playText(result.ttsText, language);
       }
 
       goTo("results");

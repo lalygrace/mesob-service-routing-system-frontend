@@ -46,15 +46,18 @@ function SettingsPageContent() {
   const [dailyReports, setDailyReports] = React.useState(true);
 
   // AI Engine state
-  const [aiApiKey, setAiApiKey] = React.useState("");
-  const [aiApiKeyVisible, setAiApiKeyVisible] = React.useState(false);
-  const [aiBaseUrl, setAiBaseUrl] = React.useState(
+  const [geminiApiKey, setGeminiApiKey] = React.useState("");
+  const [geminiApiKeyVisible, setGeminiApiKeyVisible] = React.useState(false);
+  const [geminiModel, setGeminiModel] = React.useState("gemini-2.5-flash");
+  const [geminiTemperature, setGeminiTemperature] = React.useState(0.0);
+  const [geminiMaxTokens, setGeminiMaxTokens] = React.useState(2000);
+  
+  const [addisAiApiKey, setAddisAiApiKey] = React.useState("");
+  const [addisAiApiKeyVisible, setAddisAiApiKeyVisible] = React.useState(false);
+  const [addisAiBaseUrl, setAddisAiBaseUrl] = React.useState(
     "https://api.addisassistant.com",
   );
-  const [aiModel, setAiModel] = React.useState("Addis-፩-አሌፍ");
-  const [aiTemperature, setAiTemperature] = React.useState(0.7);
-  const [aiMaxTokens, setAiMaxTokens] = React.useState(1200);
-  const [aiTargetLang, setAiTargetLang] = React.useState("am");
+  
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
 
@@ -81,14 +84,18 @@ function SettingsPageContent() {
           setDailyReports(
             (byKey.get("daily_reports_enabled") ?? "true") === "true",
           );
-          setAiApiKey(byKey.get("addis_ai_api_key") ?? "");
-          setAiBaseUrl(
+          
+          // Gemini Configuration
+          setGeminiApiKey(byKey.get("gemini_api_key") ?? "");
+          setGeminiModel(byKey.get("gemini_model") ?? "gemini-2.5-flash");
+          setGeminiTemperature(Number(byKey.get("gemini_temperature") ?? 0.0));
+          setGeminiMaxTokens(Number(byKey.get("gemini_max_tokens") ?? 2000));
+          
+          // AddisAI Configuration
+          setAddisAiApiKey(byKey.get("addis_ai_api_key") ?? "");
+          setAddisAiBaseUrl(
             byKey.get("addis_ai_base_url") ?? "https://api.addisassistant.com",
           );
-          setAiModel(byKey.get("addis_ai_model") ?? "Addis-፩-አሌፍ");
-          setAiTemperature(Number(byKey.get("addis_ai_temperature") ?? 0.7));
-          setAiMaxTokens(Number(byKey.get("addis_ai_max_tokens") ?? 1200));
-          setAiTargetLang(byKey.get("addis_ai_target_language") ?? "am");
         })
         .catch((error) => {
           toast.error(getApiErrorMessage(error, "Failed to load settings"));
@@ -121,16 +128,18 @@ function SettingsPageContent() {
         updateSystemConfig("daily_reports_enabled", {
           value: String(dailyReports),
         }),
-        updateSystemConfig("addis_ai_api_key", { value: aiApiKey }),
-        updateSystemConfig("addis_ai_base_url", { value: aiBaseUrl }),
-        updateSystemConfig("addis_ai_model", { value: aiModel }),
-        updateSystemConfig("addis_ai_temperature", {
-          value: String(aiTemperature),
+        // Gemini Configuration
+        updateSystemConfig("gemini_api_key", { value: geminiApiKey }),
+        updateSystemConfig("gemini_model", { value: geminiModel }),
+        updateSystemConfig("gemini_temperature", {
+          value: String(geminiTemperature),
         }),
-        updateSystemConfig("addis_ai_max_tokens", {
-          value: String(aiMaxTokens),
+        updateSystemConfig("gemini_max_tokens", {
+          value: String(geminiMaxTokens),
         }),
-        updateSystemConfig("addis_ai_target_language", { value: aiTargetLang }),
+        // AddisAI Configuration
+        updateSystemConfig("addis_ai_api_key", { value: addisAiApiKey }),
+        updateSystemConfig("addis_ai_base_url", { value: addisAiBaseUrl }),
       ]);
       toast.success("Settings saved successfully");
     } catch (error) {
@@ -387,32 +396,180 @@ function SettingsPageContent() {
           </CardContent>
         </Card>
 
-        {/* ── AI Engine (Addis AI) ──────────────────────────── */}
+        {/* ── AI Engine: Gemini (Primary Intelligence) ──────────────────────────── */}
         <Card className="border-border/50 bg-card/80 backdrop-blur-sm lg:col-span-2">
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                 <Sparkles className="h-4 w-4 text-primary" />
               </div>
-              <div>
+              <div className="flex-1">
                 <CardTitle className="text-base">
-                  AI Engine (Addis AI)
+                  Gemini AI (Primary Intelligence Layer)
                 </CardTitle>
                 <CardDescription>
-                  Configure the Addis AI integration for service routing
+                  Google Gemini Flash for intent understanding and service routing
                 </CardDescription>
               </div>
+              <Badge variant="outline" className="text-xs">
+                Primary
+              </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="ai-api-key">ADDIS_AI_API_KEY</Label>
+              <Label htmlFor="gemini-api-key">GEMINI_API_KEY</Label>
               <div className="relative">
                 <Input
-                  id="ai-api-key"
-                  type={aiApiKeyVisible ? "text" : "password"}
-                  value={aiApiKey}
-                  onChange={(e) => setAiApiKey(e.target.value)}
+                  id="gemini-api-key"
+                  type={geminiApiKeyVisible ? "text" : "password"}
+                  value={geminiApiKey}
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                  placeholder="AIzaSy..."
+                  className="pr-10 font-mono text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1 h-7 w-7"
+                  onClick={() => setGeminiApiKeyVisible(!geminiApiKeyVisible)}
+                >
+                  {geminiApiKeyVisible ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Your API key from{" "}
+                <a
+                  href="https://aistudio.google.com/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline"
+                >
+                  Google AI Studio
+                </a>
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="gemini-model">Model</Label>
+                <Select value={geminiModel} onValueChange={setGeminiModel}>
+                  <SelectTrigger id="gemini-model">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gemini-2.5-flash">
+                      gemini-2.5-flash (Recommended)
+                    </SelectItem>
+                    <SelectItem value="gemini-2.0-flash">
+                      gemini-2.0-flash
+                    </SelectItem>
+                    <SelectItem value="gemini-1.5-flash">
+                      gemini-1.5-flash
+                    </SelectItem>
+                    <SelectItem value="gemini-1.5-flash-8b">
+                      gemini-1.5-flash-8b
+                    </SelectItem>
+                    <SelectItem value="gemini-1.5-pro">
+                      gemini-1.5-pro
+                    </SelectItem>
+                    <SelectItem value="gemini-pro">
+                      gemini-pro (Legacy)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Flash models are optimized for speed
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="gemini-temperature">Temperature</Label>
+                <Input
+                  id="gemini-temperature"
+                  type="number"
+                  min={0.0}
+                  max={2.0}
+                  step={0.1}
+                  value={geminiTemperature}
+                  onChange={(e) => setGeminiTemperature(Number(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  0.0 = deterministic (recommended for routing)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="gemini-max-tokens">Max Output Tokens</Label>
+                <Input
+                  id="gemini-max-tokens"
+                  type="number"
+                  min={100}
+                  max={8192}
+                  step={100}
+                  value={geminiMaxTokens}
+                  onChange={(e) => setGeminiMaxTokens(Number(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Maximum response length
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border/50 bg-muted/30 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">About Gemini Integration</p>
+                  <p className="text-xs text-muted-foreground">
+                    Gemini Flash is the primary intelligence layer responsible for understanding citizen requests,
+                    matching them to services, and generating clarification questions. It processes all natural
+                    language input and makes routing decisions based on the service catalog.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── AI Engine: AddisAI (Audio Processing) ──────────────────────────── */}
+        <Card className="border-border/50 bg-card/80 backdrop-blur-sm lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <CardTitle className="text-base">
+                  AddisAI (Audio Processing Layer)
+                </CardTitle>
+                <CardDescription>
+                  Speech-to-Text and Text-to-Speech for Ethiopian languages
+                </CardDescription>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                Audio
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="addis-ai-api-key">ADDIS_AI_API_KEY</Label>
+              <div className="relative">
+                <Input
+                  id="addis-ai-api-key"
+                  type={addisAiApiKeyVisible ? "text" : "password"}
+                  value={addisAiApiKey}
+                  onChange={(e) => setAddisAiApiKey(e.target.value)}
                   placeholder="sk_..."
                   className="pr-10 font-mono text-sm"
                 />
@@ -421,9 +578,9 @@ function SettingsPageContent() {
                   variant="ghost"
                   size="icon"
                   className="absolute right-1 top-1 h-7 w-7"
-                  onClick={() => setAiApiKeyVisible(!aiApiKeyVisible)}
+                  onClick={() => setAddisAiApiKeyVisible(!addisAiApiKeyVisible)}
                 >
-                  {aiApiKeyVisible ? (
+                  {addisAiApiKeyVisible ? (
                     <EyeOff className="h-4 w-4 text-muted-foreground" />
                   ) : (
                     <Eye className="h-4 w-4 text-muted-foreground" />
@@ -438,17 +595,17 @@ function SettingsPageContent() {
                   rel="noopener noreferrer"
                   className="text-primary underline"
                 >
-                  Addis AI Dashboard
+                  AddisAI Dashboard
                 </a>
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="ai-base-url">ADDIS_AI_BASE_URL</Label>
+              <Label htmlFor="addis-ai-base-url">ADDIS_AI_BASE_URL</Label>
               <Input
-                id="ai-base-url"
-                value={aiBaseUrl}
-                onChange={(e) => setAiBaseUrl(e.target.value)}
+                id="addis-ai-base-url"
+                value={addisAiBaseUrl}
+                onChange={(e) => setAddisAiBaseUrl(e.target.value)}
                 placeholder="https://api.addisassistant.com"
                 className="font-mono text-sm"
               />
@@ -459,72 +616,43 @@ function SettingsPageContent() {
 
             <Separator />
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>ADDIS_AI_MODEL</Label>
-                <Select value={aiModel} onValueChange={setAiModel}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Addis-፩-አሌፍ">
-                      Addis-፩-አሌፍ (Text)
-                    </SelectItem>
-                    <SelectItem value="አሌፍ-Audio-AM">
-                      አሌፍ-Audio-AM (Amharic TTS)
-                    </SelectItem>
-                    <SelectItem value="አሌፍ-Audio-OM">
-                      አሌፍ-Audio-OM (Oromo TTS)
-                    </SelectItem>
-                    <SelectItem value="addis-whisper">
-                      addis-whisper (STT)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>ADDIS_AI_TARGET_LANGUAGE</Label>
-                <Select value={aiTargetLang} onValueChange={setAiTargetLang}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="am">Amharic (am)</SelectItem>
-                    <SelectItem value="om">Afaan Oromo (om)</SelectItem>
-                    <SelectItem value="en">English (en)</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="rounded-lg border border-border/50 bg-muted/30 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">About AddisAI Integration</p>
+                  <p className="text-xs text-muted-foreground">
+                    AddisAI provides specialized audio processing for Ethiopian languages. It handles Speech-to-Text
+                    (STT) transcription using the addis-whisper model and Text-to-Speech (TTS) synthesis using
+                    አሌፍ-Audio-AM (Amharic) and አሌፍ-Audio-OM (Afaan Oromo) models. These models are purpose-built
+                    for Ethiopian languages and provide superior accuracy compared to generic alternatives.
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="ai-temperature">ADDIS_AI_TEMPERATURE</Label>
-                <Input
-                  id="ai-temperature"
-                  type="number"
-                  min={0.1}
-                  max={1.0}
-                  step={0.1}
-                  value={aiTemperature}
-                  onChange={(e) => setAiTemperature(Number(e.target.value))}
-                />
-                <p className="text-xs text-muted-foreground">
-                  0.1–0.3 for factual, 0.7–0.9 for creative
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                <p className="text-xs font-medium text-muted-foreground">STT Model</p>
+                <p className="mt-1 text-sm font-semibold">addis-whisper</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Speech-to-Text for am, om, en
                 </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="ai-max-tokens">ADDIS_AI_MAX_TOKENS</Label>
-                <Input
-                  id="ai-max-tokens"
-                  type="number"
-                  min={100}
-                  max={8000}
-                  value={aiMaxTokens}
-                  onChange={(e) => setAiMaxTokens(Number(e.target.value))}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Max output tokens per response (1 Amharic word ≈ 1.8 tokens)
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                <p className="text-xs font-medium text-muted-foreground">TTS Model (Amharic)</p>
+                <p className="mt-1 text-sm font-semibold">አሌፍ-Audio-AM</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Natural Amharic voice synthesis
+                </p>
+              </div>
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                <p className="text-xs font-medium text-muted-foreground">TTS Model (Oromo)</p>
+                <p className="mt-1 text-sm font-semibold">አሌፍ-Audio-OM</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Natural Afaan Oromo voice synthesis
                 </p>
               </div>
             </div>
