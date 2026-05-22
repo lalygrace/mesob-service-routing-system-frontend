@@ -28,6 +28,9 @@ export function LanguageStep({
   return (
     <div className="space-y-10">
       <div className="text-center space-y-4">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/20 to-primary/10">
+          <Languages className="h-10 w-10 text-primary" strokeWidth={2} />
+        </div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           {strings.landing.selectLanguage}
         </h1>
@@ -56,20 +59,15 @@ export function LanguageStep({
                   }
                 }}
                 className={cn(
-                  "group relative overflow-hidden cursor-pointer transition-all duration-300 border-2 hover:shadow-2xl hover:scale-[1.02]",
+                  "group relative overflow-hidden cursor-pointer transition-all duration-300 border-2 shadow-xl hover:scale-[1.05]",
                   isSelected
-                    ? "border-primary shadow-xl shadow-primary/20"
-                    : "border-border/50 hover:border-primary/40 shadow-lg"
+                    ? "border-primary shadow-2xl"
+                    : "border-border/50 hover:border-primary/40"
                 )}
               >
                 <div className="relative h-full min-h-[240px] p-8 flex flex-col">
-                  {/* Decorative blue curved shape */}
-                  <div
-                    className={cn(
-                      "absolute inset-0 transition-opacity duration-300",
-                      isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-70"
-                    )}
-                  >
+                  {/* Decorative blue curved shape - ALWAYS VISIBLE */}
+                  <div className={cn("absolute inset-0", isSelected ? "opacity-100" : "opacity-70")}>
                     <svg
                       viewBox="0 0 400 300"
                       className="absolute inset-0 w-full h-full"
@@ -90,8 +88,8 @@ export function LanguageStep({
                         className={cn(
                           "flex h-16 w-16 items-center justify-center rounded-3xl transition-all duration-300",
                           isSelected
-                            ? "bg-primary/20 text-primary"
-                            : "bg-primary/10 text-primary/70 group-hover:bg-primary/15 group-hover:text-primary"
+                            ? "bg-primary/20 text-primary scale-110"
+                            : "bg-primary/15 text-primary"
                         )}
                       >
                         <Icon className="h-8 w-8" strokeWidth={2} />
@@ -102,7 +100,7 @@ export function LanguageStep({
                           "rounded-full px-3 py-1 text-xs font-bold tracking-wider transition-colors",
                           isSelected
                             ? "bg-primary/20 text-primary border-primary/30"
-                            : "bg-muted text-muted-foreground border-border group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20"
+                            : "bg-primary/10 text-primary border-primary/20"
                         )}
                       >
                         {label.secondary}
