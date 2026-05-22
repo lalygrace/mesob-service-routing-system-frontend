@@ -366,7 +366,11 @@ function NavigateContent() {
         setAiQuestion(result.message);
         setAiOptions(result.options || null);
         // Use ttsText from Gemini if available (voice mode only, am/om only)
-        if (intakeMethod === "voice" && result.ttsText && (language === "am" || language === "om")) {
+        if (
+          intakeMethod === "voice" &&
+          result.ttsText &&
+          (language === "am" || language === "om")
+        ) {
           ttsPlayback.playText(result.ttsText, language);
         }
         return;
@@ -392,7 +396,11 @@ function NavigateContent() {
       setCheckedRequirements({});
 
       // Use ttsText from Gemini if available (voice mode only, am/om only)
-      if (intakeMethod === "voice" && result.ttsText && (language === "am" || language === "om")) {
+      if (
+        intakeMethod === "voice" &&
+        result.ttsText &&
+        (language === "am" || language === "om")
+      ) {
         ttsPlayback.playText(result.ttsText, language);
       }
 
@@ -436,7 +444,11 @@ function NavigateContent() {
         setAiQuestion(result.message);
         setAiOptions(result.options || null);
         // Use ttsText from Gemini if available (voice mode only, am/om only)
-        if (intakeMethod === "voice" && result.ttsText && (language === "am" || language === "om")) {
+        if (
+          intakeMethod === "voice" &&
+          result.ttsText &&
+          (language === "am" || language === "om")
+        ) {
           ttsPlayback.playText(result.ttsText, language);
         }
         return;
@@ -463,7 +475,11 @@ function NavigateContent() {
       setCheckedRequirements({});
 
       // Use ttsText from Gemini if available (voice mode only, am/om only)
-      if (intakeMethod === "voice" && result.ttsText && (language === "am" || language === "om")) {
+      if (
+        intakeMethod === "voice" &&
+        result.ttsText &&
+        (language === "am" || language === "om")
+      ) {
         ttsPlayback.playText(result.ttsText, language);
       }
 
@@ -603,234 +619,239 @@ function NavigateContent() {
                     />
                   )}
 
-                {isLoadingServices &&
-                  !["language", "intake"].includes(step) && (
-                    <div className="mb-4 rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-                      Loading service catalog…
-                    </div>
+                  {isLoadingServices &&
+                    !["language", "intake"].includes(step) && (
+                      <div className="mb-4 rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                        Loading service catalog…
+                      </div>
+                    )}
+
+                  {step === "intake" && (
+                    <IntakeStep
+                      strings={strings}
+                      onPick={(method) => {
+                        setIntakeMethod(method);
+                        setCaseText("");
+                        setDecision(null);
+                        setAssistantError(null);
+                        setAiUnavailable(false);
+                        setAiQuestion(null);
+                        setAiOptions(null);
+                        setSelectedService(null);
+                        setRichService(null);
+                        if (method === "voice") goTo("voice");
+                        else if (method === "browse") goTo("browse");
+                        else goTo("case");
+                      }}
+                    />
                   )}
 
-                {step === "intake" && (
-                  <IntakeStep
-                    strings={strings}
-                    onPick={(method) => {
-                      setIntakeMethod(method);
-                      setCaseText("");
-                      setDecision(null);
-                      setAssistantError(null);
-                      setAiUnavailable(false);
-                      setAiQuestion(null);
-                      setAiOptions(null);
-                      setSelectedService(null);
-                      setRichService(null);
-                      if (method === "voice") goTo("voice");
-                      else if (method === "browse") goTo("browse");
-                      else goTo("case");
-                    }}
-                  />
-                )}
+                  {step === "voice" && (
+                    <VoiceInput
+                      language={language}
+                      strings={strings}
+                      value={caseText}
+                      onChange={setCaseText}
+                      onSubmit={() => submitCase(caseText)}
+                      onSwitchToTyping={() => {
+                        setIntakeMethod("type");
+                        goTo("case");
+                      }}
+                    />
+                  )}
 
-                {step === "voice" && (
-                  <VoiceInput
-                    language={language}
-                    strings={strings}
-                    value={caseText}
-                    onChange={setCaseText}
-                    onSubmit={() => submitCase(caseText)}
-                    onSwitchToTyping={() => {
-                      setIntakeMethod("type");
-                      goTo("case");
-                    }}
-                  />
-                )}
+                  {step === "case" && (
+                    <TextInput
+                      strings={strings}
+                      value={caseText}
+                      onChange={setCaseText}
+                      onSubmit={() => submitCase(caseText)}
+                      onSwitchToVoice={() => {
+                        setIntakeMethod("voice");
+                        goTo("voice");
+                      }}
+                    />
+                  )}
 
-                {step === "case" && (
-                  <TextInput
-                    strings={strings}
-                    value={caseText}
-                    onChange={setCaseText}
-                    onSubmit={() => submitCase(caseText)}
-                    onSwitchToVoice={() => {
-                      setIntakeMethod("voice");
-                      goTo("voice");
-                    }}
-                  />
-                )}
+                  {step === "browse" && (
+                    <OrganizationBrowse
+                      language={language}
+                      strings={strings}
+                      onServiceSelected={handleBrowseServiceSelected}
+                    />
+                  )}
 
-                {step === "browse" && (
-                  <OrganizationBrowse
-                    language={language}
-                    strings={strings}
-                    onServiceSelected={handleBrowseServiceSelected}
-                  />
-                )}
+                  {step === "assistant" && (
+                    <>
+                      {/* Item 4 — AI unavailable fallback */}
+                      {aiUnavailable ? (
+                        <AiUnavailableBanner
+                          strings={strings}
+                          onBrowse={() => {
+                            setAiUnavailable(false);
+                            setIntakeMethod("browse");
+                            goTo("browse");
+                          }}
+                          onRetry={() => {
+                            setAiUnavailable(false);
+                            goToInput();
+                          }}
+                        />
+                      ) : (
+                        <AssistantStepWithClarify
+                          strings={strings}
+                          caseText={caseText}
+                          decision={decision}
+                          assistantError={assistantError}
+                          isAiLoading={isAiLoading}
+                          aiQuestion={aiQuestion}
+                          aiOptions={aiOptions}
+                          intakeMethod={intakeMethod}
+                          onPickClarification={async (serviceIds) => {
+                            const service = findServiceById(
+                              services,
+                              serviceIds[0] ?? "",
+                            );
+                            if (!service) return;
+                            const rich = await recordServiceSelection(
+                              service.id,
+                              citizenSessionId,
+                            );
+                            setRichService(rich);
+                            setSelectedService(service);
+                            setCheckedRequirements({});
+                            goTo("results");
+                          }}
+                          onPickAiOption={(value) => submitClarification(value)}
+                          onRetry={() => {
+                            setAssistantError(null);
+                            setAiQuestion(null);
+                            setAiOptions(null);
+                            goToInput();
+                          }}
+                          onStartOver={resetFlow}
+                          onSwitchToTyping={
+                            intakeMethod === "voice"
+                              ? () => {
+                                  setAssistantError(null);
+                                  setAiQuestion(null);
+                                  setAiOptions(null);
+                                  setIntakeMethod("type");
+                                  goTo("case");
+                                }
+                              : undefined
+                          }
+                          onClarificationSubmit={submitClarification}
+                        />
+                      )}
+                    </>
+                  )}
 
-                {step === "assistant" && (
-                  <>
-                    {/* Item 4 — AI unavailable fallback */}
-                    {aiUnavailable ? (
-                      <AiUnavailableBanner
-                        strings={strings}
-                        onBrowse={() => {
-                          setAiUnavailable(false);
-                          setIntakeMethod("browse");
-                          goTo("browse");
-                        }}
-                        onRetry={() => {
-                          setAiUnavailable(false);
-                          goToInput();
-                        }}
-                      />
-                    ) : (
-                      <AssistantStepWithClarify
-                        strings={strings}
-                        caseText={caseText}
-                        decision={decision}
-                        assistantError={assistantError}
-                        isAiLoading={isAiLoading}
-                        aiQuestion={aiQuestion}
-                        aiOptions={aiOptions}
-                        intakeMethod={intakeMethod}
-                        onPickClarification={async (serviceIds) => {
-                          const service = findServiceById(
-                            services,
-                            serviceIds[0] ?? "",
-                          );
-                          if (!service) return;
-                          const rich = await recordServiceSelection(
-                            service.id,
-                            citizenSessionId,
-                          );
-                          setRichService(rich);
-                          setSelectedService(service);
-                          setCheckedRequirements({});
-                          goTo("results");
-                        }}
-                        onPickAiOption={(value) => submitClarification(value)}
-                        onRetry={() => {
-                          setAssistantError(null);
-                          setAiQuestion(null);
-                          setAiOptions(null);
-                          goToInput();
-                        }}
-                        onStartOver={resetFlow}
-                        onSwitchToTyping={
-                          intakeMethod === "voice"
-                            ? () => {
-                                setAssistantError(null);
-                                setAiQuestion(null);
-                                setAiOptions(null);
-                                setIntakeMethod("type");
-                                goTo("case");
-                              }
-                            : undefined
-                        }
-                        onClarificationSubmit={submitClarification}
-                      />
-                    )}
-                  </>
-                )}
+                  {step === "results" && (
+                    <ResultsStep
+                      strings={strings}
+                      service={selectedService}
+                      richService={richService}
+                      checked={checkedRequirements}
+                      onCheckedChange={setCheckedRequirements}
+                      onContinue={() => {
+                        setRating(0);
+                        setFeedbackSubmitted(false);
+                        goTo("review");
+                      }}
+                      // Item 3 — "Not what I need" sends citizen back to intake
+                      onNotMyService={() => {
+                        setSelectedService(null);
+                        setRichService(null);
+                        setCheckedRequirements({});
+                        setDecision(null);
+                        setAssistantError(null);
+                        setAiQuestion(null);
+                        setAiOptions(null);
+                        setCaseText("");
+                        goTo("intake");
+                      }}
+                    />
+                  )}
 
-                {step === "results" && (
-                  <ResultsStep
-                    strings={strings}
-                    service={selectedService}
-                    richService={richService}
-                    checked={checkedRequirements}
-                    onCheckedChange={setCheckedRequirements}
-                    onContinue={() => {
-                      setRating(0);
-                      setFeedbackSubmitted(false);
-                      goTo("review");
-                    }}
-                    // Item 3 — "Not what I need" sends citizen back to intake
-                    onNotMyService={() => {
-                      setSelectedService(null);
-                      setRichService(null);
-                      setCheckedRequirements({});
-                      setDecision(null);
-                      setAssistantError(null);
-                      setAiQuestion(null);
-                      setAiOptions(null);
-                      setCaseText("");
-                      goTo("intake");
-                    }}
-                  />
-                )}
-
-                {step === "review" && (
-                  <ReviewStep
-                    strings={strings}
-                    service={
-                      selectedService ??
-                      (richService ? richServiceToFlat(richService) : null)
-                    }
-                    checked={checkedRequirements}
-                    rating={rating}
-                    onRatingChange={setRating}
-                    submitted={feedbackSubmitted}
-                    onSubmit={submitFeedback}
-                    onStartOver={resetFlow}
-                    sessionCount={sessionCount}
-                    language={language}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Fixed Navigation Bar */}
-            {showBack && (
-              <div className="sticky bottom-0 border-t border-white/10 dark:border-white/5 bg-background/95 backdrop-blur-md px-6 py-4 shadow-lg">
-                <div className="mx-auto max-w-4xl flex items-center justify-between">
-                  {/* Large Back Button - Left Side */}
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={handleBack}
-                    className="group relative overflow-hidden rounded-2xl h-16 px-8 gap-4 border-2 border-primary/30 bg-gradient-to-r from-primary/10 to-transparent hover:border-primary hover:shadow-xl transition-all duration-300 active:scale-95"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent" />
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="relative z-10 h-7 w-7 text-primary group-hover:-translate-x-1 transition-transform duration-300"
-                    >
-                      <path d="m15 18-6-6 6-6" />
-                    </svg>
-                    <span className="relative z-10 text-lg font-bold text-foreground">{strings.actions.back}</span>
-                  </Button>
-
-                  {/* Large Home/Restart Button - Right Side */}
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={resetFlow}
-                    className="group relative overflow-hidden rounded-2xl h-16 px-8 gap-4 border-2 border-amber-500/30 bg-gradient-to-l from-amber-500/10 to-transparent hover:border-amber-500 hover:shadow-xl transition-all duration-300 active:scale-95"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-l from-amber-500/5 to-transparent" />
-                    <span className="relative z-10 text-lg font-bold text-foreground">Start Over</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="relative z-10 h-7 w-7 text-amber-500"
-                    >
-                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                      <path d="M3 3v5h5" />
-                    </svg>
-                  </Button>
+                  {step === "review" && (
+                    <ReviewStep
+                      strings={strings}
+                      service={
+                        selectedService ??
+                        (richService ? richServiceToFlat(richService) : null)
+                      }
+                      checked={checkedRequirements}
+                      rating={rating}
+                      onRatingChange={setRating}
+                      submitted={feedbackSubmitted}
+                      onSubmit={submitFeedback}
+                      onStartOver={resetFlow}
+                      sessionCount={sessionCount}
+                      language={language}
+                    />
+                  )}
                 </div>
               </div>
-            )}
+
+              {/* Fixed Navigation Bar */}
+              {showBack && (
+                <div className="sticky bottom-0 border-t border-white/10 dark:border-white/5 bg-background/95 backdrop-blur-md px-6 py-4 shadow-lg">
+                  <div className="mx-auto max-w-4xl flex items-center justify-between">
+                    {/* Large Back Button - Left Side */}
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={handleBack}
+                      className="group relative overflow-hidden rounded-2xl h-16 px-8 gap-4 border-2 border-primary/30 bg-gradient-to-r from-primary/10 to-transparent hover:border-primary hover:shadow-xl transition-all duration-300 active:scale-95"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="relative z-10 h-7 w-7 text-primary group-hover:-translate-x-1 transition-transform duration-300"
+                      >
+                        <path d="m15 18-6-6 6-6" />
+                      </svg>
+                      <span className="relative z-10 text-lg font-bold text-foreground">
+                        {strings.actions.back}
+                      </span>
+                    </Button>
+
+                    {/* Large Home/Restart Button - Right Side */}
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={resetFlow}
+                      className="group relative overflow-hidden rounded-2xl h-16 px-8 gap-4 border-2 border-amber-500/30 bg-gradient-to-l from-amber-500/10 to-transparent hover:border-amber-500 hover:shadow-xl transition-all duration-300 active:scale-95"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-l from-amber-500/5 to-transparent" />
+                      <span className="relative z-10 text-lg font-bold text-foreground">
+                        Start Over
+                      </span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="relative z-10 h-7 w-7 text-amber-500"
+                      >
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                      </svg>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </main>
