@@ -592,16 +592,16 @@ function NavigateContent() {
               <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-8 sm:py-8">
                 <div className="w-full">
                   {step === "language" && (
-                  <LanguageStep
-                    strings={strings}
-                    language={language}
-                    onLanguageChange={(lang) => {
-                      setLanguage(lang);
-                      setCitizenSessionId(null);
-                      goTo("intake");
-                    }}
-                  />
-                )}
+                    <LanguageStep
+                      strings={strings}
+                      language={language}
+                      onLanguageChange={(lang) => {
+                        setLanguage(lang);
+                        setCitizenSessionId(null);
+                        goTo("intake");
+                      }}
+                    />
+                  )}
 
                 {isLoadingServices &&
                   !["language", "intake"].includes(step) && (
