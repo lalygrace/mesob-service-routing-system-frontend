@@ -26,21 +26,21 @@ export function LanguageStep({
   onLanguageChange: (lang: LanguageCode) => void;
 }) {
   return (
-    <div className="space-y-10">
-      <div className="text-center space-y-4">
-        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/20 to-primary/10">
-          <Languages className="h-10 w-10 text-primary" strokeWidth={2} />
+    <div className="space-y-6">
+      <div className="text-center space-y-3">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/20 to-primary/10">
+          <Languages className="h-8 w-8 text-primary" strokeWidth={2} />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {strings.landing.selectLanguage}
         </h1>
-        <p className="text-base text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
           {strings.appSubtitle}
         </p>
       </div>
 
       <div className="mx-auto w-full max-w-5xl">
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
           {(["en", "am", "om"] as LanguageCode[]).map((lang) => {
             const label = LANG_LABELS[lang];
             const Icon = label.icon;
@@ -59,13 +59,13 @@ export function LanguageStep({
                   }
                 }}
                 className={cn(
-                  "group relative overflow-hidden cursor-pointer transition-all duration-300 border-2 shadow-xl hover:scale-[1.05]",
+                  "group relative overflow-hidden cursor-pointer transition-all duration-300 border-2 shadow-xl hover:scale-[1.05] active:scale-100",
                   isSelected
                     ? "border-primary shadow-2xl"
                     : "border-border/50 hover:border-primary/40"
                 )}
               >
-                <div className="relative h-full min-h-[240px] p-8 flex flex-col">
+                <div className="relative h-full min-h-[200px] p-6 flex flex-col">
                   {/* Decorative blue curved shape - ALWAYS VISIBLE */}
                   <div className={cn("absolute inset-0", isSelected ? "opacity-100" : "opacity-70")}>
                     <svg
@@ -86,13 +86,13 @@ export function LanguageStep({
                     <div className="flex items-start justify-between mb-auto">
                       <div
                         className={cn(
-                          "flex h-16 w-16 items-center justify-center rounded-3xl transition-all duration-300",
+                          "flex h-14 w-14 items-center justify-center rounded-3xl transition-all duration-300",
                           isSelected
                             ? "bg-primary/20 text-primary scale-110"
                             : "bg-primary/15 text-primary"
                         )}
                       >
-                        <Icon className="h-8 w-8" strokeWidth={2} />
+                        <Icon className="h-7 w-7" strokeWidth={2} />
                       </div>
                       <Badge
                         variant="secondary"
@@ -108,11 +108,11 @@ export function LanguageStep({
                     </div>
 
                     {/* Bottom: Title and description */}
-                    <div className="space-y-2 mt-6">
-                      <h3 className="text-2xl font-bold tracking-tight text-foreground">
+                    <div className="space-y-1.5 mt-4">
+                      <h3 className="text-xl font-bold tracking-tight text-foreground">
                         {label.primary}
                       </h3>
-                      <p className="text-sm text-muted-foreground font-medium">
+                      <p className="text-xs text-muted-foreground font-medium">
                         Select {label.primary}
                       </p>
                     </div>
