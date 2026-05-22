@@ -84,7 +84,7 @@ function OrganizationList({
   }, [organizations, query]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -92,7 +92,7 @@ function OrganizationList({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search organizations…"
-          className="pl-9 rounded-xl"
+          className="pl-9 rounded-xl h-12 border-2"
           autoFocus
         />
       </div>
@@ -102,31 +102,48 @@ function OrganizationList({
           No organizations match your search.
         </p>
       ) : (
-        <div className="space-y-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           {filtered.map((organization) => (
             <button
               key={organization.id}
               onClick={() => onSelect(organization)}
-              className="group flex w-full items-center gap-4 rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm p-4 text-left transition-all hover:border-primary/30 hover:bg-card/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="group relative overflow-hidden flex flex-col items-start gap-4 rounded-3xl border-2 border-border/50 bg-card p-6 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-2xl hover:scale-[1.02] shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {/* Icon */}
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
-                <Building2 className="h-5 w-5" />
+              {/* Decorative blue curved shape */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <svg
+                  viewBox="0 0 400 300"
+                  className="absolute inset-0 w-full h-full"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M 0,0 L 0,300 Q 150,200 400,280 L 400,0 Z"
+                    className="fill-primary/15"
+                  />
+                </svg>
               </div>
 
-              {/* Text */}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-foreground">
-                  {organization.name}
-                </p>
-                {organization.floor && (
-                  <p className="text-xs text-muted-foreground">
-                    Floor {organization.floor}
-                  </p>
-                )}
+              {/* Content */}
+              <div className="relative z-10 w-full space-y-4">
+                {/* Icon */}
+                <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-105">
+                  <Building2 className="h-7 w-7" strokeWidth={2} />
+                </div>
+
+                {/* Text */}
+                <div className="space-y-1.5">
+                  <h3 className="text-lg font-bold text-foreground leading-tight">
+                    {organization.name}
+                  </h3>
+                  {organization.floor && (
+                    <p className="text-sm text-muted-foreground font-medium">
+                      Floor {organization.floor}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+              <ChevronRight className="absolute bottom-4 right-4 h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
             </button>
           ))}
         </div>
@@ -149,23 +166,23 @@ function ServiceList({
   onBack: () => void;
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Organization header */}
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
           size="icon"
           onClick={onBack}
-          className="shrink-0 rounded-xl"
+          className="shrink-0 rounded-xl h-10 w-10"
           aria-label="Back to organizations"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Organization
           </p>
-          <h2 className="truncate text-base font-bold text-foreground">
+          <h2 className="truncate text-lg font-bold text-foreground">
             {organization.name}
           </h2>
         </div>
@@ -182,24 +199,42 @@ function ServiceList({
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           {services.map((service) => (
             <button
               key={service.id}
               onClick={() => onSelect(service)}
-              className="group flex w-full items-start gap-4 rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm p-4 text-left transition-all hover:border-primary/30 hover:bg-card/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="group relative overflow-hidden flex flex-col items-start gap-4 rounded-3xl border-2 border-border/50 bg-card p-6 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-2xl hover:scale-[1.02] shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[180px]"
             >
-              <div className="min-w-0 flex-1 space-y-1">
-                <p className="text-sm font-semibold text-foreground">
-                  {service.title}
-                </p>
-                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                  {service.locationHint && <span>{service.locationHint}</span>}
-                  {service.feeHint && <span>{service.feeHint}</span>}
-                  {service.durationHint && <span>{service.durationHint}</span>}
+              {/* Decorative blue curved shape */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <svg
+                  viewBox="0 0 400 300"
+                  className="absolute inset-0 w-full h-full"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M 0,0 L 0,300 Q 150,200 400,280 L 400,0 Z"
+                    className="fill-primary/15"
+                  />
+                </svg>
+              </div>
+
+              {/* Content */}
+              <div className="relative z-10 w-full flex flex-col h-full">
+                <div className="space-y-2 mb-auto">
+                  <h3 className="text-lg font-bold text-foreground leading-tight">
+                    {service.title}
+                  </h3>
+                  <div className="flex flex-col gap-1 text-xs text-muted-foreground font-medium">
+                    {service.locationHint && <span>📍 {service.locationHint}</span>}
+                    {service.feeHint && <span>💰 {service.feeHint}</span>}
+                    {service.durationHint && <span>⏱️ {service.durationHint}</span>}
+                  </div>
                 </div>
               </div>
-              <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+
+              <ChevronRight className="absolute bottom-4 right-4 h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
             </button>
           ))}
         </div>
