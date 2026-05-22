@@ -91,13 +91,13 @@ export function OrganizationForm({
         setName(organization.name);
         setAbbreviation(organization.abbreviation);
         setDescription(organization.description ?? "");
-        setFloor(organization.floor);
+        setFloor(organization.floor ?? "");
         setRoom(organization.room ?? "");
 
         setNameAm(organization.nameAm);
         setAbbreviationAm(organization.abbreviationAm);
         setDescriptionAm(organization.descriptionAm ?? "");
-        setFloorAm(organization.floorAm);
+        setFloorAm(organization.floorAm ?? "");
         setRoomAm(organization.roomAm ?? "");
 
         setNameOm(organization.nameOm ?? "");

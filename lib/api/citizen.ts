@@ -57,6 +57,7 @@ export type CitizenInteractionResult = {
   systemAction: "ASK_CLARIFICATION" | "SHOW_OPTIONS" | "SHOW_FINAL_SUMMARY" | string;
   message: string;
   matches: CitizenMatch[];
+  options?: Array<{ label: string; value: string }>;
 };
 
 export type CitizenSessionCreated = {
