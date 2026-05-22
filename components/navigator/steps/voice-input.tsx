@@ -10,7 +10,8 @@
  * poor support for Amharic and Afaan Oromo. All transcription goes through
  * the addis.ai STT model which is purpose-built for Ethiopian languages.
  *
- * Uses react-voice-visualizer for professional audio visualization.
+ * Uses react-voice-visualizer for professional audio visualization only.
+ * Recording is handled by our own MediaRecorder implementation.
  */
 
 import * as React from "react";
@@ -52,19 +53,21 @@ export function VoiceInput({
     React.useState<RecordingState>("idle");
   const [error, setError] = React.useState<string | null>(null);
   const [mediaSupported, setMediaSupported] = React.useState(true);
+  const [recordingTime, setRecordingTime] = React.useState(0);
+  
+  // Our own MediaRecorder for actual recording
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const audioChunksRef = React.useRef<Blob[]>([]);
+  const recordingTimerRef = React.useRef<number | null>(null);
   const autoStopRef = React.useRef<number | null>(null);
 
-  // Initialize voice visualizer with custom error handling
+  // Voice visualizer for display only
   const recorderControls = useVoiceVisualizer();
   const {
-    recordedBlob,
     error: visualizerError,
-    isRecordingInProgress,
-    recordingTime,
-    startRecording,
-    stopRecording,
+    startRecording: startVisualizer,
+    stopRecording: stopVisualizer,
     clearCanvas,
-    isAvailableRecordingTime,
   } = recorderControls;
 
   // Check MediaRecorder support on mount
@@ -78,91 +81,184 @@ export function VoiceInput({
     }
   }, []);
 
-  // Handle visualizer errors - suppress default error UI
+  // Handle visualizer errors
   React.useEffect(() => {
     if (visualizerError) {
       console.error("Voice visualizer error:", visualizerError);
-      setError(strings.voice.notSupportedDesc);
-      setRecordingState("error");
     }
-  }, [visualizerError, strings.voice.notSupportedDesc]);
-
-  // Check if recording is available
-  React.useEffect(() => {
-    if (isAvailableRecordingTime === false) {
-      setMediaSupported(false);
-    }
-  }, [isAvailableRecordingTime]);
-
-  // Auto-stop at 58 seconds
-  React.useEffect(() => {
-    if (isRecordingInProgress && recordingTime >= MAX_RECORD_MS) {
-      handleStopRecording();
-    }
-  }, [isRecordingInProgress, recordingTime]);
-
-  // Process recorded blob
-  React.useEffect(() => {
-    if (recordedBlob && recordingState === "recording") {
-      // Small delay to ensure blob is fully ready
-      const timer = setTimeout(() => {
-        processRecording(recordedBlob);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [recordedBlob, recordingState]);
+  }, [visualizerError]);
 
   // Cleanup on unmount
   React.useEffect(() => {
     return () => {
+      if (recordingTimerRef.current) window.clearInterval(recordingTimerRef.current);
       if (autoStopRef.current) window.clearTimeout(autoStopRef.current);
-      if (isRecordingInProgress) {
-        stopRecording();
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        mediaRecorderRef.current.stop();
       }
     };
   }, []);
 
   async function handleStartRecording() {
     setError(null);
-    setRecordingState("recording");
+    audioChunksRef.current = [];
+    setRecordingTime(0);
     
     try {
-      await startRecording();
+      console.log("Requesting microphone access...");
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          channelCount: 1, // Mono
+          sampleRate: 16000, // 16kHz as recommended by AddisAI
+          echoCancellation: true,
+          noiseSuppression: true,
+        } 
+      });
+
+      console.log("Microphone access granted");
+
+      // Determine the best MIME type
+      const mimeTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/wav',
+      ];
       
-      // Set auto-stop timeout
+      let selectedMimeType = '';
+      for (const mimeType of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          selectedMimeType = mimeType;
+          console.log("Selected MIME type:", mimeType);
+          break;
+        }
+      }
+
+      // Create MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: selectedMimeType || undefined,
+      });
+
+      mediaRecorderRef.current = mediaRecorder;
+
+      // Collect audio data
+      mediaRecorder.ondataavailable = (event) => {
+        console.log("Data available:", event.data.size, "bytes");
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      // Handle recording stop
+      mediaRecorder.onstop = async () => {
+        console.log("MediaRecorder stopped");
+        console.log("Total chunks:", audioChunksRef.current.length);
+        
+        // Stop the stream
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Clear timers
+        if (recordingTimerRef.current) {
+          window.clearInterval(recordingTimerRef.current);
+          recordingTimerRef.current = null;
+        }
+        if (autoStopRef.current) {
+          window.clearTimeout(autoStopRef.current);
+          autoStopRef.current = null;
+        }
+
+        // Create blob from chunks
+        if (audioChunksRef.current.length > 0) {
+          const audioBlob = new Blob(audioChunksRef.current, { 
+            type: mediaRecorder.mimeType || 'audio/webm' 
+          });
+          console.log("Created audio blob:", {
+            size: audioBlob.size,
+            type: audioBlob.type,
+          });
+          
+          if (audioBlob.size > 100) {
+            await processRecording(audioBlob);
+          } else {
+            console.warn("Audio blob too small, no audio recorded");
+            setRecordingState("idle");
+            setError("No audio was recorded. Please try again.");
+          }
+        } else {
+          console.warn("No audio chunks collected");
+          setRecordingState("idle");
+          setError("No audio was recorded. Please try again.");
+        }
+      };
+
+      mediaRecorder.onerror = (event) => {
+        console.error("MediaRecorder error:", event);
+        setError(strings.voice.notSupportedDesc);
+        setRecordingState("error");
+      };
+
+      // Start recording
+      mediaRecorder.start(100); // Collect data every 100ms
+      console.log("MediaRecorder started");
+      
+      setRecordingState("recording");
+
+      // Start visualizer for display
+      try {
+        await startVisualizer();
+      } catch (err) {
+        console.warn("Visualizer failed to start, continuing without it:", err);
+      }
+
+      // Start recording timer
+      const startTime = Date.now();
+      recordingTimerRef.current = window.setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        setRecordingTime(elapsed);
+        
+        // Auto-stop at max duration
+        if (elapsed >= MAX_RECORD_MS) {
+          handleStopRecording();
+        }
+      }, 100);
+
+      // Set auto-stop timeout as backup
       autoStopRef.current = window.setTimeout(() => {
         handleStopRecording();
       }, MAX_RECORD_MS);
+
     } catch (err) {
+      console.error("Failed to start recording:", err);
       setError(strings.voice.notSupportedDesc);
       setRecordingState("error");
     }
   }
 
   function handleStopRecording() {
-    if (autoStopRef.current) {
-      window.clearTimeout(autoStopRef.current);
-      autoStopRef.current = null;
+    console.log("Stopping recording...");
+    
+    // Stop visualizer
+    try {
+      stopVisualizer();
+    } catch (err) {
+      console.warn("Failed to stop visualizer:", err);
     }
-    stopRecording();
+
+    // Stop MediaRecorder
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
   }
 
   async function processRecording(blob: Blob) {
-    if (blob.size < 100) {
-      // Nothing was recorded
-      setRecordingState("idle");
-      return;
-    }
+    console.log("Processing recording blob:", {
+      size: blob.size,
+      type: blob.type,
+    });
 
     setRecordingState("transcribing");
 
     try {
-      console.log("Transcribing audio blob:", {
-        size: blob.size,
-        type: blob.type,
-        language,
-      });
-      
       const result = await transcribeAudio(blob, language);
       
       console.log("Transcription result:", result);
@@ -172,7 +268,7 @@ export function VoiceInput({
       setRecordingState("done");
     } catch (err) {
       console.error("Transcription error:", err);
-      setError(strings.voice.notSupportedDesc);
+      setError(err instanceof Error ? err.message : strings.voice.notSupportedDesc);
       setRecordingState("error");
     }
   }
@@ -183,9 +279,11 @@ export function VoiceInput({
     setError(null);
     onChange("");
     setRecordingState("idle");
+    setRecordingTime(0);
+    audioChunksRef.current = [];
   }
 
-  const isRecording = recordingState === "recording" && isRecordingInProgress;
+  const isRecording = recordingState === "recording";
   const isTranscribing = recordingState === "transcribing";
   const isDone = recordingState === "done";
 
@@ -250,27 +348,6 @@ export function VoiceInput({
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">Processing audio...</p>
-            </div>
-          ) : visualizerError ? (
-            <div className="flex flex-col items-center gap-3 text-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-12 w-12 text-muted-foreground"
-              >
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" x2="12" y1="19" y2="22" />
-                <line x1="2" x2="22" y1="2" y2="22" />
-              </svg>
-              <p className="text-sm text-muted-foreground">
-                Microphone not available
-              </p>
             </div>
           ) : (
             <div className="w-full overflow-hidden relative">
