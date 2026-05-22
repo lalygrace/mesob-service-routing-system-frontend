@@ -591,56 +591,7 @@ function NavigateContent() {
       )}
 
       <main className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative z-10">
-        {/* Navigation Buttons Container - Outside main card */}
-        <div className="w-full max-w-7xl flex items-center justify-between mb-4 px-4">
-          {/* Large Back Button - Left Side */}
-          {showBack && (
-            <Button
-              variant="ghost"
-              size="lg"
-              onClick={handleBack}
-              className="group relative overflow-hidden rounded-2xl h-20 w-20 p-0 bg-white/90 dark:bg-background/90 backdrop-blur-md hover:bg-white dark:hover:bg-background hover:scale-110 transition-all duration-300 active:scale-95 shadow-xl border-2 border-primary/20 hover:border-primary"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-10 w-10 text-primary group-hover:-translate-x-1 transition-transform duration-300"
-              >
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-            </Button>
-          )}
-          {!showBack && <div className="h-20 w-20" />}
-
-          {/* Large Start Over Button - Right Side */}
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={resetFlow}
-            className="group relative overflow-hidden rounded-2xl h-20 w-20 p-0 bg-white/90 dark:bg-background/90 backdrop-blur-md hover:bg-white dark:hover:bg-background hover:scale-110 transition-all duration-300 active:scale-95 shadow-xl border-2 border-amber-500/20 hover:border-amber-500"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-10 w-10 text-amber-500 group-hover:rotate-180 transition-transform duration-500"
-            >
-              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-              <path d="M3 3v5h5" />
-            </svg>
-          </Button>
-        </div>
-
-        <div className="w-full max-w-5xl h-[85vh] min-h-[600px] max-h-[900px] rounded-3xl overflow-hidden flex flex-col shadow-2xl">
+        <div className="w-full max-w-5xl h-[85vh] min-h-[600px] max-h-[900px] rounded-3xl overflow-hidden flex flex-col">
           {/* Step indicator */}
           <div className="border-b border-white/10 dark:border-white/5 bg-background/20 backdrop-blur-md py-4 px-6 shrink-0">
             <div className="mx-auto max-w-4xl">
@@ -652,8 +603,8 @@ function NavigateContent() {
           </div>
 
           {/* Content area */}
-          <div className="flex-1 flex flex-col bg-transparent overflow-hidden">
-            <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 flex flex-col bg-transparent overflow-hidden relative">
+            <div className="flex-1 overflow-y-auto pb-24">
               <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-8 sm:py-8">
                 <div className="w-full">
                   {step === "language" && (
@@ -842,6 +793,64 @@ function NavigateContent() {
                   )}
                 </div>
               </div>
+
+              {/* Fixed Navigation Bar - Always at bottom */}
+              {showBack && (
+                <div className="absolute bottom-0 left-0 right-0 px-6 py-4">
+                  <div className="mx-auto max-w-4xl flex items-center justify-between">
+                    {/* Large Back Button - Left Side */}
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={handleBack}
+                      className="group relative overflow-hidden rounded-2xl h-16 px-8 gap-4 border-2 border-primary/30 bg-gradient-to-r from-primary/10 to-transparent hover:border-primary hover:shadow-xl transition-all duration-300 active:scale-95"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="relative z-10 h-7 w-7 text-primary group-hover:-translate-x-1 transition-transform duration-300"
+                      >
+                        <path d="m15 18-6-6 6-6" />
+                      </svg>
+                      <span className="relative z-10 text-lg font-bold text-foreground">
+                        {strings.actions.back}
+                      </span>
+                    </Button>
+
+                    {/* Large Home/Restart Button - Right Side */}
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={resetFlow}
+                      className="group relative overflow-hidden rounded-2xl h-16 px-8 gap-4 border-2 border-amber-500/30 bg-gradient-to-l from-amber-500/10 to-transparent hover:border-amber-500 hover:shadow-xl transition-all duration-300 active:scale-95"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-l from-amber-500/5 to-transparent" />
+                      <span className="relative z-10 text-lg font-bold text-foreground">
+                        Start Over
+                      </span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="relative z-10 h-7 w-7 text-amber-500"
+                      >
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                      </svg>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
