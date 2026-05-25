@@ -62,8 +62,8 @@ export function IntakeStep({
                 className="group relative overflow-hidden cursor-pointer transition-all duration-300 border-2 border-border/50 hover:border-primary/40 hover:shadow-2xl hover:scale-[1.02] shadow-lg"
               >
                 <div className="relative h-full min-h-[220px] p-8 flex flex-col">
-                  {/* Decorative blue curved shape */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {/* Decorative blue curved shape - ALWAYS VISIBLE */}
+                  <div className="absolute inset-0 opacity-70">
                     <svg
                       viewBox="0 0 400 300"
                       className="absolute inset-0 w-full h-full"
@@ -78,7 +78,7 @@ export function IntakeStep({
 
                   {/* Content */}
                   <div className="relative z-10 flex flex-col h-full">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-105 mb-auto">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/15 text-primary transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-105 mb-auto">
                       <opt.icon className="h-8 w-8" strokeWidth={2} />
                     </div>
                     <div className="space-y-2 mt-6">
@@ -109,8 +109,8 @@ export function IntakeStep({
           className="group relative overflow-hidden cursor-pointer transition-all duration-300 border-2 border-border/50 hover:border-primary/40 hover:shadow-2xl hover:scale-[1.01] shadow-lg"
         >
           <div className="relative p-8 flex items-center gap-6">
-            {/* Decorative blue curved shape */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            {/* Decorative blue curved shape - ALWAYS VISIBLE */}
+            <div className="absolute inset-0 opacity-70">
               <svg
                 viewBox="0 0 800 150"
                 className="absolute inset-0 w-full h-full"
@@ -125,7 +125,7 @@ export function IntakeStep({
 
             {/* Content */}
             <div className="relative z-10 flex items-center gap-6 w-full">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-muted text-muted-foreground transition-all duration-300 group-hover:bg-primary/15 group-hover:text-primary group-hover:scale-105">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-primary/15 text-primary transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-105">
                 <Building2 className="h-8 w-8" strokeWidth={2} />
               </div>
               <div className="space-y-1.5">

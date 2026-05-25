@@ -794,62 +794,60 @@ function NavigateContent() {
                 </div>
               </div>
 
-              {/* Fixed Navigation Bar - Always at bottom */}
+              {/* Fixed Navigation Buttons - Left and Right edges */}
               {showBack && (
-                <div className="absolute bottom-0 left-0 right-0 px-6 py-4">
-                  <div className="mx-auto max-w-4xl flex items-center justify-between">
-                    {/* Large Back Button - Left Side */}
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={handleBack}
-                      className="group relative overflow-hidden rounded-2xl h-16 px-8 gap-4 border-2 border-primary/30 bg-gradient-to-r from-primary/10 to-transparent hover:border-primary hover:shadow-xl transition-all duration-300 active:scale-95"
+                <>
+                  {/* Large Back Button - Fixed Left */}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handleBack}
+                    className="group absolute bottom-6 left-6 z-50 overflow-hidden rounded-2xl h-16 px-8 gap-4 border-2 border-primary/30 bg-gradient-to-r from-primary/10 to-transparent hover:border-primary hover:shadow-xl transition-all duration-300 active:scale-95"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="relative z-10 h-7 w-7 text-primary group-hover:-translate-x-1 transition-transform duration-300"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent" />
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="relative z-10 h-7 w-7 text-primary group-hover:-translate-x-1 transition-transform duration-300"
-                      >
-                        <path d="m15 18-6-6 6-6" />
-                      </svg>
-                      <span className="relative z-10 text-lg font-bold text-foreground">
-                        {strings.actions.back}
-                      </span>
-                    </Button>
+                      <path d="m15 18-6-6 6-6" />
+                    </svg>
+                    <span className="relative z-10 text-lg font-bold text-foreground">
+                      {strings.actions.back}
+                    </span>
+                  </Button>
 
-                    {/* Large Home/Restart Button - Right Side */}
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={resetFlow}
-                      className="group relative overflow-hidden rounded-2xl h-16 px-8 gap-4 border-2 border-amber-500/30 bg-gradient-to-l from-amber-500/10 to-transparent hover:border-amber-500 hover:shadow-xl transition-all duration-300 active:scale-95"
+                  {/* Large Start Over Button - Fixed Right */}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={resetFlow}
+                    className="group absolute bottom-6 right-6 z-50 overflow-hidden rounded-2xl h-16 px-8 gap-4 border-2 border-amber-500/30 bg-gradient-to-l from-amber-500/10 to-transparent hover:border-amber-500 hover:shadow-xl transition-all duration-300 active:scale-95"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-l from-amber-500/5 to-transparent" />
+                    <span className="relative z-10 text-lg font-bold text-foreground">
+                      Start Over
+                    </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="relative z-10 h-7 w-7 text-amber-500"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-l from-amber-500/5 to-transparent" />
-                      <span className="relative z-10 text-lg font-bold text-foreground">
-                        Start Over
-                      </span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="relative z-10 h-7 w-7 text-amber-500"
-                      >
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                      </svg>
-                    </Button>
-                  </div>
-                </div>
+                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                    </svg>
+                  </Button>
+                </>
               )}
             </div>
           </div>
