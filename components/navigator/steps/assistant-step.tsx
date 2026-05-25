@@ -119,28 +119,64 @@ export function AssistantStep({
 
       {/* Option buttons */}
       {!isLoading && !error && hasAiClarify && aiOptions && onPickAiOption && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           {aiOptions.map((option, index) => (
             <button
               key={`${option.value}-${index}`}
               onClick={() => onPickAiOption(option.value)}
-              className="rounded-xl border border-border bg-card p-5 text-left font-semibold text-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="group relative overflow-hidden rounded-3xl border-2 border-border/50 bg-card p-6 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-2xl hover:scale-[1.02] shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[120px]"
             >
-              {option.label}
+              {/* Decorative blue curved shape */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <svg
+                  viewBox="0 0 400 200"
+                  className="absolute inset-0 w-full h-full"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M 0,0 L 0,200 Q 150,130 400,180 L 400,0 Z"
+                    className="fill-primary/15"
+                  />
+                </svg>
+              </div>
+              
+              <div className="relative z-10">
+                <p className="text-lg font-bold text-foreground leading-tight">
+                  {option.label}
+                </p>
+              </div>
             </button>
           ))}
         </div>
       )}
 
       {!isLoading && !error && !hasAiClarify && hasLocalClarify && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           {decision!.clarify!.options.map((option) => (
             <button
               key={option.id}
               onClick={() => onPickClarification(option.serviceIds)}
-              className="rounded-xl border border-border bg-card p-5 text-left font-semibold text-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="group relative overflow-hidden rounded-3xl border-2 border-border/50 bg-card p-6 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-2xl hover:scale-[1.02] shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[120px]"
             >
-              {option.label}
+              {/* Decorative blue curved shape */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <svg
+                  viewBox="0 0 400 200"
+                  className="absolute inset-0 w-full h-full"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M 0,0 L 0,200 Q 150,130 400,180 L 400,0 Z"
+                    className="fill-primary/15"
+                  />
+                </svg>
+              </div>
+              
+              <div className="relative z-10">
+                <p className="text-lg font-bold text-foreground leading-tight">
+                  {option.label}
+                </p>
+              </div>
             </button>
           ))}
         </div>

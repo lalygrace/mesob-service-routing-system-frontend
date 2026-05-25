@@ -270,57 +270,10 @@ export function ReviewStep({
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-        {/* Requirements summary */}
+      <div className="grid gap-4">
+        {/* Rating card - Full width */}
         <Card className="bg-card/40 backdrop-blur-md border-white/20 shadow-xl">
-          <CardContent className="space-y-4 p-5">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-base font-semibold text-foreground">
-                  {strings.detail.requirements}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {confirmedDocs.length}/{service.requirements.length}{" "}
-                  {strings.detail.itemsConfirmed}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              {service.requirements.map((req) => {
-                const confirmed = Boolean(checked[req]);
-                return (
-                  <div
-                    key={req}
-                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-background/40 backdrop-blur-sm px-3 py-2"
-                  >
-                    <CheckCircle2
-                      className={
-                        confirmed
-                          ? "h-4 w-4 text-primary"
-                          : "h-4 w-4 text-muted-foreground"
-                      }
-                    />
-                    <span className="text-sm text-foreground">{req}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {missingDocs.length > 0 && (
-              <div className="rounded-xl border border-white/10 bg-background/30 backdrop-blur-sm p-3 text-sm text-muted-foreground">
-                {strings.review.missingDocsDesc}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Rating card */}
-        <Card className="bg-card/40 backdrop-blur-md border-white/20 shadow-xl">
-          <CardContent className="space-y-5 p-5">
+          <CardContent className="space-y-6 p-6 sm:p-8">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
                 <Navigation className="h-5 w-5" />
@@ -336,12 +289,12 @@ export function ReviewStep({
             </div>
 
             {/* Star rating with hover effects */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               <h3 className="text-sm font-semibold text-foreground text-center">
                 {strings.feedbackForm.rating}
               </h3>
 
-              <div className="flex items-center justify-center gap-1">
+              <div className="flex items-center justify-center gap-3 sm:gap-4">
                 {Array.from({ length: 5 }).map((_, i) => {
                   const starValue = i + 1;
                   return (
@@ -363,10 +316,10 @@ export function ReviewStep({
               </div>
 
               {/* Dynamic rating label */}
-              <div className="h-6 flex items-center justify-center">
+              <div className="h-8 flex items-center justify-center">
                 {displayRating > 0 && (
                   <span
-                    className="text-sm font-medium text-primary animate-in fade-in-0 slide-in-from-bottom-2 duration-200"
+                    className="text-lg font-semibold text-primary animate-in fade-in-0 slide-in-from-bottom-2 duration-200"
                     key={displayRating}
                   >
                     {labels[displayRating] ?? ""}
@@ -375,7 +328,7 @@ export function ReviewStep({
               </div>
             </div>
 
-            <p className="text-center text-xs text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground">
               Select a star to finish and serve the next customer.
             </p>
           </CardContent>
