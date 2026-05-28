@@ -55,19 +55,45 @@ export function WelcomeMessage({ language, text }: WelcomeMessageProps) {
       });
   };
 
+  // For audio messages (Amharic/Afaan Oromo), only show audio controls
+  // For English or if audio fails, show text
+  const shouldShowText = !isAudio || error || language === "en";
+
   return (
     <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-5">
       <div className="flex items-start gap-3">
-        <div className="flex-1">
-          <p className="text-sm text-foreground leading-relaxed">
-            {displayText}
-          </p>
-          {error && (
-            <p className="mt-2 text-xs text-destructive">
-              Audio playback failed. Showing text instead.
+        {shouldShowText ? (
+          <div className="flex-1">
+            <p className="text-sm text-foreground leading-relaxed">
+              {displayText}
             </p>
-          )}
-        </div>
+            {error && (
+              <p className="mt-2 text-xs text-destructive">
+                Audio playback failed. Showing text instead.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {isPlaying ? (
+                <>
+                  <Volume2 className="h-5 w-5 text-primary animate-pulse" />
+                  <span className="text-sm text-muted-foreground">
+                    Playing welcome message...
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Volume2 className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Welcome message played
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
         
         {/* Show replay button for audio messages (Amharic/Afaan Oromo) */}
         {isAudio && language !== "en" && (
