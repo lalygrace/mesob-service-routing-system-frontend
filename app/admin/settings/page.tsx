@@ -661,28 +661,47 @@ function SettingsPageContent() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    {/* Gemini 3 - Latest Generation */}
+                    <SelectItem value="gemini-3.5-flash">
+                      gemini-3.5-flash (Stable - Most Intelligent)
+                    </SelectItem>
+                    <SelectItem value="gemini-3.1-flash-lite">
+                      gemini-3.1-flash-lite (Stable - Cost Efficient)
+                    </SelectItem>
+                    <SelectItem value="gemini-3.1-pro">
+                      gemini-3.1-pro (Preview - Advanced Intelligence)
+                    </SelectItem>
+                    <SelectItem value="gemini-3-flash">
+                      gemini-3-flash (Preview - Frontier Performance)
+                    </SelectItem>
+                    
+                    {/* Gemini 2.5 - Current Recommended */}
                     <SelectItem value="gemini-2.5-flash">
-                      gemini-2.5-flash (Recommended)
+                      gemini-2.5-flash (Recommended - Best Price/Performance)
                     </SelectItem>
+                    <SelectItem value="gemini-2.5-flash-lite">
+                      gemini-2.5-flash-lite (Fastest & Budget-Friendly)
+                    </SelectItem>
+                    <SelectItem value="gemini-2.5-pro">
+                      gemini-2.5-pro (Most Advanced - Complex Tasks)
+                    </SelectItem>
+                    
+                    {/* Gemini 2.0 - Deprecated */}
                     <SelectItem value="gemini-2.0-flash">
-                      gemini-2.0-flash
-                    </SelectItem>
-                    <SelectItem value="gemini-1.5-flash">
-                      gemini-1.5-flash
-                    </SelectItem>
-                    <SelectItem value="gemini-1.5-flash-8b">
-                      gemini-1.5-flash-8b
-                    </SelectItem>
-                    <SelectItem value="gemini-1.5-pro">
-                      gemini-1.5-pro
-                    </SelectItem>
-                    <SelectItem value="gemini-pro">
-                      gemini-pro (Legacy)
+                      gemini-2.0-flash (Deprecated - Migrate Soon)
                     </SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Flash models are optimized for speed
+                  Gemini 3.5 Flash recommended for best intelligence. See{" "}
+                  <a
+                    href="https://ai.google.dev/gemini-api/docs/models"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                  >
+                    all models
+                  </a>
                 </p>
               </div>
 
