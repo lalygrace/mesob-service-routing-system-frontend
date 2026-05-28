@@ -156,11 +156,10 @@ function AiUnavailableBanner({
     <div className="space-y-6">
       <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 space-y-3">
         <p className="text-sm font-semibold text-foreground">
-          AI assistant is temporarily unavailable
+          AI Assistant Temporarily Unavailable
         </p>
         <p className="text-sm text-muted-foreground">
-          The AI service is not responding right now. You can still find your
-          service by browsing the organization list directly — no AI needed.
+          {strings.systemMessages.geminiUnavailable}
         </p>
       </div>
 
@@ -627,23 +626,31 @@ function NavigateContent() {
                     )}
 
                   {step === "intake" && (
-                    <IntakeStep
-                      strings={strings}
-                      onPick={(method) => {
-                        setIntakeMethod(method);
-                        setCaseText("");
-                        setDecision(null);
-                        setAssistantError(null);
-                        setAiUnavailable(false);
-                        setAiQuestion(null);
-                        setAiOptions(null);
-                        setSelectedService(null);
-                        setRichService(null);
-                        if (method === "voice") goTo("voice");
-                        else if (method === "browse") goTo("browse");
-                        else goTo("case");
-                      }}
-                    />
+                    <>
+                      {/* Welcome message after language selection */}
+                      <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {strings.systemMessages.welcome}
+                        </p>
+                      </div>
+                      <IntakeStep
+                        strings={strings}
+                        onPick={(method) => {
+                          setIntakeMethod(method);
+                          setCaseText("");
+                          setDecision(null);
+                          setAssistantError(null);
+                          setAiUnavailable(false);
+                          setAiQuestion(null);
+                          setAiOptions(null);
+                          setSelectedService(null);
+                          setRichService(null);
+                          if (method === "voice") goTo("voice");
+                          else if (method === "browse") goTo("browse");
+                          else goTo("case");
+                        }}
+                      />
+                    </>
                   )}
 
                   {step === "voice" && (
@@ -683,6 +690,16 @@ function NavigateContent() {
 
                   {step === "assistant" && (
                     <>
+                      {/* Processing message while AI is working */}
+                      {isAiLoading && !aiUnavailable && (
+                        <div className="mb-6 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 flex items-center gap-3">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                          <p className="text-sm text-foreground">
+                            {strings.systemMessages.processing}
+                          </p>
+                        </div>
+                      )}
+
                       {/* Item 4 — AI unavailable fallback */}
                       {aiUnavailable ? (
                         <AiUnavailableBanner
