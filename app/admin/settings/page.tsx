@@ -10,6 +10,8 @@ import {
   Sparkles,
   Eye,
   EyeOff,
+  Database,
+  RefreshCw,
 } from "lucide-react";
 import {
   Card,
@@ -32,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { listSystemConfig, updateSystemConfig } from "@/lib/api/admin";
-import { getApiErrorMessage } from "@/lib/api/client";
+import { getApiErrorMessage, apiData } from "@/lib/api/client";
 import { toast } from "sonner";
 import { RequireSuperAdmin } from "@/components/auth/require-super-admin";
 
@@ -60,6 +62,16 @@ function SettingsPageContent() {
   
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
+
+  // Cache status state
+  const [cacheStatus, setCacheStatus] = React.useState<{
+    exists: boolean;
+    lastModified: string | null;
+    fileSizeBytes: number | null;
+    organizationCount: number | null;
+  } | null>(null);
+  const [isRegeneratingCache, setIsRegeneratingCache] = React.useState(false);
+  const [isLoadingCacheStatus, setIsLoadingCacheStatus] = React.useState(false);
 
   React.useEffect(() => {
     let mounted = true;
@@ -105,10 +117,59 @@ function SettingsPageContent() {
         });
     });
 
+    // Load cache status
+    loadCacheStatus();
+
     return () => {
       mounted = false;
     };
   }, []);
+
+  async function loadCacheStatus() {
+    setIsLoadingCacheStatus(true);
+    try {
+      const response = await apiData<{
+        exists: boolean;
+        lastModified: string | null;
+        fileSizeBytes: number | null;
+        organizationCount: number | null;
+      }>("/api/admin/system-config/cache/status");
+      setCacheStatus(response);
+    } catch (error) {
+      console.error("Failed to load cache status:", error);
+    } finally {
+      setIsLoadingCacheStatus(false);
+    }
+  }
+
+  async function handleRegenerateCache() {
+    setIsRegeneratingCache(true);
+    try {
+      const response = await apiData<{
+        success: boolean;
+        duration: number;
+        exists: boolean;
+        lastModified: string | null;
+        fileSizeBytes: number | null;
+        organizationCount: number | null;
+      }>("/api/admin/system-config/cache/regenerate", {
+        method: "POST",
+      });
+      
+      setCacheStatus({
+        exists: response.exists,
+        lastModified: response.lastModified,
+        fileSizeBytes: response.fileSizeBytes,
+        organizationCount: response.organizationCount,
+      });
+      
+      toast.success(`Cache regenerated successfully in ${response.duration}ms`);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to regenerate cache"));
+    } finally {
+      setIsRegeneratingCache(false);
+    }
+  }
 
   async function handleSaveSettings() {
     setIsSaving(true);
@@ -393,6 +454,141 @@ function SettingsPageContent() {
             <Button variant="outline" className="w-full" disabled>
               Configure Email Recipients
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* ── Cache Management ─────────────────────────────────── */}
+        <Card className="border-border/50 bg-card/80 backdrop-blur-sm lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <Database className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <CardTitle className="text-base">AI Service Cache</CardTitle>
+                <CardDescription>
+                  Pre-generated service catalog for AI routing
+                </CardDescription>
+              </div>
+              {cacheStatus?.exists && (
+                <Badge variant="outline" className="text-xs">
+                  Active
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="rounded-lg border border-border/50 bg-muted/30 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Database className="h-4 w-4 text-primary" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">About Service Cache</p>
+                  <p className="text-xs text-muted-foreground">
+                    The AI service cache is a pre-generated JSON snapshot of all organizations and services.
+                    Gemini Flash reads this file instead of querying the database on every citizen request,
+                    which significantly improves response time and reduces database load. The cache is
+                    automatically regenerated whenever you create, update, or delete organizations, services,
+                    or requirements through the admin panel.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {isLoadingCacheStatus ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : cacheStatus ? (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Status</Label>
+                  <p className="text-sm font-semibold">
+                    {cacheStatus.exists ? (
+                      <span className="text-green-600 dark:text-green-400">Generated</span>
+                    ) : (
+                      <span className="text-amber-600 dark:text-amber-400">Not Found</span>
+                    )}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Last Updated</Label>
+                  <p className="text-sm font-semibold">
+                    {cacheStatus.lastModified
+                      ? new Date(cacheStatus.lastModified).toLocaleString()
+                      : "Never"}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Organizations</Label>
+                  <p className="text-sm font-semibold">
+                    {cacheStatus.organizationCount ?? 0}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">File Size</Label>
+                  <p className="text-sm font-semibold">
+                    {cacheStatus.fileSizeBytes
+                      ? `${(cacheStatus.fileSizeBytes / 1024).toFixed(2)} KB`
+                      : "N/A"}
+                  </p>
+                </div>
+
+                <div className="space-y-1 md:col-span-2">
+                  <Label className="text-xs text-muted-foreground">Cache File</Label>
+                  <p className="text-xs font-mono text-muted-foreground">
+                    cache/services_all.json
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-sm text-muted-foreground">
+                Failed to load cache status
+              </div>
+            )}
+
+            <Separator />
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="font-medium">Manual Regeneration</Label>
+                <p className="text-xs text-muted-foreground">
+                  Force regenerate the cache file from the current database state
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRegenerateCache}
+                disabled={isRegeneratingCache}
+              >
+                {isRegeneratingCache ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Regenerating...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Regenerate Cache
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3">
+              <p className="text-xs text-amber-900 dark:text-amber-200">
+                <strong>Note:</strong> Manual regeneration is rarely needed. The cache is automatically
+                regenerated in the background whenever you make changes through the admin panel. Use this
+                button only if you suspect the cache is out of sync or after direct database modifications.
+              </p>
+            </div>
           </CardContent>
         </Card>
 
