@@ -37,6 +37,7 @@ import { listSystemConfig, updateSystemConfig } from "@/lib/api/admin";
 import { getApiErrorMessage, apiData } from "@/lib/api/client";
 import { toast } from "sonner";
 import { RequireSuperAdmin } from "@/components/auth/require-super-admin";
+import { SystemMessagesEditor } from "@/components/admin/system-messages-editor";
 
 function SettingsPageContent() {
   const [systemName, setSystemName] = React.useState("Mesob Service Navigator");
@@ -873,6 +874,9 @@ function SettingsPageContent() {
             </div>
           </CardContent>
         </Card>
+
+        {/* ── System Messages (TTS) ──────────────────────────────────────────── */}
+        <SystemMessagesEditor />
       </div>
 
       {/* Save button */}
