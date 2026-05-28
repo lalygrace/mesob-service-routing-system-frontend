@@ -39,6 +39,7 @@ import {
 import { OrganizationBrowse } from "@/components/navigator/steps/organization-browse";
 import { ResultsStep } from "@/components/navigator/steps/results-step";
 import { ReviewStep } from "@/components/navigator/steps/review-step";
+import { WelcomeMessage } from "@/components/navigator/welcome-message";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Building2 } from "lucide-react";
 import { getStrings } from "@/lib/service-navigator/strings";
@@ -627,12 +628,11 @@ function NavigateContent() {
 
                   {step === "intake" && (
                     <>
-                      {/* Welcome message after language selection */}
-                      <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-5">
-                        <p className="text-sm text-foreground leading-relaxed">
-                          {strings.systemMessages.welcome}
-                        </p>
-                      </div>
+                      {/* Welcome message with TTS audio */}
+                      <WelcomeMessage
+                        language={language}
+                        text={strings.systemMessages.welcome}
+                      />
                       <IntakeStep
                         strings={strings}
                         onPick={(method) => {
