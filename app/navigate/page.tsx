@@ -629,10 +629,7 @@ function NavigateContent() {
                   {step === "intake" && (
                     <>
                       {/* Welcome message with TTS audio */}
-                      <WelcomeMessage
-                        language={language}
-                        text={strings.systemMessages.welcome}
-                      />
+                      <WelcomeMessage language={language} />
                       <IntakeStep
                         strings={strings}
                         onPick={(method) => {

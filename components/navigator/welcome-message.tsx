@@ -8,33 +8,26 @@ import { Button } from "@/components/ui/button";
 
 type WelcomeMessageProps = {
   language: LanguageCode;
-  text: string; // Fallback text for English or if audio fails
 };
 
 /**
  * Welcome message component that plays TTS audio for Amharic/Afaan Oromo
- * and displays text for English
+ * No text display - audio only
  */
-export function WelcomeMessage({ language, text }: WelcomeMessageProps) {
-  const { playMessage, stopMessage, isPlaying, error } = useSystemMessageAudio();
+export function WelcomeMessage({ language }: WelcomeMessageProps) {
+  const { playMessage, stopMessage, isPlaying } = useSystemMessageAudio();
   const [hasPlayed, setHasPlayed] = React.useState(false);
-  const [displayText, setDisplayText] = React.useState(text);
-  const [isAudio, setIsAudio] = React.useState(false);
 
   // Auto-play welcome message when component mounts
   React.useEffect(() => {
-    if (!hasPlayed) {
+    if (!hasPlayed && language !== "en") {
       playMessage("welcome", language)
-        .then((result) => {
-          setDisplayText(result.text);
-          setIsAudio(result.isAudio);
+        .then(() => {
           setHasPlayed(true);
         })
         .catch((err) => {
           console.error("Failed to play welcome message:", err);
-          // Fallback to text display
-          setDisplayText(text);
-          setIsAudio(false);
+          // Silently fail - no text fallback
         });
     }
 
@@ -42,76 +35,56 @@ export function WelcomeMessage({ language, text }: WelcomeMessageProps) {
     return () => {
       stopMessage();
     };
-  }, [language, hasPlayed]); // Only run once per language change
+  }, [language, hasPlayed]);
 
   const handleReplay = () => {
-    playMessage("welcome", language)
-      .then((result) => {
-        setDisplayText(result.text);
-        setIsAudio(result.isAudio);
-      })
-      .catch((err) => {
-        console.error("Failed to replay welcome message:", err);
-      });
+    playMessage("welcome", language).catch((err) => {
+      console.error("Failed to replay welcome message:", err);
+    });
   };
 
-  // For audio messages (Amharic/Afaan Oromo), only show audio controls
-  // For English or if audio fails, show text
-  const shouldShowText = !isAudio || error || language === "en";
+  // For English, don't show anything (no TTS support)
+  if (language === "en") {
+    return null;
+  }
 
   return (
     <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-5">
-      <div className="flex items-start gap-3">
-        {shouldShowText ? (
-          <div className="flex-1">
-            <p className="text-sm text-foreground leading-relaxed">
-              {displayText}
-            </p>
-            {error && (
-              <p className="mt-2 text-xs text-destructive">
-                Audio playback failed. Showing text instead.
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              {isPlaying ? (
-                <>
-                  <Volume2 className="h-5 w-5 text-primary animate-pulse" />
-                  <span className="text-sm text-muted-foreground">
-                    Playing welcome message...
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Volume2 className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    Welcome message played
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {isPlaying ? (
+            <>
+              <Volume2 className="h-5 w-5 text-primary animate-pulse" />
+              <span className="text-sm text-muted-foreground">
+                Playing welcome message...
+              </span>
+            </>
+          ) : (
+            <>
+              <Volume2 className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Welcome message played
+              </span>
+            </>
+          )}
+        </div>
         
-        {/* Show replay button for audio messages (Amharic/Afaan Oromo) */}
-        {isAudio && language !== "en" && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="shrink-0"
-            onClick={isPlaying ? stopMessage : handleReplay}
-            title={isPlaying ? "Stop audio" : "Replay audio"}
-          >
-            {isPlaying ? (
-              <VolumeX className="h-4 w-4" />
-            ) : (
-              <Volume2 className="h-4 w-4" />
-            )}
-          </Button>
-        )}
+        {/* Replay button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          onClick={isPlaying ? stopMessage : handleReplay}
+          title={isPlaying ? "Stop audio" : "Replay audio"}
+        >
+          {isPlaying ? (
+            <VolumeX className="h-4 w-4" />
+          ) : (
+            <Volume2 className="h-4 w-4" />
+          )}
+        </Button>
       </div>
     </div>
   );
 }
+
