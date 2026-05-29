@@ -51,16 +51,16 @@ function SettingsPageContent() {
   // AI Engine state
   const [geminiApiKey, setGeminiApiKey] = React.useState("");
   const [geminiApiKeyVisible, setGeminiApiKeyVisible] = React.useState(false);
-  const [geminiModel, setGeminiModel] = React.useState("gemini-2.5-flash");
+  const [geminiModel, setGeminiModel] = React.useState("gemini-3.5-flash");
   const [geminiTemperature, setGeminiTemperature] = React.useState(0.0);
   const [geminiMaxTokens, setGeminiMaxTokens] = React.useState(1000); // Reduced for free tier
-  
+
   const [addisAiApiKey, setAddisAiApiKey] = React.useState("");
   const [addisAiApiKeyVisible, setAddisAiApiKeyVisible] = React.useState(false);
   const [addisAiBaseUrl, setAddisAiBaseUrl] = React.useState(
     "https://api.addisassistant.com",
   );
-  
+
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
 
@@ -97,13 +97,13 @@ function SettingsPageContent() {
           setDailyReports(
             (byKey.get("daily_reports_enabled") ?? "true") === "true",
           );
-          
+
           // Gemini Configuration
           setGeminiApiKey(byKey.get("gemini_api_key") ?? "");
-          setGeminiModel(byKey.get("gemini_model") ?? "gemini-2.5-flash");
+          setGeminiModel(byKey.get("gemini_model") ?? "gemini-3.5-flash");
           setGeminiTemperature(Number(byKey.get("gemini_temperature") ?? 0.0));
           setGeminiMaxTokens(Number(byKey.get("gemini_max_tokens") ?? 1000));
-          
+
           // AddisAI Configuration
           setAddisAiApiKey(byKey.get("addis_ai_api_key") ?? "");
           setAddisAiBaseUrl(
@@ -156,14 +156,14 @@ function SettingsPageContent() {
       }>("/api/admin/system-config/cache/regenerate", {
         method: "POST",
       });
-      
+
       setCacheStatus({
         exists: response.exists,
         lastModified: response.lastModified,
         fileSizeBytes: response.fileSizeBytes,
         organizationCount: response.organizationCount,
       });
-      
+
       toast.success(`Cache regenerated successfully in ${response.duration}ms`);
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to regenerate cache"));
@@ -487,11 +487,13 @@ function SettingsPageContent() {
                 <div className="space-y-1">
                   <p className="text-sm font-medium">About Service Cache</p>
                   <p className="text-xs text-muted-foreground">
-                    The AI service cache is a pre-generated JSON snapshot of all organizations and services.
-                    Gemini Flash reads this file instead of querying the database on every citizen request,
-                    which significantly improves response time and reduces database load. The cache is
-                    automatically regenerated whenever you create, update, or delete organizations, services,
-                    or requirements through the admin panel.
+                    The AI service cache is a pre-generated JSON snapshot of all
+                    organizations and services. Gemini Flash reads this file
+                    instead of querying the database on every citizen request,
+                    which significantly improves response time and reduces
+                    database load. The cache is automatically regenerated
+                    whenever you create, update, or delete organizations,
+                    services, or requirements through the admin panel.
                   </p>
                 </div>
               </div>
@@ -506,18 +508,26 @@ function SettingsPageContent() {
             ) : cacheStatus ? (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Status</Label>
+                  <Label className="text-xs text-muted-foreground">
+                    Status
+                  </Label>
                   <p className="text-sm font-semibold">
                     {cacheStatus.exists ? (
-                      <span className="text-green-600 dark:text-green-400">Generated</span>
+                      <span className="text-green-600 dark:text-green-400">
+                        Generated
+                      </span>
                     ) : (
-                      <span className="text-amber-600 dark:text-amber-400">Not Found</span>
+                      <span className="text-amber-600 dark:text-amber-400">
+                        Not Found
+                      </span>
                     )}
                   </p>
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Last Updated</Label>
+                  <Label className="text-xs text-muted-foreground">
+                    Last Updated
+                  </Label>
                   <p className="text-sm font-semibold">
                     {cacheStatus.lastModified
                       ? new Date(cacheStatus.lastModified).toLocaleString()
@@ -526,14 +536,18 @@ function SettingsPageContent() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Organizations</Label>
+                  <Label className="text-xs text-muted-foreground">
+                    Organizations
+                  </Label>
                   <p className="text-sm font-semibold">
                     {cacheStatus.organizationCount ?? 0}
                   </p>
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">File Size</Label>
+                  <Label className="text-xs text-muted-foreground">
+                    File Size
+                  </Label>
                   <p className="text-sm font-semibold">
                     {cacheStatus.fileSizeBytes
                       ? `${(cacheStatus.fileSizeBytes / 1024).toFixed(2)} KB`
@@ -542,7 +556,9 @@ function SettingsPageContent() {
                 </div>
 
                 <div className="space-y-1 md:col-span-2">
-                  <Label className="text-xs text-muted-foreground">Cache File</Label>
+                  <Label className="text-xs text-muted-foreground">
+                    Cache File
+                  </Label>
                   <p className="text-xs font-mono text-muted-foreground">
                     cache/services_all.json
                   </p>
@@ -560,7 +576,8 @@ function SettingsPageContent() {
               <div className="space-y-1">
                 <Label className="font-medium">Manual Regeneration</Label>
                 <p className="text-xs text-muted-foreground">
-                  Force regenerate the cache file from the current database state
+                  Force regenerate the cache file from the current database
+                  state
                 </p>
               </div>
               <Button
@@ -585,9 +602,11 @@ function SettingsPageContent() {
 
             <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3">
               <p className="text-xs text-amber-900 dark:text-amber-200">
-                <strong>Note:</strong> Manual regeneration is rarely needed. The cache is automatically
-                regenerated in the background whenever you make changes through the admin panel. Use this
-                button only if you suspect the cache is out of sync or after direct database modifications.
+                <strong>Note:</strong> Manual regeneration is rarely needed. The
+                cache is automatically regenerated in the background whenever
+                you make changes through the admin panel. Use this button only
+                if you suspect the cache is out of sync or after direct database
+                modifications.
               </p>
             </div>
           </CardContent>
@@ -605,7 +624,8 @@ function SettingsPageContent() {
                   Gemini AI (Primary Intelligence Layer)
                 </CardTitle>
                 <CardDescription>
-                  Google Gemini Flash for intent understanding and service routing
+                  Google Gemini Flash for intent understanding and service
+                  routing
                 </CardDescription>
               </div>
               <Badge variant="outline" className="text-xs">
@@ -664,10 +684,12 @@ function SettingsPageContent() {
                   <SelectContent>
                     {/* Gemini 3 - Latest Generation */}
                     <SelectItem value="gemini-3.5-flash">
-                      gemini-3.5-flash (Stable - Most Intelligent)
+                      gemini-3.5-flash (Stable - Recommended, free-tier
+                      friendly)
                     </SelectItem>
                     <SelectItem value="gemini-3.1-flash-lite">
-                      gemini-3.1-flash-lite (Stable - Cost Efficient)
+                      gemini-3.1-flash-lite (Stable - Cost efficient, free-tier
+                      friendly)
                     </SelectItem>
                     <SelectItem value="gemini-3.1-pro">
                       gemini-3.1-pro (Preview - Advanced Intelligence)
@@ -675,18 +697,18 @@ function SettingsPageContent() {
                     <SelectItem value="gemini-3-flash">
                       gemini-3-flash (Preview - Frontier Performance)
                     </SelectItem>
-                    
-                    {/* Gemini 2.5 - Current Recommended */}
+
+                    {/* Gemini 2.5 - Legacy/paid tiers */}
                     <SelectItem value="gemini-2.5-flash">
-                      gemini-2.5-flash (Recommended - Best Price/Performance)
+                      gemini-2.5-flash (Legacy - check quota availability)
                     </SelectItem>
                     <SelectItem value="gemini-2.5-flash-lite">
-                      gemini-2.5-flash-lite (Fastest & Budget-Friendly)
+                      gemini-2.5-flash-lite (Legacy - check quota availability)
                     </SelectItem>
                     <SelectItem value="gemini-2.5-pro">
-                      gemini-2.5-pro (Most Advanced - Complex Tasks)
+                      gemini-2.5-pro (Paid tier required)
                     </SelectItem>
-                    
+
                     {/* Gemini 2.0 - Deprecated */}
                     <SelectItem value="gemini-2.0-flash">
                       gemini-2.0-flash (Deprecated - Migrate Soon)
@@ -694,7 +716,8 @@ function SettingsPageContent() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Gemini 3.5 Flash recommended for best intelligence. See{" "}
+                  Free tier typically supports gemini-3.5-flash or
+                  gemini-3.1-flash-lite. Pro models may require billing. See{" "}
                   <a
                     href="https://ai.google.dev/gemini-api/docs/models"
                     target="_blank"
@@ -745,11 +768,15 @@ function SettingsPageContent() {
                   <Sparkles className="h-4 w-4 text-primary" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">About Gemini Integration</p>
+                  <p className="text-sm font-medium">
+                    About Gemini Integration
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    Gemini Flash is the primary intelligence layer responsible for understanding citizen requests,
-                    matching them to services, and generating clarification questions. It processes all natural
-                    language input and makes routing decisions based on the service catalog.
+                    Gemini Flash is the primary intelligence layer responsible
+                    for understanding citizen requests, matching them to
+                    services, and generating clarification questions. It
+                    processes all natural language input and makes routing
+                    decisions based on the service catalog.
                   </p>
                 </div>
               </div>
@@ -838,12 +865,17 @@ function SettingsPageContent() {
                   <Sparkles className="h-4 w-4 text-primary" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">About AddisAI Integration</p>
+                  <p className="text-sm font-medium">
+                    About AddisAI Integration
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    AddisAI provides specialized audio processing for Ethiopian languages. It handles Speech-to-Text
-                    (STT) transcription using the addis-whisper model and Text-to-Speech (TTS) synthesis using
-                    አሌፍ-Audio-AM (Amharic) and አሌፍ-Audio-OM (Afaan Oromo) models. These models are purpose-built
-                    for Ethiopian languages and provide superior accuracy compared to generic alternatives.
+                    AddisAI provides specialized audio processing for Ethiopian
+                    languages. It handles Speech-to-Text (STT) transcription
+                    using the addis-whisper model and Text-to-Speech (TTS)
+                    synthesis using አሌፍ-Audio-AM (Amharic) and አሌፍ-Audio-OM
+                    (Afaan Oromo) models. These models are purpose-built for
+                    Ethiopian languages and provide superior accuracy compared
+                    to generic alternatives.
                   </p>
                 </div>
               </div>
@@ -851,21 +883,27 @@ function SettingsPageContent() {
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
-                <p className="text-xs font-medium text-muted-foreground">STT Model</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  STT Model
+                </p>
                 <p className="mt-1 text-sm font-semibold">addis-whisper</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Speech-to-Text for am, om, en
                 </p>
               </div>
               <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
-                <p className="text-xs font-medium text-muted-foreground">TTS Model (Amharic)</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  TTS Model (Amharic)
+                </p>
                 <p className="mt-1 text-sm font-semibold">አሌፍ-Audio-AM</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Natural Amharic voice synthesis
                 </p>
               </div>
               <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
-                <p className="text-xs font-medium text-muted-foreground">TTS Model (Oromo)</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  TTS Model (Oromo)
+                </p>
                 <p className="mt-1 text-sm font-semibold">አሌፍ-Audio-OM</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Natural Afaan Oromo voice synthesis
