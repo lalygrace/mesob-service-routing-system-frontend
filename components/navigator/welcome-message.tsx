@@ -13,27 +13,27 @@ type WelcomeMessageProps = {
  * No visual display - audio only
  */
 export function WelcomeMessage({ language }: WelcomeMessageProps) {
-  const { playMessage, stopMessage } = useSystemMessageAudio();
-  const [hasPlayed, setHasPlayed] = React.useState(false);
+  const { playMessage } = useSystemMessageAudio();
+  const playedRef = React.useRef(false);
 
   // Auto-play welcome message when component mounts
   React.useEffect(() => {
-    if (!hasPlayed && language !== "en") {
+    // Only play once per language
+    if (!playedRef.current && language !== "en") {
+      playedRef.current = true;
+      
       playMessage("welcome", language)
-        .then(() => {
-          setHasPlayed(true);
-        })
         .catch((err) => {
           console.error("Failed to play welcome message:", err);
           // Silently fail - no visual feedback
         });
     }
 
-    // Cleanup: stop audio when component unmounts
+    // Reset when language changes
     return () => {
-      stopMessage();
+      playedRef.current = false;
     };
-  }, [language, hasPlayed]);
+  }, [language, playMessage]);
 
   // No visual component - just plays audio in background
   return null;
