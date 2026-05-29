@@ -6,21 +6,23 @@ import type { LanguageCode } from "@/lib/service-navigator/types";
 
 type WelcomeMessageProps = {
   language: LanguageCode;
+  sessionCount: number; // Track session resets
 };
 
 /**
  * Welcome message component that silently plays TTS audio
  * No visual display - audio only
+ * Plays only once per session (not on back navigation)
  */
-export function WelcomeMessage({ language }: WelcomeMessageProps) {
+export function WelcomeMessage({ language, sessionCount }: WelcomeMessageProps) {
   const { playMessage } = useSystemMessageAudio();
-  const playedRef = React.useRef(false);
+  const lastPlayedSessionRef = React.useRef<number>(-1);
 
-  // Auto-play welcome message when component mounts
+  // Auto-play welcome message only once per session
   React.useEffect(() => {
-    // Only play once per language
-    if (!playedRef.current && language !== "en") {
-      playedRef.current = true;
+    // Only play if this is a new session and language is not English
+    if (lastPlayedSessionRef.current !== sessionCount && language !== "en") {
+      lastPlayedSessionRef.current = sessionCount;
       
       playMessage("welcome", language)
         .catch((err) => {
@@ -28,7 +30,7 @@ export function WelcomeMessage({ language }: WelcomeMessageProps) {
           // Silently fail - no visual feedback
         });
     }
-  }, [language]); // Remove playMessage from dependencies
+  }, [sessionCount, language, playMessage]);
 
   // No visual component - just plays audio in background
   return null;

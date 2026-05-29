@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { getSystemMessage, SystemMessageType } from "@/lib/api/system-message";
 import type { LanguageCode } from "@/lib/service-navigator/types";
 
@@ -25,6 +25,16 @@ export function useSystemMessageAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   /**
    * Play a system message
@@ -53,6 +63,7 @@ export function useSystemMessageAudio() {
       // Stop any currently playing audio
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.currentTime = 0;
         audioRef.current = null;
       }
 
@@ -89,6 +100,7 @@ export function useSystemMessageAudio() {
   const stopMessage = () => {
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current.currentTime = 0;
       audioRef.current = null;
       setIsPlaying(false);
     }

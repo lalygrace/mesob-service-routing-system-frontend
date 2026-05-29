@@ -53,7 +53,7 @@ function SettingsPageContent() {
   const [geminiApiKeyVisible, setGeminiApiKeyVisible] = React.useState(false);
   const [geminiModel, setGeminiModel] = React.useState("gemini-2.5-flash");
   const [geminiTemperature, setGeminiTemperature] = React.useState(0.0);
-  const [geminiMaxTokens, setGeminiMaxTokens] = React.useState(2000);
+  const [geminiMaxTokens, setGeminiMaxTokens] = React.useState(1000); // Reduced for free tier
   
   const [addisAiApiKey, setAddisAiApiKey] = React.useState("");
   const [addisAiApiKeyVisible, setAddisAiApiKeyVisible] = React.useState(false);
@@ -102,7 +102,7 @@ function SettingsPageContent() {
           setGeminiApiKey(byKey.get("gemini_api_key") ?? "");
           setGeminiModel(byKey.get("gemini_model") ?? "gemini-2.5-flash");
           setGeminiTemperature(Number(byKey.get("gemini_temperature") ?? 0.0));
-          setGeminiMaxTokens(Number(byKey.get("gemini_max_tokens") ?? 2000));
+          setGeminiMaxTokens(Number(byKey.get("gemini_max_tokens") ?? 1000));
           
           // AddisAI Configuration
           setAddisAiApiKey(byKey.get("addis_ai_api_key") ?? "");

@@ -628,8 +628,8 @@ function NavigateContent() {
 
                   {step === "intake" && (
                     <>
-                      {/* Welcome message with TTS audio */}
-                      <WelcomeMessage language={language} />
+                      {/* Welcome message with TTS audio - plays once per session */}
+                      <WelcomeMessage language={language} sessionCount={sessionCount} />
                       <IntakeStep
                         strings={strings}
                         onPick={(method) => {
