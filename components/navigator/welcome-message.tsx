@@ -28,12 +28,7 @@ export function WelcomeMessage({ language }: WelcomeMessageProps) {
           // Silently fail - no visual feedback
         });
     }
-
-    // Reset when language changes
-    return () => {
-      playedRef.current = false;
-    };
-  }, [language, playMessage]);
+  }, [language]); // Remove playMessage from dependencies
 
   // No visual component - just plays audio in background
   return null;
