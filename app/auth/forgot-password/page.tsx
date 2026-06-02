@@ -131,8 +131,10 @@ function ForgotPasswordPageContent() {
                 />
               </div>
             </div>
+          </CardContent>
 
-            <div className="flex justify-center pt-2">
+          <CardFooter className="flex flex-col space-y-3">
+            <div className="w-full flex justify-center py-2">
               <Turnstile
                 ref={turnstileRef}
                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
@@ -151,9 +153,7 @@ function ForgotPasswordPageContent() {
                 }}
               />
             </div>
-          </CardContent>
-
-          <CardFooter className="flex flex-col space-y-3">
+            
             <Button 
               type="submit" 
               className="w-full" 
