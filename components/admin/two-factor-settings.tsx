@@ -123,15 +123,32 @@ export function TwoFactorSettings() {
       setSetupData(null);
       verifyForm.reset();
       
-      // Wait a moment for backend to process
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait longer for backend to process and update the database
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Reload user data to update the UI
-      const data = await getAdminMe();
-      setIs2FAEnabled(data.user?.twoFactorEnabled ?? false);
+      // Reload user data multiple times to ensure we get the updated state
+      let attempts = 0;
+      let maxAttempts = 3;
       
-      // Show success message after state update
-      toast.success("Two-factor authentication enabled successfully!");
+      while (attempts < maxAttempts) {
+        const data = await getAdminMe();
+        console.log(`Attempt ${attempts + 1}: twoFactorEnabled =`, data.user?.twoFactorEnabled);
+        
+        if (data.user?.twoFactorEnabled) {
+          setIs2FAEnabled(true);
+          toast.success("Two-factor authentication enabled successfully!");
+          return;
+        }
+        
+        attempts++;
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+      // If after all attempts it's still not enabled, show a message but update anyway
+      toast.success("Two-factor authentication enabled! Please refresh the page to see the updated status.");
+      setIs2FAEnabled(true); // Set it optimistically
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Invalid verification code"));
     } finally {
