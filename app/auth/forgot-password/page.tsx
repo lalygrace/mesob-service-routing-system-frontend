@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ArrowLeft, Mail, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
 import { PublicRoute } from "@/components/auth/public-route";
 import { requestPasswordReset } from "@/lib/api/auth";
 import { getApiErrorMessage } from "@/lib/api/client";
@@ -35,12 +36,21 @@ function ForgotPasswordPageContent() {
 
     try {
       await requestPasswordReset(email.trim());
-      toast.success("Password reset link sent");
+      toast.success("If an account exists, a reset link has been sent.");
       setSuccess(true);
     } catch (err) {
-      toast.error(
-        getApiErrorMessage(err, "Failed to send reset link. Please try again."),
+      const message = getApiErrorMessage(
+        err,
+        "Failed to send reset link. Please try again.",
       );
+
+      if (/user not found/i.test(message)) {
+        toast.success("If an account exists, a reset link has been sent.");
+        setSuccess(true);
+        return;
+      }
+
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -48,19 +58,24 @@ function ForgotPasswordPageContent() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="w-8 h-8 text-white" />
-              </div>
+              <Image
+                src="/mesoblogo.png"
+                alt="Mesob Logo"
+                width={64}
+                height={64}
+                className="h-16 w-auto"
+              />
             </div>
             <CardTitle className="text-2xl text-center">
               Check Your Email
             </CardTitle>
             <CardDescription className="text-center">
-              We have sent a password reset link to <strong>{email}</strong>
+              If an account exists for <strong>{email}</strong>, we sent a
+              password reset link.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -83,13 +98,17 @@ function ForgotPasswordPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-              <Mail className="w-8 h-8 text-primary-foreground" />
-            </div>
+            <Image
+              src="/mesoblogo.png"
+              alt="Mesob Logo"
+              width={64}
+              height={64}
+              className="h-16 w-auto"
+            />
           </div>
           <CardTitle className="text-2xl text-center">
             Forgot Password?
