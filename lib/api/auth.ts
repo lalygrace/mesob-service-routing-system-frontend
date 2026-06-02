@@ -29,10 +29,16 @@ export type AdminMe = {
   user: AuthUser | null;
 };
 
-export function signInWithEmail(email: string, password: string) {
+export function signInWithEmail(email: string, password: string, captchaToken?: string) {
+  const headers: Record<string, string> = {};
+  if (captchaToken) {
+    headers['x-captcha-response'] = captchaToken;
+  }
+  
   return apiRequest<unknown>("/api/auth/sign-in/email", {
     method: "POST",
     body: { email, password },
+    headers,
   });
 }
 
@@ -42,10 +48,16 @@ export function signOut() {
   });
 }
 
-export function requestPasswordReset(email: string) {
+export function requestPasswordReset(email: string, captchaToken?: string) {
+  const headers: Record<string, string> = {};
+  if (captchaToken) {
+    headers['x-captcha-response'] = captchaToken;
+  }
+  
   return apiRequest<unknown>("/api/auth/forgot-password", {
     method: "POST",
     body: { email },
+    headers,
   });
 }
 

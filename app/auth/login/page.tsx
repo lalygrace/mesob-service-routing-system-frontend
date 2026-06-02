@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,18 +27,26 @@ function LoginPageContent() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileRef = useRef<any>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!email.trim() || !password) {
       toast.error("Please enter both email and password");
+      return;
+    }
+
+    if (!captchaToken) {
+      toast.error("Please complete the captcha verification");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await signInWithEmail(email.trim(), password);
+      await signInWithEmail(email.trim(), password, captchaToken);
       toast.success("Signed in successfully");
       router.push("/admin");
       router.refresh();
@@ -45,6 +54,11 @@ function LoginPageContent() {
       toast.error(
         getApiErrorMessage(err, "Invalid credentials. Please try again."),
       );
+      // Reset Turnstile on error
+      if (turnstileRef.current) {
+        turnstileRef.current.reset();
+        setCaptchaToken(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -78,6 +92,7 @@ function LoginPageContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -94,11 +109,13 @@ function LoginPageContent() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10"
                   required
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -117,10 +134,34 @@ function LoginPageContent() {
                 Forgot password?
               </Link>
             </div>
+
+            <div className="flex justify-center pt-2">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                onSuccess={(token) => setCaptchaToken(token)}
+                onError={() => {
+                  setCaptchaToken(null);
+                  toast.error("Captcha verification failed. Please try again.");
+                }}
+                onExpire={() => {
+                  setCaptchaToken(null);
+                  toast.warning("Captcha expired. Please verify again.");
+                }}
+                options={{
+                  theme: "light",
+                  size: "normal",
+                }}
+              />
+            </div>
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading || !captchaToken}
+            >
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </CardFooter>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,24 +24,37 @@ function ForgotPasswordPageContent() {
   const [email, setEmail] = useState("");
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileRef = useRef<any>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!email.trim()) {
       toast.error("Please enter your email address");
+      return;
+    }
+
+    if (!captchaToken) {
+      toast.error("Please complete the captcha verification");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await requestPasswordReset(email.trim());
+      await requestPasswordReset(email.trim(), captchaToken);
       toast.success("Password reset link sent");
       setSuccess(true);
     } catch (err) {
       toast.error(
         getApiErrorMessage(err, "Failed to send reset link. Please try again."),
       );
+      // Reset Turnstile on error
+      if (turnstileRef.current) {
+        turnstileRef.current.reset();
+        setCaptchaToken(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -113,13 +127,38 @@ function ForgotPasswordPageContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   required
+                  disabled={isLoading}
                 />
               </div>
+            </div>
+
+            <div className="flex justify-center pt-2">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                onSuccess={(token) => setCaptchaToken(token)}
+                onError={() => {
+                  setCaptchaToken(null);
+                  toast.error("Captcha verification failed. Please try again.");
+                }}
+                onExpire={() => {
+                  setCaptchaToken(null);
+                  toast.warning("Captcha expired. Please verify again.");
+                }}
+                options={{
+                  theme: "light",
+                  size: "normal",
+                }}
+              />
             </div>
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-3">
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading || !captchaToken}
+            >
               {isLoading ? "Sending..." : "Send Reset Link"}
             </Button>
             <Link href="/auth/login" className="w-full">
