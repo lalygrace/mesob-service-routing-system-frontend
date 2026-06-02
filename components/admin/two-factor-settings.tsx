@@ -116,40 +116,48 @@ export function TwoFactorSettings() {
   async function onVerifySubmit(values: VerifyFormValues) {
     setIsLoading(true);
     try {
-      await verify2FATOTP(values.code, false);
+      const verifyResult = await verify2FATOTP(values.code, false);
+      console.log("Verify 2FA result:", verifyResult);
       
       // Close dialog first
       setShowSetupDialog(false);
       setSetupData(null);
       verifyForm.reset();
       
-      // Wait longer for backend to process and update the database
+      // Show success immediately
+      toast.success("Two-factor authentication enabled successfully!");
+      
+      // Wait for backend to process
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Reload user data multiple times to ensure we get the updated state
-      let attempts = 0;
-      let maxAttempts = 3;
-      
-      while (attempts < maxAttempts) {
+      // Try to reload data multiple times
+      for (let i = 0; i < 3; i++) {
         const data = await getAdminMe();
-        console.log(`Attempt ${attempts + 1}: twoFactorEnabled =`, data.user?.twoFactorEnabled);
+        console.log(`Reload attempt ${i + 1}:`, {
+          twoFactorEnabled: data.user?.twoFactorEnabled,
+          userEmail: data.user?.email
+        });
         
-        if (data.user?.twoFactorEnabled) {
+        if (data.user?.twoFactorEnabled === true) {
           setIs2FAEnabled(true);
-          toast.success("Two-factor authentication enabled successfully!");
+          console.log("✅ 2FA status updated successfully");
           return;
         }
         
-        attempts++;
-        if (attempts < maxAttempts) {
+        if (i < 2) {
           await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
       
-      // If after all attempts it's still not enabled, show a message but update anyway
-      toast.success("Two-factor authentication enabled! Please refresh the page to see the updated status.");
-      setIs2FAEnabled(true); // Set it optimistically
+      // If we get here, the backend hasn't updated yet
+      // Force a page reload to get fresh data
+      console.log("⚠️ 2FA not reflected in session, reloading page...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
     } catch (error) {
+      console.error("2FA verification error:", error);
       toast.error(getApiErrorMessage(error, "Invalid verification code"));
     } finally {
       setIsLoading(false);
