@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
           trendLabel="live data"
         />
         <StatCard
-          title="Today's Sessions"
+          title="Customers Served Today"
           value={
             isLoading
               ? "..."

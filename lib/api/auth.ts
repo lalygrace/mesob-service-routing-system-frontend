@@ -19,6 +19,7 @@ export type AuthUser = {
   isActive?: boolean | null;
   phone?: string | null;
   location?: string | null;
+  twoFactorEnabled?: boolean | null;
 };
 
 export type AdminMe = {
@@ -29,13 +30,22 @@ export type AdminMe = {
   user: AuthUser | null;
 };
 
+export type SignInResponse = {
+  user?: AuthUser;
+  session?: {
+    id: string;
+    expiresAt: string;
+  };
+  twoFactorRedirect?: boolean;
+};
+
 export function signInWithEmail(email: string, password: string, captchaToken?: string) {
   const headers: Record<string, string> = {};
   if (captchaToken) {
     headers['x-captcha-response'] = captchaToken;
   }
   
-  return apiRequest<unknown>("/api/auth/sign-in/email", {
+  return apiData<SignInResponse>("/api/auth/sign-in/email", {
     method: "POST",
     body: { email, password },
     headers,
@@ -130,5 +140,39 @@ export function revokeSession(sessionId: string) {
 export function revokeOtherSessions() {
   return apiRequest<{ success: boolean }>("/api/auth/revoke-other-sessions", {
     method: "POST",
+  });
+}
+
+// Two-Factor Authentication
+export type Enable2FAResponse = {
+  totpURI: string;
+  backupCodes: string[];
+};
+
+export function enable2FA(password: string) {
+  return apiData<Enable2FAResponse>("/api/auth/two-factor/enable", {
+    method: "POST",
+    body: { password },
+  });
+}
+
+export function disable2FA(password: string) {
+  return apiRequest<{ success: boolean }>("/api/auth/two-factor/disable", {
+    method: "POST",
+    body: { password },
+  });
+}
+
+export function verify2FATOTP(code: string, trustDevice: boolean = false) {
+  return apiRequest<{ success: boolean }>("/api/auth/two-factor/verify-totp", {
+    method: "POST",
+    body: { code, trustDevice },
+  });
+}
+
+export function get2FAURI(password: string) {
+  return apiData<{ totpURI: string }>("/api/auth/two-factor/get-totp-uri", {
+    method: "POST",
+    body: { password },
   });
 }

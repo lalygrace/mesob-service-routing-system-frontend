@@ -46,7 +46,15 @@ function LoginPageContent() {
     setIsLoading(true);
 
     try {
-      await signInWithEmail(email.trim(), password, captchaToken);
+      const response = await signInWithEmail(email.trim(), password, captchaToken);
+      
+      // Check if 2FA is required
+      if (response.twoFactorRedirect) {
+        toast.info("Two-factor authentication required");
+        router.push("/auth/two-factor?from=login");
+        return;
+      }
+      
       toast.success("Signed in successfully");
       router.push("/admin");
       router.refresh();

@@ -96,8 +96,8 @@ const ACCOUNT_ITEMS = [
     icon: User,
   },
   {
-    title: "Change Password",
-    url: "/admin/change-password",
+    title: "Security",
+    url: "/admin/security",
     icon: Lock,
   },
 ];
@@ -311,9 +311,9 @@ export function AdminSidebar() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="gap-2">
-                  <Link href="/admin/change-password">
+                  <Link href="/admin/security">
                     <Lock className="h-4 w-4" />
-                    Change Password
+                    Security
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="gap-2">
