@@ -31,7 +31,7 @@ export async function getSystemMessage(
   language: Language
 ): Promise<SystemMessage> {
   return apiData<SystemMessage>(
-    `/api/system-message?type=${type}&language=${language}`
+    `/system-message?type=${type}&language=${language}`
   );
 }
 
@@ -41,7 +41,7 @@ export async function getSystemMessage(
 export async function getAllSystemMessages(): Promise<
   SystemMessageListItem[]
 > {
-  return apiData<SystemMessageListItem[]>("/api/system-message/all");
+  return apiData<SystemMessageListItem[]>("/system-message/all");
 }
 
 /**
@@ -52,7 +52,7 @@ export async function updateSystemMessage(
   language: Language,
   text: string
 ): Promise<SystemMessage> {
-  return apiData<SystemMessage>("/api/system-message", {
+  return apiData<SystemMessage>("/system-message", {
     method: "PUT",
     body: JSON.stringify({ type, language, text }),
   });
@@ -66,7 +66,7 @@ export async function initializeSystemMessages(): Promise<{
   count: number;
 }> {
   return apiData<{ initialized: boolean; count: number }>(
-    "/api/system-message/initialize",
+    "/system-message/initialize",
     {
       method: "POST",
     }
