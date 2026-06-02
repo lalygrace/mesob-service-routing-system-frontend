@@ -175,6 +175,13 @@ export function ReviewStep({
           </p>
         </div>
 
+        {/* Closing message */}
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 max-w-2xl">
+          <p className="text-sm text-foreground leading-relaxed">
+            {strings.systemMessages.closing}
+          </p>
+        </div>
+
         {/* Star display */}
         {rating > 0 && (
           <div className="flex items-center gap-1">

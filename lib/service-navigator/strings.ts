@@ -15,6 +15,12 @@ export type Strings = {
     featureLanguageDesc: string;
     getStarted: string;
   };
+  systemMessages: {
+    welcome: string;
+    processing: string;
+    closing: string;
+    geminiUnavailable: string;
+  };
   steps: {
     intake: { title: string; description: string };
     voice: { title: string; description: string };
@@ -155,6 +161,16 @@ const EN: Strings = {
     featureLanguage: "3 Languages",
     featureLanguageDesc: "Amharic, English, Afaan Oromo.",
     getStarted: "Get Started",
+  },
+  systemMessages: {
+    welcome:
+      "Welcome to Mesob One-Stop Government Service Center. How can we help you today? Please describe your need, speak to us, or browse our services by organization.",
+    processing:
+      "Thank you, we are looking into that for you. Just a moment please.",
+    closing:
+      "Thank you for using Mesob One-Stop Government Service Center. We hope we were able to help you today. Wishing you a smooth and successful experience with your service. Have a wonderful day!",
+    geminiUnavailable:
+      "We're sorry, our AI service is temporarily unavailable. Please continue by browsing our services directly by organization. All services are still available.",
   },
   steps: {
     intake: {
@@ -321,6 +337,15 @@ const AM: Strings = {
     featureLanguageDesc: "አማርኛ፣ እንግሊዝኛ፣ አፋን ኦሮሞ።",
     getStarted: "ጀምር",
   },
+  systemMessages: {
+    welcome:
+      "እንኳን ወደ መሶብ አንድ-ማዕከል መንግሥታዊ አገልግሎት ማዕከል ደህና መጡ። ዛሬ እንዴት ልንረዳዎት እንችላለን? የሚፈልጉትን አገልግሎት ይግለጹ፣ ይናገሩን፣ ወይም አገልግሎቶቻችንን በድርጅት ያስሱ።",
+    processing: "እናመሰግናለን፣ ለእርስዎ እየፈለግን ነው። እባክዎ ትንሽ ይጠብቁ።",
+    closing:
+      "መሶብ አንድ-ማዕከል መንግሥታዊ አገልግሎት ማዕከልን ስለተጠቀሙ እናመሰግናለን። ዛሬ ልንረዳዎት መቻላችንን ተስፋ እናደርጋለን። ከአገልግሎትዎ ጋር ለስላሳ እና ስኬታማ ልምድ እንመኝልዎታለን። መልካም ቀን ይሁንልዎት!",
+    geminiUnavailable:
+      "ይቅርታ፣ የእኛ AI አገልግሎት ጊዜያዊ ስራ ላይ የለም። እባክዎ አገልግሎቶቻችንን በቀጥታ በድርጅት በማሰስ ይቀጥሉ። ሁሉም አገልግሎቶች አሁንም ይገኛሉ።",
+  },
   steps: {
     intake: { title: "ቋንቋ", description: "ቋንቋዎን እና የመግቢያ መንገድዎን ይምረጡ።" },
     voice: { title: "ይናገሩ", description: "ጉዳይዎን ይንገሩን።" },
@@ -472,6 +497,15 @@ const OM: Strings = {
     featureLanguage: "Afaan 3",
     featureLanguageDesc: "Amaariffaa, Ingiliffaa, Afaan Oromoo.",
     getStarted: "Jalqabi",
+  },
+  systemMessages: {
+    welcome:
+      "Gara Wiirtuu Tajaajila Mootummaa Tokkicha Mesob Nagaan Dhuftan. Har'a akkamitti isin gargaaruu dandeenya? Tajaajila barbaaddan ibsaa, nutti himaa, yookaan tajaajiloota keenya dhaabbata keessaa sakattaʼaa.",
+    processing: "Galatoomaa; isinii barbaadaa jirra. Mee xinnoo obsa.",
+    closing:
+      "Wiirtuu Tajaajila Mootummaa Tokkicha Mesob fayyadamuu keessaniif galatoomaa. Har'a isin gargaaruu dandeenyee abdii qabna. Tajaajila keessan waliin muuxannoo sirrii fi milkaaʼaa akka qabaattan hawwina. Guyyaa gaarii qabaataa!",
+    geminiUnavailable:
+      "Dhiifama; tajaajilli AI keenya yeroo muraasaaf hin hojjetu. Mee tajaajiloota keenya kallattiin dhaabbata keessaa sakattaʼuun itti fufaa. Tajaajiloota hundi ammallee ni argamu.",
   },
   steps: {
     intake: {
