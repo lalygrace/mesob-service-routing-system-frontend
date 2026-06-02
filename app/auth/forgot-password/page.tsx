@@ -35,12 +35,21 @@ function ForgotPasswordPageContent() {
 
     try {
       await requestPasswordReset(email.trim());
-      toast.success("Password reset link sent");
+      toast.success("If an account exists, a reset link has been sent.");
       setSuccess(true);
     } catch (err) {
-      toast.error(
-        getApiErrorMessage(err, "Failed to send reset link. Please try again."),
+      const message = getApiErrorMessage(
+        err,
+        "Failed to send reset link. Please try again.",
       );
+
+      if (/user not found/i.test(message)) {
+        toast.success("If an account exists, a reset link has been sent.");
+        setSuccess(true);
+        return;
+      }
+
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +69,8 @@ function ForgotPasswordPageContent() {
               Check Your Email
             </CardTitle>
             <CardDescription className="text-center">
-              We have sent a password reset link to <strong>{email}</strong>
+              If an account exists for <strong>{email}</strong>, we sent a
+              password reset link.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

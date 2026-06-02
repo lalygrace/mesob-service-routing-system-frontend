@@ -43,7 +43,7 @@ export function signOut() {
 }
 
 export function requestPasswordReset(email: string) {
-  return apiRequest<unknown>("/api/auth/forgot-password", {
+  return apiRequest<unknown>("/api/auth/request-password-reset", {
     method: "POST",
     body: { email },
   });
