@@ -13,9 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Shield, ArrowLeft } from "lucide-react";
+import { Shield, ArrowLeft, ShieldCheck, Check, AlertCircle, Loader2 } from "lucide-react";
 import { PublicRoute } from "@/components/auth/public-route";
 import { verify2FATOTP } from "@/lib/api/auth";
 import { getApiErrorMessage } from "@/lib/api/client";
@@ -67,78 +72,126 @@ function TwoFactorPageContent() {
     }
   };
 
+  const handleCodeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "");
+    setCode(value);
+    
+    // Auto-submit when 6 digits are entered
+    if (value.length === 6 && !isLoading) {
+      // Small delay to show the complete code
+      setTimeout(() => {
+        const form = e.target.form;
+        if (form) {
+          form.requestSubmit();
+        }
+      }, 100);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-              <Shield className="w-8 h-8 text-primary-foreground" />
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-4 text-center pb-4">
+          <div className="flex justify-center">
+            <div className="relative">
+              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
+                <Shield className="w-10 h-10 text-primary" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-500 rounded-full flex items-center justify-center border-2 border-background">
+                <Check className="w-4 h-4 text-white" />
+              </div>
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">
-            Two-Factor Authentication
-          </CardTitle>
-          <CardDescription className="text-center">
-            Enter the 6-digit code from your authenticator app
-          </CardDescription>
+          <div className="space-y-2">
+            <CardTitle className="text-2xl font-bold">
+              Two-Factor Verification
+            </CardTitle>
+            <CardDescription className="text-base">
+              Enter the 6-digit code from your authenticator app to continue
+            </CardDescription>
+          </div>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="code">Verification Code</Label>
+              <Label htmlFor="code" className="text-base">
+                Verification Code
+              </Label>
               <Input
                 id="code"
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 maxLength={6}
-                placeholder="000000"
+                placeholder="• • • • • •"
                 value={code}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, "");
-                  setCode(value);
-                }}
-                className="text-center text-2xl tracking-widest"
+                onChange={handleCodeInput}
+                className="text-center text-3xl tracking-[0.5em] font-bold h-16 px-4"
                 required
                 disabled={isLoading}
                 autoFocus
+                autoComplete="one-time-code"
               />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="trust-device"
-                checked={trustDevice}
-                onCheckedChange={(checked) => setTrustDevice(checked as boolean)}
-                disabled={isLoading}
-              />
-              <Label
-                htmlFor="trust-device"
-                className="text-sm font-normal cursor-pointer"
-              >
-                Trust this device for 30 days
-              </Label>
-            </div>
-
-            <div className="pt-2">
-              <p className="text-xs text-muted-foreground text-center">
-                Don't have access to your authenticator app?
-                <br />
-                Contact your system administrator for assistance.
+              <p className="text-xs text-muted-foreground text-center pt-1">
+                The code refreshes every 30 seconds
               </p>
             </div>
+
+            <div className="rounded-lg border bg-muted/50 p-4">
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="trust-device"
+                  checked={trustDevice}
+                  onCheckedChange={(checked) => setTrustDevice(checked as boolean)}
+                  disabled={isLoading}
+                  className="mt-0.5"
+                />
+                <div className="space-y-1">
+                  <Label
+                    htmlFor="trust-device"
+                    className="text-sm font-medium cursor-pointer leading-none"
+                  >
+                    Trust this device for 30 days
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    You won't need to verify on this device again for 30 days
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Need help?</AlertTitle>
+              <AlertDescription className="text-sm">
+                If you don't have access to your authenticator app, contact your system administrator for assistance.
+              </AlertDescription>
+            </Alert>
           </CardContent>
 
-          <CardFooter className="flex flex-col space-y-3">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Verifying..." : "Verify"}
+          <CardFooter className="flex flex-col space-y-3 pt-2">
+            <Button 
+              type="submit" 
+              className="w-full h-11 text-base" 
+              disabled={isLoading || code.length !== 6}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="mr-2 h-5 w-5" />
+                  Verify and Continue
+                </>
+              )}
             </Button>
 
             <Link href="/auth/login" className="w-full">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 className="w-full"
                 disabled={isLoading}
               >

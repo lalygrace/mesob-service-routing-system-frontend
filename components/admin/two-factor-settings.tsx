@@ -4,7 +4,17 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Shield, ShieldCheck, Copy, Check } from "lucide-react";
+import { 
+  Loader2, 
+  Shield, 
+  ShieldCheck, 
+  Copy, 
+  Check, 
+  ShieldAlert,
+  Smartphone,
+  Key,
+  AlertTriangle
+} from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "react-qr-code";
 
@@ -32,6 +42,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { getAdminMe, enable2FA, disable2FA, verify2FATOTP, type Enable2FAResponse } from "@/lib/api/auth";
 import { getApiErrorMessage } from "@/lib/api/client";
 
@@ -143,31 +155,91 @@ export function TwoFactorSettings() {
 
   return (
     <div className="space-y-6">
-      {is2FAEnabled ? (
-        <Alert>
-          <ShieldCheck className="h-4 w-4" />
-          <AlertTitle>Two-Factor Authentication is Enabled</AlertTitle>
-          <AlertDescription>
-            Your account is protected with an additional layer of security.
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <Alert>
-          <Shield className="h-4 w-4" />
-          <AlertTitle>Two-Factor Authentication is Disabled</AlertTitle>
-          <AlertDescription>
-            Enable 2FA to add an extra layer of security to your account.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Status Card */}
+      <div className="rounded-lg border bg-card">
+        <div className="p-6">
+          <div className="flex items-start justify-between">
+            <div className="flex gap-4">
+              <div className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                is2FAEnabled 
+                  ? "bg-green-100 dark:bg-green-950" 
+                  : "bg-orange-100 dark:bg-orange-950"
+              }`}>
+                {is2FAEnabled ? (
+                  <ShieldCheck className="h-6 w-6 text-green-600 dark:text-green-400" />
+                ) : (
+                  <ShieldAlert className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                )}
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-lg">Two-Factor Authentication</h3>
+                  <Badge variant={is2FAEnabled ? "default" : "secondary"}>
+                    {is2FAEnabled ? "Enabled" : "Disabled"}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {is2FAEnabled 
+                    ? "Your account is protected with TOTP-based two-factor authentication."
+                    : "Add an extra layer of security by requiring a verification code from your authenticator app."}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {!is2FAEnabled && (
+          <>
+            <Separator />
+            <div className="p-6 bg-muted/50">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                    <Smartphone className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm">Use an Authenticator App</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Compatible with Google Authenticator, Authy, 1Password, and other TOTP apps
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                    <Key className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm">Backup Codes</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Save backup codes to recover access if you lose your device
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
+      {/* Action Section */}
       {is2FAEnabled ? (
-        <div>
+        <div className="flex items-center justify-between rounded-lg border border-destructive/50 bg-destructive/5 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
+            <div>
+              <p className="font-medium text-sm">Disable Two-Factor Authentication</p>
+              <p className="text-sm text-muted-foreground">
+                This will reduce your account security
+              </p>
+            </div>
+          </div>
           <Button
             variant="destructive"
             onClick={() => setShowDisableDialog(true)}
+            disabled={isLoading}
           >
-            Disable Two-Factor Authentication
+            Disable 2FA
           </Button>
         </div>
       ) : (
@@ -183,7 +255,7 @@ export function TwoFactorSettings() {
                 <FormItem>
                   <FormLabel>Confirm Your Password</FormLabel>
                   <FormDescription>
-                    Enter your password to enable two-factor authentication
+                    Enter your password to begin the setup process
                   </FormDescription>
                   <FormControl>
                     <Input
@@ -199,8 +271,9 @@ export function TwoFactorSettings() {
               )}
             />
 
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} size="lg" className="w-full sm:w-auto">
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Shield className="mr-2 h-4 w-4" />
               Enable Two-Factor Authentication
             </Button>
           </form>
@@ -209,86 +282,161 @@ export function TwoFactorSettings() {
 
       {/* Setup Dialog */}
       <Dialog open={showSetupDialog} onOpenChange={setShowSetupDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Set Up Two-Factor Authentication</DialogTitle>
+            <DialogTitle className="text-2xl">Set Up Two-Factor Authentication</DialogTitle>
             <DialogDescription>
-              Scan the QR code with your authenticator app and enter the code to
-              complete setup.
+              Follow these steps to secure your account with TOTP-based authentication
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6">
+          <div className="space-y-6 py-4">
             {/* Step 1: QR Code */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 font-medium">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
                   1
                 </div>
-                <span>Scan QR Code</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Use an authenticator app like Google Authenticator, Authy, or
-                1Password to scan this QR code.
-              </p>
-              {setupData?.totpURI && (
-                <div className="flex justify-center p-4 bg-white rounded-lg">
-                  <QRCode value={setupData.totpURI} size={200} />
+                <div>
+                  <h3 className="font-semibold text-base">Scan QR Code</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Use your authenticator app to scan this code
+                  </p>
                 </div>
-              )}
-              <div className="text-xs text-muted-foreground text-center">
-                Can't scan? Manual entry key: <code className="px-1 py-0.5 bg-muted rounded">{setupData?.totpURI?.split("secret=")[1]?.split("&")[0]}</code>
+              </div>
+              
+              <div className="rounded-lg border bg-muted/50 p-6">
+                {setupData?.totpURI && (
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="rounded-lg bg-white p-4 shadow-sm">
+                      <QRCode value={setupData.totpURI} size={200} />
+                    </div>
+                    
+                    <div className="space-y-2 w-full">
+                      <p className="text-xs font-medium text-center text-muted-foreground">
+                        Can't scan? Enter this code manually:
+                      </p>
+                      <div className="flex items-center gap-2 p-3 bg-background border rounded-lg">
+                        <code className="flex-1 text-sm font-mono text-center break-all">
+                          {setupData.totpURI.split("secret=")[1]?.split("&")[0]}
+                        </code>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={() => {
+                            const secret = setupData.totpURI.split("secret=")[1]?.split("&")[0];
+                            navigator.clipboard.writeText(secret);
+                            toast.success("Secret key copied to clipboard");
+                          }}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="mt-4 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Recommended apps:</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="text-xs">Google Authenticator</Badge>
+                    <Badge variant="outline" className="text-xs">Microsoft Authenticator</Badge>
+                    <Badge variant="outline" className="text-xs">Authy</Badge>
+                    <Badge variant="outline" className="text-xs">1Password</Badge>
+                  </div>
+                </div>
               </div>
             </div>
+
+            <Separator />
 
             {/* Step 2: Backup Codes */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 font-medium">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
                   2
                 </div>
-                <span>Save Backup Codes</span>
+                <div>
+                  <h3 className="font-semibold text-base">Save Backup Codes</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Store these codes securely for account recovery
+                  </p>
+                </div>
               </div>
-              <Alert>
+              
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Important</AlertTitle>
                 <AlertDescription>
-                  <strong>Important:</strong> Save these backup codes in a safe
-                  place. You can use them to access your account if you lose your
-                  authenticator device.
+                  Each backup code can only be used once. Save them in a secure location like a password manager.
                 </AlertDescription>
               </Alert>
-              <div className="grid grid-cols-2 gap-2 p-4 bg-muted rounded-lg">
-                {setupData?.backupCodes?.map((code, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between gap-2 p-2 bg-background rounded border"
-                  >
-                    <code className="text-sm font-mono">{code}</code>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => copyToClipboard(code, index)}
+              
+              <div className="rounded-lg border bg-muted/50 p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {setupData?.backupCodes?.map((code, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between gap-2 p-3 bg-background rounded-lg border hover:bg-accent transition-colors group"
                     >
-                      {copiedCodes[index] ? (
-                        <Check className="h-3 w-3" />
-                      ) : (
-                        <Copy className="h-3 w-3" />
-                      )}
-                    </Button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-2 flex-1">
+                        <span className="text-xs font-medium text-muted-foreground w-6">
+                          #{index + 1}
+                        </span>
+                        <code className="text-sm font-mono font-medium">{code}</code>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => copyToClipboard(code, index)}
+                      >
+                        {copiedCodes[index] ? (
+                          <Check className="h-3.5 w-3.5 text-green-600" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-3"
+                  onClick={() => {
+                    const allCodes = setupData?.backupCodes?.join("\n") || "";
+                    navigator.clipboard.writeText(allCodes);
+                    toast.success("All backup codes copied to clipboard");
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5 mr-2" />
+                  Copy All Codes
+                </Button>
               </div>
             </div>
 
+            <Separator />
+
             {/* Step 3: Verify */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 font-medium">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
                   3
                 </div>
-                <span>Verify Setup</span>
+                <div>
+                  <h3 className="font-semibold text-base">Verify Setup</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Enter the code from your app to complete setup
+                  </p>
+                </div>
               </div>
+              
               <Form {...verifyForm}>
                 <form
                   onSubmit={verifyForm.handleSubmit(onVerifySubmit)}
@@ -301,13 +449,14 @@ export function TwoFactorSettings() {
                       <FormItem>
                         <FormLabel>Verification Code</FormLabel>
                         <FormDescription>
-                          Enter the 6-digit code from your authenticator app
+                          Enter the 6-digit code shown in your authenticator app
                         </FormDescription>
                         <FormControl>
                           <Input
                             placeholder="000000"
                             maxLength={6}
                             disabled={isLoading}
+                            className="text-center text-lg tracking-widest font-mono"
                             {...field}
                           />
                         </FormControl>
@@ -316,7 +465,7 @@ export function TwoFactorSettings() {
                     )}
                   />
 
-                  <DialogFooter>
+                  <div className="flex gap-3 pt-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -326,16 +475,22 @@ export function TwoFactorSettings() {
                         verifyForm.reset();
                       }}
                       disabled={isLoading}
+                      className="flex-1"
                     >
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={isLoading}>
+                    <Button 
+                      type="submit" 
+                      disabled={isLoading}
+                      className="flex-1"
+                    >
                       {isLoading && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
+                      <ShieldCheck className="mr-2 h-4 w-4" />
                       Verify and Enable
                     </Button>
-                  </DialogFooter>
+                  </div>
                 </form>
               </Form>
             </div>
