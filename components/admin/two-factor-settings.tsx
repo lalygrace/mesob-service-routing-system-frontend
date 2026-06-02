@@ -93,6 +93,9 @@ export function TwoFactorSettings() {
   async function loadUserData() {
     try {
       const data = await getAdminMe();
+      console.log("🔍 Full user data:", JSON.stringify(data, null, 2));
+      console.log("🔍 twoFactorEnabled value:", data.user?.twoFactorEnabled);
+      console.log("🔍 twoFactorEnabled type:", typeof data.user?.twoFactorEnabled);
       setIs2FAEnabled(data.user?.twoFactorEnabled ?? false);
     } catch (error) {
       console.error("Failed to load user data:", error);
