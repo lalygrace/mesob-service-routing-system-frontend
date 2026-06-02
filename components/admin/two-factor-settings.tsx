@@ -117,11 +117,21 @@ export function TwoFactorSettings() {
     setIsLoading(true);
     try {
       await verify2FATOTP(values.code, false);
-      toast.success("Two-factor authentication enabled successfully!");
+      
+      // Close dialog first
       setShowSetupDialog(false);
       setSetupData(null);
       verifyForm.reset();
-      await loadUserData();
+      
+      // Wait a moment for backend to process
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Reload user data to update the UI
+      const data = await getAdminMe();
+      setIs2FAEnabled(data.user?.twoFactorEnabled ?? false);
+      
+      // Show success message after state update
+      toast.success("Two-factor authentication enabled successfully!");
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Invalid verification code"));
     } finally {
@@ -133,10 +143,20 @@ export function TwoFactorSettings() {
     setIsLoading(true);
     try {
       await disable2FA(values.password);
-      toast.success("Two-factor authentication disabled");
+      
+      // Close dialog
       setShowDisableDialog(false);
       disableForm.reset();
-      await loadUserData();
+      
+      // Wait a moment for backend to process
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Reload user data to update the UI
+      const data = await getAdminMe();
+      setIs2FAEnabled(data.user?.twoFactorEnabled ?? false);
+      
+      // Show success message after state update
+      toast.success("Two-factor authentication disabled");
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to disable 2FA"));
     } finally {
