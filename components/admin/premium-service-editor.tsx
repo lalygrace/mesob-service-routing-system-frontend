@@ -412,8 +412,8 @@ export function PremiumServiceEditor({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="sm:max-w-3xl flex flex-col p-0 border-l border-border/50">
-        <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
-          <SheetHeader className="px-6 py-5 border-b border-border/50 bg-muted/20">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden min-h-0">
+          <SheetHeader className="px-6 py-5 border-b border-border/50 bg-muted/20 shrink-0">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
                 <FileText className="h-5 w-5" />
@@ -429,8 +429,8 @@ export function PremiumServiceEditor({
             </div>
           </SheetHeader>
 
-          <ScrollArea className="flex-1 px-6">
-            <div className="py-6 space-y-6">
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="px-6 py-6 space-y-6">
               {/* Universal Notice (Applies across languages visually, mostly internal context) */}
               <div className="space-y-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl dark:bg-amber-500/5">
                 <Label className="text-sm font-medium flex items-center gap-2 text-amber-700 dark:text-amber-400">

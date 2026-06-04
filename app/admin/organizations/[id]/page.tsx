@@ -90,10 +90,17 @@ export default function OrganizationServicesPage() {
   async function handleServiceSave(data: Omit<Service, "id">) {
     try {
       if (editingService) {
-        await updateAdminService(editingService.id, data);
+        // Strip out fields not allowed in UpdateServiceDto to prevent 400 Bad Request
+        const { organizationId, organization, notice, syncedFromCms, isActive, ...updateData } = data as any;
+        await updateAdminService(editingService.id, updateData);
         toast.success("Service updated successfully");
       } else {
-        await createAdminService(data);
+        // Strip out notice and frontend-only fields for Create as well
+        const { notice, syncedFromCms, isActive, organization, ...createData } = data as any;
+        // Map frontend "organization" to backend DTO "Organization"
+        createData.Organization = organization;
+        
+        await createAdminService(createData);
         toast.success("Service created successfully");
       }
       await loadData();
