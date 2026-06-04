@@ -10,12 +10,24 @@ import {
   Building2,
   RefreshCw,
   ChevronRight,
+  Clock,
+  Banknote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -53,7 +65,7 @@ import {
   syncOrganizationsFromCms,
   type Organization,
 } from "@/lib/api/organizations";
-import { listAdminServices, updateAdminService } from "@/lib/api/services";
+import { listAdminServices, updateAdminService, deleteAdminService } from "@/lib/api/services";
 import type { Service } from "@/lib/service-navigator/types";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { ServiceForm } from "@/components/admin/service-form";
@@ -73,8 +85,12 @@ export default function OrganizationsPage() {
     Service[]
   >([]);
   const [servicesLoading, setServicesLoading] = React.useState(false);
+  const [serviceSearch, setServiceSearch] = React.useState("");
   const [serviceEditOpen, setServiceEditOpen] = React.useState(false);
   const [editingService, setEditingService] = React.useState<Service | null>(
+    null,
+  );
+  const [deletingService, setDeletingService] = React.useState<Service | null>(
     null,
   );
 
@@ -197,6 +213,19 @@ export default function OrganizationsPage() {
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to update service"));
       return false;
+    }
+  }
+
+  async function handleServiceDelete() {
+    if (!deletingService) return;
+    try {
+      await deleteAdminService(deletingService.id);
+      toast.success("Service deleted successfully");
+      await refreshSelectedOrganizationServices();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to delete service"));
+    } finally {
+      setDeletingService(null);
     }
   }
 
@@ -372,86 +401,151 @@ export default function OrganizationsPage() {
           if (!open) {
             setEditingService(null);
             setServiceEditOpen(false);
+            setServiceSearch("");
           }
         }}
       >
-        <SheetContent side="right" className="sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>
-              {selectedOrganization?.name || "Organization Services"}
-            </SheetTitle>
-            <SheetDescription>
-              Services available for the selected organization.
-            </SheetDescription>
+        <SheetContent side="right" className="sm:max-w-2xl flex flex-col p-0 border-l border-border/50">
+          <SheetHeader className="px-6 py-5 border-b border-border/50 bg-muted/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <SheetTitle className="text-xl">
+                  {selectedOrganization?.name || "Organization Services"}
+                </SheetTitle>
+                <SheetDescription className="mt-1">
+                  Manage services offered by this organization.
+                </SheetDescription>
+              </div>
+            </div>
           </SheetHeader>
-          <div className="px-4 pb-4">
-            <ScrollArea className="h-[calc(100vh-180px)] pr-2">
-              {servicesLoading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <Card key={`org-service-skeleton-${index}`}>
-                      <CardContent className="p-4 space-y-2">
-                        <Skeleton className="h-4 w-40" />
-                        <Skeleton className="h-3 w-24" />
-                        <Skeleton className="h-3 w-32" />
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : organizationServices.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
-                  <Building2 className="h-8 w-8" />
-                  <p>No services found for this organization.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {organizationServices.map((service) => {
-                    const hasNotice = !!service.notice?.trim();
-                    const title = service.title || "-";
+          
+          <div className="flex flex-col flex-1 min-h-0">
+            <div className="px-6 py-4 border-b border-border/50 flex gap-3 bg-background/95 backdrop-blur z-10 sticky top-0">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Filter services by name..."
+                  value={serviceSearch}
+                  onChange={(e) => setServiceSearch(e.target.value)}
+                  className="pl-8 bg-muted/50 focus-visible:bg-background"
+                />
+              </div>
+            </div>
 
-                    return (
-                      <Card key={service.id}>
-                        <CardContent className="p-4 space-y-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="font-medium">{title}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {service.organization}
-                              </p>
+            <ScrollArea className="flex-1">
+              <div className="p-6">
+                {servicesLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <Skeleton key={`org-service-skeleton-${index}`} className="h-24 w-full rounded-lg" />
+                    ))}
+                  </div>
+                ) : organizationServices.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground bg-muted/10 rounded-xl border border-dashed">
+                    <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center">
+                      <Building2 className="h-6 w-6" />
+                    </div>
+                    <p className="font-medium">No services found</p>
+                    <p className="text-sm">This organization doesn&apos;t have any mapped services yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {organizationServices
+                      .filter(s => (s.title || "").toLowerCase().includes(serviceSearch.toLowerCase()))
+                      .map((service) => {
+                      const hasNotice = !!service.notice?.trim();
+                      const title = service.title || "Unnamed Service";
+
+                      return (
+                        <div 
+                          key={service.id}
+                          className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border/50 bg-card hover:bg-muted/20 hover:border-border transition-colors gap-4"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium truncate" title={title}>{title}</h4>
+                              {hasNotice && (
+                                <Badge variant="destructive" className="h-5 px-1.5 text-[10px] uppercase tracking-wider font-semibold">
+                                  Notice
+                                </Badge>
+                              )}
                             </div>
-                            {hasNotice && (
-                              <Badge variant="destructive" className="text-xs">
-                                Notice
-                              </Badge>
-                            )}
+                            <p className="text-xs text-muted-foreground line-clamp-1" title={service.descriptionHint}>
+                              {service.descriptionHint || "No description provided."}
+                            </p>
                           </div>
-                          <div className="grid gap-1 text-sm text-muted-foreground">
-                            <div>Service Fee (EN): {service.feeHint}</div>
-                            <div>
-                              Processing Time (EN): {service.durationHint}
+                          
+                          <div className="flex items-center gap-6 text-sm text-muted-foreground shrink-0">
+                            <div className="flex items-center gap-1.5" title="Processing Time">
+                              <Clock className="h-3.5 w-3.5" />
+                              <span className="truncate max-w-[100px]">{service.durationHint || "-"}</span>
                             </div>
+                            <div className="flex items-center gap-1.5" title="Service Fee">
+                              <Banknote className="h-3.5 w-3.5" />
+                              <span className="truncate max-w-[100px]">{service.feeHint || "Free"}</span>
+                            </div>
+                            
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem
+                                  className="gap-2 cursor-pointer"
+                                  onClick={() => openServiceEdit(service)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                  Edit Service
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="gap-2 text-destructive focus:text-destructive cursor-pointer"
+                                  onClick={() => setDeletingService(service)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
-                          <div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1.5"
-                              onClick={() => openServiceEdit(service)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                              Edit
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </ScrollArea>
           </div>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={!!deletingService} onOpenChange={(open) => !open && setDeletingService(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the service <span className="font-semibold text-foreground">&quot;{deletingService?.title}&quot;</span>. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                void handleServiceDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Service
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <OrganizationForm
         open={formOpen}
