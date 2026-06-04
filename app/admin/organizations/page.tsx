@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Plus,
   Search,
-  MoreHorizontal,
   Pencil,
   Trash2,
   Building2,
@@ -39,12 +38,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Card,
   CardContent,

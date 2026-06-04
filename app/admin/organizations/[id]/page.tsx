@@ -34,12 +34,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Card,
   CardContent,
 } from "@/components/ui/card";
@@ -47,7 +41,7 @@ import { getAdminOrganization, type Organization } from "@/lib/api/organizations
 import { listAdminServices, updateAdminService, deleteAdminService, createAdminService } from "@/lib/api/services";
 import type { Service } from "@/lib/service-navigator/types";
 import { getApiErrorMessage } from "@/lib/api/client";
-import { ServiceForm } from "@/components/admin/service-form";
+import { PremiumServiceEditor } from "@/components/admin/premium-service-editor";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -318,16 +312,15 @@ export default function OrganizationServicesPage() {
       </AlertDialog>
 
       {organization && (
-        <ServiceForm
+        <PremiumServiceEditor
           open={serviceFormOpen}
           onOpenChange={(open) => {
             setServiceFormOpen(open);
             if (!open) setEditingService(null);
           }}
           service={editingService}
-          organizations={[organization]}
-          organizationReadOnly
-          lockedOrganizationId={organization.id}
+          organizationId={organization.id}
+          organizationName={organization.name}
           onSave={handleServiceSave}
         />
       )}
