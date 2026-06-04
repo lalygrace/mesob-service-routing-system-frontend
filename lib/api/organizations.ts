@@ -32,6 +32,10 @@ export function listAdminOrganizations() {
   return apiData<Organization[]>("/api/admin/organizations");
 }
 
+export function getAdminOrganization(organizationId: string) {
+  return apiData<Organization>(`/api/admin/organizations/${organizationId}`);
+}
+
 export function createAdminOrganization(payload: OrganizationPayload) {
   return apiData<Organization>("/api/admin/organizations", {
     method: "POST",
