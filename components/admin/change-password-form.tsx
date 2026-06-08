@@ -39,6 +39,7 @@ export function ChangePasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<FormValues>({
+    // @ts-expect-error - Zod version mismatch between dependencies
     resolver: zodResolver(formSchema),
     defaultValues: {
       currentPassword: "",

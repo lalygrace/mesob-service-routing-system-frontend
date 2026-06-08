@@ -304,7 +304,7 @@ export function VoiceInput({
           </p>
           <Button
             onClick={onSwitchToTyping}
-            variant="glass"
+            variant="outline"
             size="lg"
             className="rounded-xl"
           >
@@ -474,14 +474,14 @@ export function VoiceInput({
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Button
-          variant="glass"
+          variant="outline"
           onClick={onSwitchToTyping}
           className="rounded-xl h-12"
         >
           {strings.voice.typeInstead}
         </Button>
         <Button
-          variant="glass"
+          variant="outline"
           onClick={reset}
           className="rounded-xl h-12 gap-2"
           disabled={isRecording || isTranscribing}
@@ -490,7 +490,7 @@ export function VoiceInput({
           {strings.actions.askAgain}
         </Button>
         <Button
-          variant="glass"
+          variant="outline"
           onClick={onSubmit}
           disabled={value.trim().length < 3 || isRecording || isTranscribing}
           className="rounded-xl h-12"
