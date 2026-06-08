@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
   TooltipContent,
@@ -38,7 +39,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { getAdminOrganization, type Organization } from "@/lib/api/organizations";
-import { listAdminServices, updateAdminService, deleteAdminService, createAdminService } from "@/lib/api/services";
+import { listAdminServices, updateAdminService, deleteAdminService, createAdminService, bulkDeleteAdminServices } from "@/lib/api/services";
 import type { Service } from "@/lib/service-navigator/types";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { PremiumServiceEditor } from "@/components/admin/premium-service-editor";
@@ -58,6 +59,8 @@ export default function OrganizationServicesPage() {
   const [serviceFormOpen, setServiceFormOpen] = React.useState(false);
   const [editingService, setEditingService] = React.useState<Service | null>(null);
   const [deletingService, setDeletingService] = React.useState<Service | null>(null);
+  const [selectedServices, setSelectedServices] = React.useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
 
   React.useEffect(() => {
     if (orgId) {
@@ -117,10 +120,44 @@ export default function OrganizationServicesPage() {
       await deleteAdminService(deletingService.id);
       toast.success("Service deleted successfully");
       await loadData();
+      setSelectedServices(new Set()); // Clear selection
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to delete service"));
     } finally {
       setDeletingService(null);
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (selectedServices.size === 0) return;
+    setIsBulkDeleting(true);
+    try {
+      await bulkDeleteAdminServices(Array.from(selectedServices));
+      toast.success(`${selectedServices.size} service(s) deleted successfully`);
+      await loadData();
+      setSelectedServices(new Set());
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to delete services"));
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  }
+
+  function toggleServiceSelection(serviceId: string) {
+    const newSelection = new Set(selectedServices);
+    if (newSelection.has(serviceId)) {
+      newSelection.delete(serviceId);
+    } else {
+      newSelection.add(serviceId);
+    }
+    setSelectedServices(newSelection);
+  }
+
+  function toggleSelectAll() {
+    if (selectedServices.size === filteredServices.length) {
+      setSelectedServices(new Set());
+    } else {
+      setSelectedServices(new Set(filteredServices.map((s) => s.id)));
     }
   }
 
@@ -203,6 +240,17 @@ export default function OrganizationServicesPage() {
               className="pl-8 bg-muted/50 focus-visible:bg-background"
             />
           </div>
+          {selectedServices.size > 0 && (
+            <Button
+              variant="destructive"
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+              className="gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete {selectedServices.size} Selected
+            </Button>
+          )}
         </div>
         
         <CardContent className="p-4 sm:p-6">
@@ -223,15 +271,39 @@ export default function OrganizationServicesPage() {
               </div>
             ) : (
               <div className="grid gap-3">
+                {filteredServices.length > 0 && (
+                  <div className="flex items-center gap-2 px-4 py-2 border-b border-border/30">
+                    <Checkbox
+                      checked={selectedServices.size === filteredServices.length && filteredServices.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                      id="select-all"
+                    />
+                    <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer select-none">
+                      Select All ({filteredServices.length})
+                    </label>
+                  </div>
+                )}
                 {filteredServices.map((service) => {
                   const hasNotice = !!service.notice?.trim();
                   const title = service.title || "Unnamed Service";
+                  const isSelected = selectedServices.has(service.id);
 
                   return (
                     <div 
                       key={service.id}
-                      className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border/50 bg-card hover:bg-muted/10 transition-colors gap-4 shadow-sm"
+                      className={`group flex items-center gap-3 p-4 rounded-xl border ${
+                        isSelected 
+                          ? "border-primary bg-primary/5" 
+                          : "border-border/50 bg-card hover:bg-muted/10"
+                      } transition-colors shadow-sm`}
                     >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleServiceSelection(service.id)}
+                        id={`service-${service.id}`}
+                        className="shrink-0"
+                      />
+                      
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
                           <h4 className="font-medium text-base truncate" title={title}>{title}</h4>
@@ -241,9 +313,6 @@ export default function OrganizationServicesPage() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-1" title={service.descriptionHint}>
-                          {service.descriptionHint || "No description provided."}
-                        </p>
                       </div>
                       
                       <div className="flex items-center gap-6 text-sm text-muted-foreground shrink-0">

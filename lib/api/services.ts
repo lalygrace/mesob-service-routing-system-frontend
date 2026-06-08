@@ -33,6 +33,13 @@ export function deleteAdminService(serviceId: string) {
   });
 }
 
+export function bulkDeleteAdminServices(serviceIds: string[]) {
+  return apiData<{ deleted: number; serviceIds: string[] }>("/api/admin/services/bulk-delete", {
+    method: "POST",
+    body: { serviceIds },
+  });
+}
+
 export function syncServicesFromCms() {
   return apiData<{
     created: number;

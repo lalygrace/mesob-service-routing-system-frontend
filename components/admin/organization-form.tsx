@@ -419,7 +419,7 @@ export function OrganizationForm({
               </Label>
               <Input
                 id="org-logo"
-                type="url"
+                type="text"
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
