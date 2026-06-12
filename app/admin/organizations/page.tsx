@@ -1,21 +1,35 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Search,
-  MoreHorizontal,
   Pencil,
   Trash2,
   Building2,
   RefreshCw,
-  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -24,19 +38,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Card,
   CardContent,
@@ -53,28 +54,18 @@ import {
   syncOrganizationsFromCms,
   type Organization,
 } from "@/lib/api/organizations";
-import { listAdminServices, updateAdminService } from "@/lib/api/services";
-import type { Service } from "@/lib/service-navigator/types";
 import { getApiErrorMessage } from "@/lib/api/client";
-import { ServiceForm } from "@/components/admin/service-form";
 import { toast } from "sonner";
 
 export default function OrganizationsPage() {
+  const router = useRouter();
   const [organizations, setOrganizations] = React.useState<Organization[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Organization | null>(null);
-  const [servicesSheetOpen, setServicesSheetOpen] = React.useState(false);
-  const [selectedOrganization, setSelectedOrganization] =
-    React.useState<Organization | null>(null);
-  const [organizationServices, setOrganizationServices] = React.useState<
-    Service[]
-  >([]);
-  const [servicesLoading, setServicesLoading] = React.useState(false);
-  const [serviceEditOpen, setServiceEditOpen] = React.useState(false);
-  const [editingService, setEditingService] = React.useState<Service | null>(
+  const [deletingOrganization, setDeletingOrganization] = React.useState<Organization | null>(
     null,
   );
 
@@ -123,13 +114,16 @@ export default function OrganizationsPage() {
     }
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete() {
+    if (!deletingOrganization) return;
     try {
-      await deleteAdminOrganization(id);
-      setOrganizations((prev) => prev.filter((o) => o.id !== id));
+      await deleteAdminOrganization(deletingOrganization.id);
+      setOrganizations((prev) => prev.filter((o) => o.id !== deletingOrganization.id));
       toast.success("Organization deleted successfully");
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to delete organization"));
+    } finally {
+      setDeletingOrganization(null);
     }
   }
 
@@ -152,52 +146,6 @@ export default function OrganizationsPage() {
   function openEdit(organization: Organization) {
     setEditing(organization);
     setFormOpen(true);
-  }
-
-  async function loadServicesForOrganization(organization: Organization) {
-    setServicesLoading(true);
-    try {
-      const services = await listAdminServices();
-      const filteredServices = services.filter(
-        (service) =>
-          service.organizationId === organization.id ||
-          service.organization === organization.name,
-      );
-      setOrganizationServices(filteredServices);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to load services"));
-    } finally {
-      setServicesLoading(false);
-    }
-  }
-
-  async function refreshSelectedOrganizationServices() {
-    if (!selectedOrganization) return;
-    await loadServicesForOrganization(selectedOrganization);
-  }
-
-  function openServicesSheet(organization: Organization) {
-    setSelectedOrganization(organization);
-    setServicesSheetOpen(true);
-    void loadServicesForOrganization(organization);
-  }
-
-  function openServiceEdit(service: Service) {
-    setEditingService(service);
-    setServiceEditOpen(true);
-  }
-
-  async function handleServiceSave(data: Omit<Service, "id">) {
-    if (!editingService) return false;
-    try {
-      await updateAdminService(editingService.id, data);
-      toast.success("Service updated successfully");
-      await refreshSelectedOrganizationServices();
-      return true;
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to update service"));
-      return false;
-    }
   }
 
   function openCreate() {
@@ -234,7 +182,6 @@ export default function OrganizationsPage() {
         </div>
       </div>
 
-      {/* Table */}
       <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -263,214 +210,141 @@ export default function OrganizationsPage() {
                 </TableHead>
                 <TableHead className="hidden lg:table-cell">Location</TableHead>
                 <TableHead className="text-center">Services</TableHead>
-                <TableHead className="w-48" />
+                <TableHead className="w-16" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-center py-12 text-muted-foreground"
-                  >
-                    Loading organizations...
-                  </TableCell>
-                </TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Building2 className="h-8 w-8" />
-                      <p>No organizations found</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((org) => (
-                  <TableRow key={org.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div>
-                          <p className="font-medium">{org.name}</p>
-                          <p className="text-xs text-muted-foreground truncate max-w-62.5">
-                            {org.description}
-                          </p>
-                        </div>
-                        {org.syncedFromCms && (
-                          <Badge variant="secondary" className="text-xs">
-                            CMS
-                          </Badge>
-                        )}
-                      </div>
+              <TooltipProvider delayDuration={300}>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-12 text-muted-foreground"
+                    >
+                      Loading organizations...
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {org.abbreviation}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                      {[org.floor, org.room].filter(Boolean).join(" • ")}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="secondary" className="text-xs">
-                        {org.serviceCount}
-                      </Badge>
-                    </TableCell>
-
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1.5"
-                          onClick={() => openServicesSheet(org)}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                          View Services
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              className="gap-2"
-                              onClick={() => openEdit(org)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="gap-2 text-destructive focus:text-destructive"
-                              onClick={() => handleDelete(org.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                  </TableRow>
+                ) : filtered.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-12">
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <Building2 className="h-8 w-8" />
+                        <p>No organizations found</p>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
+                ) : (
+                  filtered.map((org) => (
+                    <TableRow 
+                      key={org.id}
+                      className="cursor-pointer hover:bg-muted/50 transition-colors group"
+                      onClick={() => router.push(`/admin/organizations/${org.id}`)}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9 rounded-lg border border-border/50 bg-primary/10 text-primary shrink-0">
+                            <AvatarImage src={org.logoUrl} alt={org.name} className="object-cover" />
+                            <AvatarFallback className="rounded-lg font-bold">
+                              {org.abbreviation?.[0] || org.name[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium truncate">{org.name}</p>
+                              {org.syncedFromCms && (
+                                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-semibold shrink-0">
+                                  CMS
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate max-w-[250px]">
+                              {org.description || "No description"}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant="outline" className="font-mono text-xs">
+                          {org.abbreviation}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                        {[org.floor, org.room].filter(Boolean).join(" • ") || "-"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary" className="text-xs">
+                          {org.serviceCount}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                                onClick={() => openEdit(org)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Edit Organization</TooltipContent>
+                          </Tooltip>
+
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => setDeletingOrganization(org)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete Organization</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TooltipProvider>
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      <Sheet
-        open={servicesSheetOpen}
-        onOpenChange={(open) => {
-          setServicesSheetOpen(open);
-          if (!open) {
-            setEditingService(null);
-            setServiceEditOpen(false);
-          }
-        }}
-      >
-        <SheetContent side="right" className="sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>
-              {selectedOrganization?.name || "Organization Services"}
-            </SheetTitle>
-            <SheetDescription>
-              Services available for the selected organization.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="px-4 pb-4">
-            <ScrollArea className="h-[calc(100vh-180px)] pr-2">
-              {servicesLoading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <Card key={`org-service-skeleton-${index}`}>
-                      <CardContent className="p-4 space-y-2">
-                        <Skeleton className="h-4 w-40" />
-                        <Skeleton className="h-3 w-24" />
-                        <Skeleton className="h-3 w-32" />
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : organizationServices.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
-                  <Building2 className="h-8 w-8" />
-                  <p>No services found for this organization.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {organizationServices.map((service) => {
-                    const hasNotice = !!service.notice?.trim();
-                    const title = service.title || "-";
-
-                    return (
-                      <Card key={service.id}>
-                        <CardContent className="p-4 space-y-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="font-medium">{title}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {service.organization}
-                              </p>
-                            </div>
-                            {hasNotice && (
-                              <Badge variant="destructive" className="text-xs">
-                                Notice
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="grid gap-1 text-sm text-muted-foreground">
-                            <div>Service Fee (EN): {service.feeHint}</div>
-                            <div>
-                              Processing Time (EN): {service.durationHint}
-                            </div>
-                          </div>
-                          <div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1.5"
-                              onClick={() => openServiceEdit(service)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                              Edit
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
-            </ScrollArea>
-          </div>
-        </SheetContent>
-      </Sheet>
+      <AlertDialog open={!!deletingOrganization} onOpenChange={(open) => !open && setDeletingOrganization(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Organization?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <span className="font-semibold text-foreground">&quot;{deletingOrganization?.name}&quot;</span> and all of its associated services. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Organization
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <OrganizationForm
         open={formOpen}
         onOpenChange={setFormOpen}
         organization={editing}
         onSave={handleSave}
-      />
-
-      <ServiceForm
-        open={serviceEditOpen}
-        onOpenChange={(open) => {
-          setServiceEditOpen(open);
-          if (!open) setEditingService(null);
-        }}
-        service={editingService}
-        organizations={organizations}
-        organizationReadOnly
-        lockedOrganizationId={selectedOrganization?.id}
-        onSave={handleServiceSave}
       />
     </div>
   );

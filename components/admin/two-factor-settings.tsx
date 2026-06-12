@@ -72,16 +72,19 @@ export function TwoFactorSettings() {
   const [copiedCodes, setCopiedCodes] = useState<Record<string, boolean>>({});
 
   const enableForm = useForm<EnableFormValues>({
+    // @ts-expect-error - Zod version mismatch between dependencies
     resolver: zodResolver(enableFormSchema),
     defaultValues: { password: "" },
   });
 
   const verifyForm = useForm<VerifyFormValues>({
+    // @ts-expect-error - Zod version mismatch between dependencies
     resolver: zodResolver(verifyFormSchema),
     defaultValues: { code: "" },
   });
 
   const disableForm = useForm<DisableFormValues>({
+    // @ts-expect-error - Zod version mismatch between dependencies
     resolver: zodResolver(disableFormSchema),
     defaultValues: { password: "" },
   });
